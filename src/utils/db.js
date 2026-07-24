@@ -91,6 +91,7 @@ export const deleteDocument = async (id) => { await supabase.from('documents').d
 // ==========================================
 // MIGRATION SCRIPT
 // ==========================================
+
 export const migrateDataToCloud = async () => {
   const getLocal = (key) => {
     try {
@@ -98,55 +99,60 @@ export const migrateDataToCloud = async () => {
       return d ? JSON.parse(d) : [];
     } catch(e) { return []; }
   };
+  
+  const checkErr = (err, name) => {
+    if (err) throw new Error('Failed at ' + name + ': ' + err.message);
+  };
 
   const users = getLocal('const_manage_users');
-  if(users.length) await supabase.from('users').upsert(users);
+  if(users.length) { const { error } = await supabase.from('users').upsert(users); checkErr(error, 'users'); }
 
   const projects = getLocal('const_manage_projects');
-  if(projects.length) await supabase.from('projects').upsert(projects);
+  if(projects.length) { const { error } = await supabase.from('projects').upsert(projects); checkErr(error, 'projects'); }
 
   const workers = getLocal('const_manage_workers');
-  if(workers.length) await supabase.from('workers').upsert(workers);
+  if(workers.length) { const { error } = await supabase.from('workers').upsert(workers); checkErr(error, 'workers'); }
 
   const attendance = getLocal('const_manage_attendance');
-  if(attendance.length) await supabase.from('attendance').upsert(attendance);
+  if(attendance.length) { const { error } = await supabase.from('attendance').upsert(attendance); checkErr(error, 'attendance'); }
 
   const subcontractors = getLocal('const_manage_subcontractors');
-  if(subcontractors.length) await supabase.from('subcontractors').upsert(subcontractors);
+  if(subcontractors.length) { const { error } = await supabase.from('subcontractors').upsert(subcontractors); checkErr(error, 'subcontractors'); }
 
   const subPayments = getLocal('const_manage_sub_payments');
-  if(subPayments.length) await supabase.from('sub_payments').upsert(subPayments);
+  if(subPayments.length) { const { error } = await supabase.from('sub_payments').upsert(subPayments); checkErr(error, 'sub_payments'); }
 
   const materials = getLocal('const_manage_materials');
-  if(materials.length) await supabase.from('materials').upsert(materials);
+  if(materials.length) { const { error } = await supabase.from('materials').upsert(materials); checkErr(error, 'materials'); }
 
   const siteAdvances = getLocal('const_manage_site_advances');
-  if(siteAdvances.length) await supabase.from('site_advances').upsert(siteAdvances);
+  if(siteAdvances.length) { const { error } = await supabase.from('site_advances').upsert(siteAdvances); checkErr(error, 'site_advances'); }
 
   const siteExpenses = getLocal('const_manage_site_expenses');
-  if(siteExpenses.length) await supabase.from('site_expenses').upsert(siteExpenses);
+  if(siteExpenses.length) { const { error } = await supabase.from('site_expenses').upsert(siteExpenses); checkErr(error, 'site_expenses'); }
 
   const assets = getLocal('const_manage_assets');
-  if(assets.length) await supabase.from('assets').upsert(assets);
+  if(assets.length) { const { error } = await supabase.from('assets').upsert(assets); checkErr(error, 'assets'); }
 
   const tasks = getLocal('const_manage_tasks');
-  if(tasks.length) await supabase.from('tasks').upsert(tasks);
+  if(tasks.length) { const { error } = await supabase.from('tasks').upsert(tasks); checkErr(error, 'tasks'); }
 
   const messages = getLocal('const_manage_messages');
-  if(messages.length) await supabase.from('messages').upsert(messages);
+  if(messages.length) { const { error } = await supabase.from('messages').upsert(messages); checkErr(error, 'messages'); }
 
-  const documents = getLocal('const_manage_docs');
-  if(documents.length) await supabase.from('documents').upsert(documents);
+  const documents = getLocal('const_manage_documents');
+  if(documents.length) { const { error } = await supabase.from('documents').upsert(documents); checkErr(error, 'documents'); }
 
-  const changeRequests = getLocal('const_manage_cr');
-  if(changeRequests.length) await supabase.from('change_requests').upsert(changeRequests);
+  const changeRequests = getLocal('const_manage_change_requests');
+  if(changeRequests.length) { const { error } = await supabase.from('change_requests').upsert(changeRequests); checkErr(error, 'change_requests'); }
 
-  const materialCategories = getLocal('const_manage_mat_cats');
+  const materialCategories = getLocal('const_manage_material_categories');
   if(materialCategories.length) {
     const cats = materialCategories.map(c => ({ id: c, name: c }));
-    await supabase.from('material_categories').upsert(cats);
+    const { error } = await supabase.from('material_categories').upsert(cats); checkErr(error, 'material_categories');
   }
 };
+
 
 // ==========================================
 // INDEXEDDB FOR LARGE FILES

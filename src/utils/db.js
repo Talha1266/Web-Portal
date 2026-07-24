@@ -92,11 +92,39 @@ export const deleteDocument = async (id) => { await supabase.from('documents').d
 // MIGRATION SCRIPT
 // ==========================================
 
+
 export const migrateDataToCloud = async () => {
-  const getLocal = (key) => {
+  const SCHEMAS = {
+    users: ['id', 'email', 'password', 'name', 'role', 'permissions', 'isDeleted', 'createdAt'],
+    projects: ['id', 'name', 'description', 'location', 'client', 'startDate', 'status', 'progress', 'assignedUsers', 'createdBy', 'createdAt'],
+    workers: ['id', 'name', 'cnic', 'phone', 'trade', 'dailyWage', 'isDeleted', 'createdAt'],
+    attendance: ['id', 'workerId', 'projectId', 'date', 'regularHours', 'overtimeHours', 'advance', 'paid', 'createdAt'],
+    subcontractors: ['id', 'name', 'phone', 'trade', 'isDeleted', 'createdAt'],
+    sub_payments: ['id', 'subId', 'projectId', 'amount', 'date', 'description', 'createdAt'],
+    materials: ['id', 'projectId', 'name', 'category', 'quantity', 'unit', 'unitPrice', 'totalCost', 'karaya', 'isArrived', 'arrivalDate', 'status', 'createdAt'],
+    site_advances: ['id', 'projectId', 'amount', 'date', 'description', 'givenTo', 'status', 'createdAt'],
+    site_expenses: ['id', 'projectId', 'amount', 'category', 'date', 'description', 'paidBy', 'status', 'createdAt', 'receiptImage'],
+    assets: ['id', 'name', 'quantity', 'category', 'status', 'location', 'createdAt'],
+    tasks: ['id', 'projectId', 'title', 'description', 'assignedTo', 'priority', 'status', 'dueDate', 'columnId', 'position', 'createdAt'],
+    messages: ['id', 'channelId', 'senderId', 'text', 'timestamp', 'createdAt'],
+    documents: ['id', 'name', 'type', 'size', 'url', 'parentId', 'projectId', 'hasIDBContent', 'createdBy', 'createdAt'],
+    change_requests: ['id', 'collection', 'recordId', 'changes', 'requestedBy', 'status', 'createdAt'],
+    material_categories: ['id', 'name']
+  };
+
+  const getLocal = (key, table) => {
     try {
       const d = localStorage.getItem(key);
-      return d ? JSON.parse(d) : [];
+      const arr = d ? JSON.parse(d) : [];
+      const keys = SCHEMAS[table];
+      if (!keys) return arr;
+      return arr.map(obj => {
+        const newObj = {};
+        for (let k of keys) {
+          if (obj[k] !== undefined) newObj[k] = obj[k];
+        }
+        return newObj;
+      });
     } catch(e) { return []; }
   };
   
@@ -104,54 +132,55 @@ export const migrateDataToCloud = async () => {
     if (err) throw new Error('Failed at ' + name + ': ' + err.message);
   };
 
-  const users = getLocal('const_manage_users');
+  const users = getLocal('const_manage_users', 'users');
   if(users.length) { const { error } = await supabase.from('users').upsert(users); checkErr(error, 'users'); }
 
-  const projects = getLocal('const_manage_projects');
+  const projects = getLocal('const_manage_projects', 'projects');
   if(projects.length) { const { error } = await supabase.from('projects').upsert(projects); checkErr(error, 'projects'); }
 
-  const workers = getLocal('const_manage_workers');
+  const workers = getLocal('const_manage_workers', 'workers');
   if(workers.length) { const { error } = await supabase.from('workers').upsert(workers); checkErr(error, 'workers'); }
 
-  const attendance = getLocal('const_manage_attendance');
+  const attendance = getLocal('const_manage_attendance', 'attendance');
   if(attendance.length) { const { error } = await supabase.from('attendance').upsert(attendance); checkErr(error, 'attendance'); }
 
-  const subcontractors = getLocal('const_manage_subcontractors');
+  const subcontractors = getLocal('const_manage_subcontractors', 'subcontractors');
   if(subcontractors.length) { const { error } = await supabase.from('subcontractors').upsert(subcontractors); checkErr(error, 'subcontractors'); }
 
-  const subPayments = getLocal('const_manage_sub_payments');
+  const subPayments = getLocal('const_manage_sub_payments', 'sub_payments');
   if(subPayments.length) { const { error } = await supabase.from('sub_payments').upsert(subPayments); checkErr(error, 'sub_payments'); }
 
-  const materials = getLocal('const_manage_materials');
+  const materials = getLocal('const_manage_materials', 'materials');
   if(materials.length) { const { error } = await supabase.from('materials').upsert(materials); checkErr(error, 'materials'); }
 
-  const siteAdvances = getLocal('const_manage_site_advances');
+  const siteAdvances = getLocal('const_manage_site_advances', 'site_advances');
   if(siteAdvances.length) { const { error } = await supabase.from('site_advances').upsert(siteAdvances); checkErr(error, 'site_advances'); }
 
-  const siteExpenses = getLocal('const_manage_site_expenses');
+  const siteExpenses = getLocal('const_manage_site_expenses', 'site_expenses');
   if(siteExpenses.length) { const { error } = await supabase.from('site_expenses').upsert(siteExpenses); checkErr(error, 'site_expenses'); }
 
-  const assets = getLocal('const_manage_assets');
+  const assets = getLocal('const_manage_assets', 'assets');
   if(assets.length) { const { error } = await supabase.from('assets').upsert(assets); checkErr(error, 'assets'); }
 
-  const tasks = getLocal('const_manage_tasks');
+  const tasks = getLocal('const_manage_tasks', 'tasks');
   if(tasks.length) { const { error } = await supabase.from('tasks').upsert(tasks); checkErr(error, 'tasks'); }
 
-  const messages = getLocal('const_manage_messages');
+  const messages = getLocal('const_manage_messages', 'messages');
   if(messages.length) { const { error } = await supabase.from('messages').upsert(messages); checkErr(error, 'messages'); }
 
-  const documents = getLocal('const_manage_documents');
+  const documents = getLocal('const_manage_documents', 'documents');
   if(documents.length) { const { error } = await supabase.from('documents').upsert(documents); checkErr(error, 'documents'); }
 
-  const changeRequests = getLocal('const_manage_change_requests');
+  const changeRequests = getLocal('const_manage_change_requests', 'change_requests');
   if(changeRequests.length) { const { error } = await supabase.from('change_requests').upsert(changeRequests); checkErr(error, 'change_requests'); }
 
-  const materialCategories = getLocal('const_manage_material_categories');
+  const materialCategories = getLocal('const_manage_material_categories', 'material_categories');
   if(materialCategories.length) {
     const cats = materialCategories.map(c => ({ id: c, name: c }));
     const { error } = await supabase.from('material_categories').upsert(cats); checkErr(error, 'material_categories');
   }
 };
+
 
 
 // ==========================================

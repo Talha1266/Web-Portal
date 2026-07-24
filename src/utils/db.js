@@ -200,16 +200,6 @@ export const deleteFileContentFromDB = async (id) => {
     req.onerror = () => reject(req.error);
   });
 };
-
-export const loginUser = async (email, password) => {
-  const { data } = await supabase.from('users').select('*').eq('email', email).eq('password', password).single();
-  return data;
-};
-
-export const resetDB = async () => {
-  console.warn('resetDB called on cloud DB - ignored for safety');
-};
-
 export const saveAttendance = async (workerId, projectId, date, present, regularHours, overtimeHours, advance, existingId) => {
   if (!present && advance === 0) {
     if (existingId) {
@@ -245,4 +235,21 @@ export const addAdvanceOnlyRecord = async (workerId, projectId, date, amount) =>
 
 export const updateChangeRequestStatus = async (id, status) => {
   await supabase.from('change_requests').update({ status }).eq('id', id);
+};
+
+export const resetDB = async () => {};
+
+export const loginUser = async (email, password) => {
+  const { data } = await supabase.from('users').select('*').eq('email', email).eq('password', password).single();
+  if (data) return data;
+
+  try {
+    const local = localStorage.getItem('const_manage_users');
+    if (local) {
+      const users = JSON.parse(local);
+      return users.find(u => u.email === email && u.password === password);
+    }
+  } catch(e) {}
+
+  return null;
 };

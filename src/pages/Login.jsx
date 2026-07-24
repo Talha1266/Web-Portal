@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { HardHat, LogIn, RefreshCw } from 'lucide-react';
-import { getUsers, resetDB } from '../utils/db';
+import { loginUser, resetDB } from '../utils/db';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -13,20 +13,11 @@ const Login = () => {
     e.preventDefault();
     setError('');
     
-    const users = await getUsers();
     const normalizedEmail = email.trim().toLowerCase();
-    
-    // Find if user exists
-    const userMatch = users.find(u => u.email.trim().toLowerCase() === normalizedEmail);
+    const userMatch = await loginUser(normalizedEmail, password);
     
     if (!userMatch) {
-      setError(`User with email '${normalizedEmail}' not found.`);
-      return;
-    }
-    
-    // Check password
-    if (userMatch.password !== password) {
-      setError(`Incorrect password for '${normalizedEmail}'.`);
+      setError(`Invalid email or password.`);
       return;
     }
     

@@ -240,9 +240,9 @@ const UserDashboard = () => {
   // --- Projects Logic ---
   const handleCreateProject = async (e) => {
     e.preventDefault();
-    addProject({
+    await addProject({
       name: pName, description: pDesc, location: pLocation,
-      client: pClient, startDate: pStartDate, assignedUsers: pAssigned,
+      client: pClient, startDate: pStartDate, assignedUsers: [...new Set([currentUser?.id, ...pAssigned])],
       createdBy: currentUser.id
     });
     setPName(''); setPDesc(''); setPLocation(''); setPClient(''); setPStartDate(''); setPAssigned([]);
@@ -324,7 +324,7 @@ const UserDashboard = () => {
 
   const handleEditWorkerSubmit = async (e) => {
     e.preventDefault();
-    updateWorker(editWorkerObj.id, {
+    await updateWorker(editWorkerObj.id, {
       name: ewName,
       trade: ewTrade,
       dailyWage: Number(ewWage)
@@ -376,12 +376,12 @@ const UserDashboard = () => {
     const canModify = currentUser.permissions?.root || !isOld;
 
     if (canModify) {
-      saveAttendance(activeProjectId, attendanceDate, recordsToSave);
+      await saveAttendance(activeProjectId, attendanceDate, recordsToSave);
       setIsAttendanceDirty(false);
       await loadData();
       alert('Attendance Saved Successfully');
     } else {
-      addChangeRequest({
+      await addChangeRequest({
         type: 'EDIT_ATTENDANCE',
         targetId: `${activeProjectId}-${attendanceDate}`,
         requestedBy: currentUser.id,
@@ -403,10 +403,10 @@ const UserDashboard = () => {
   const handleConfirmSettle = async (e) => {
     e.preventDefault();
     if (window.confirm(`Are you sure you want to mark these wages as paid?${!settleAdvancesFlag ? ' (Note: Advances will remain outstanding)' : ''}`)) {
-      markAttendancePaid(activeProjectId, settleWorkerId, payrollStart, payrollEnd, settleAdvancesFlag);
+      await markAttendancePaid(activeProjectId, settleWorkerId, payrollStart, payrollEnd, settleAdvancesFlag);
       
       if (Number(settleAdvance) > 0) {
-         addAdvanceOnlyRecord(activeProjectId, settleWorkerId, Number(settleAdvance), currentUser.id);
+         await addAdvanceOnlyRecord(activeProjectId, settleWorkerId, Number(settleAdvance), currentUser.id);
       }
       
       setIsSettleModalOpen(false);
@@ -424,12 +424,12 @@ const UserDashboard = () => {
 
     if (canModify) {
       if (window.confirm("Are you sure you want to revert these wages back to Unpaid?")) {
-        revertAttendancePaid(activeProjectId, wId, payrollStart, payrollEnd);
+        await revertAttendancePaid(activeProjectId, wId, payrollStart, payrollEnd);
         await loadData();
       }
     } else {
       if (window.confirm("These records are older than 24 hours. Request Admin approval to revert?")) {
-        addChangeRequest({
+        await addChangeRequest({
           type: 'REVERT_ATTENDANCE',
           targetId: `${activeProjectId}-${wId}-${payrollStart}`,
           requestedBy: currentUser.id,
@@ -443,7 +443,7 @@ const UserDashboard = () => {
 
   const handleMarkAllPaid = async () => {
     if (window.confirm("Are you sure you want to mark ALL outstanding wages in this date range as paid?")) {
-      markAllAttendancePaid(activeProjectId, payrollStart, payrollEnd);
+      await markAllAttendancePaid(activeProjectId, payrollStart, payrollEnd);
       await loadData();
     }
   };
@@ -486,7 +486,7 @@ const UserDashboard = () => {
         await updateSubPayment(activeSubPayId, payload);
         await loadData();
       } else {
-        addChangeRequest({
+        await addChangeRequest({
           type: 'EDIT_SUB_PAYMENT',
           targetId: activeSubPayId,
           requestedBy: currentUser.id,
@@ -512,7 +512,7 @@ const UserDashboard = () => {
       }
     } else {
       if (window.confirm("This payment is older than 24 hours. Request Root Admin approval to delete it?")) {
-        addChangeRequest({
+        await addChangeRequest({
           type: 'DELETE_SUB_PAYMENT',
           targetId: payment.id,
           requestedBy: currentUser.id,
@@ -531,9 +531,9 @@ const UserDashboard = () => {
     } else if (req.type === 'EDIT_SUB_PAYMENT') {
       await updateSubPayment(req.targetId, req.payload);
     } else if (req.type === 'EDIT_ATTENDANCE') {
-      saveAttendance(req.payload.projectId, req.payload.date, req.payload.recordsToSave);
+      await saveAttendance(req.payload.projectId, req.payload.date, req.payload.recordsToSave);
     } else if (req.type === 'REVERT_ATTENDANCE') {
-      revertAttendancePaid(req.payload.projectId, req.payload.workerId, req.payload.startDate, req.payload.endDate);
+      await revertAttendancePaid(req.payload.projectId, req.payload.workerId, req.payload.startDate, req.payload.endDate);
     } else if (req.type === 'DELETE_MATERIAL') {
       await deleteMaterial(req.targetId);
     } else if (req.type === 'EDIT_MATERIAL') {
@@ -543,12 +543,12 @@ const UserDashboard = () => {
     } else if (req.type === 'DELETE_SITE_EXPENSE') {
       await deleteSiteExpense(req.targetId);
     }
-    updateChangeRequestStatus(req.id, 'APPROVED');
+    await updateChangeRequestStatus(req.id, 'APPROVED');
     await loadData();
   };
 
   const handleRejectRequest = async (reqId) => {
-    updateChangeRequestStatus(reqId, 'REJECTED');
+    await updateChangeRequestStatus(reqId, 'REJECTED');
     await loadData();
   };
 
@@ -564,7 +564,7 @@ const UserDashboard = () => {
 
   const handleAddAsset = async (e) => {
     e.preventDefault();
-    addAsset({
+    await addAsset({
       projectId: activeProjectId,
       name: assetName,
       type: assetType,
@@ -580,7 +580,7 @@ const UserDashboard = () => {
   };
 
   const handleReturnAsset = async (id) => {
-    updateAsset(id, {
+    await updateAsset(id, {
       status: 'Returned',
       dateReturned: new Date().toISOString().split('T')[0]
     });
@@ -597,7 +597,7 @@ const UserDashboard = () => {
   // --- Kanban Tasks Logic ---
   const handleCreateTask = async (e) => {
     e.preventDefault();
-    addTask({
+    await addTask({
       projectId: activeProjectId,
       title: taskTitle,
       description: taskDesc,
@@ -650,7 +650,7 @@ const UserDashboard = () => {
   const handleSendMessage = async (e) => {
     e.preventDefault();
     if (!messageText.trim()) return;
-    addMessage({
+    await addMessage({
       channelId: activeChannel,
       senderId: currentUser.id,
       text: messageText.trim()
@@ -661,7 +661,7 @@ const UserDashboard = () => {
 
   const handleCreateMaterial = async (e) => {
     e.preventDefault();
-    addMaterial({
+    await addMaterial({
       projectId: activeProjectId,
       category: mCategory,
       itemName: mName,
@@ -688,7 +688,7 @@ const UserDashboard = () => {
       await updateMaterial(id, { [field]: !currentValue });
       await loadData();
     } else {
-      addChangeRequest({
+      await addChangeRequest({
         type: 'EDIT_MATERIAL',
         targetId: id,
         requestedBy: currentUser.id,
@@ -712,7 +712,7 @@ const UserDashboard = () => {
       }
     } else {
       if (window.confirm("This record is older than 24 hours. Request Admin approval to delete?")) {
-        addChangeRequest({
+        await addChangeRequest({
           type: 'DELETE_MATERIAL',
           targetId: material.id,
           requestedBy: currentUser.id,
@@ -749,7 +749,7 @@ const UserDashboard = () => {
   // --- Site Expenses Logic ---
   const handleCreateAdvance = async (e) => {
     e.preventDefault();
-    addSiteAdvance({
+    await addSiteAdvance({
       projectId: activeProjectId,
       date: advDate,
       amount: Number(advAmount),
@@ -773,7 +773,7 @@ const UserDashboard = () => {
       }
     } else {
       if (window.confirm("This record is older than 24 hours. Request Admin approval to delete?")) {
-        addChangeRequest({
+        await addChangeRequest({
           type: 'DELETE_SITE_ADVANCE',
           targetId: adv.id,
           requestedBy: currentUser.id,
@@ -808,7 +808,7 @@ const UserDashboard = () => {
 
   const handleCreateExpense = async (e) => {
     e.preventDefault();
-    addSiteExpense({
+    await addSiteExpense({
       projectId: activeProjectId,
       date: expDate,
       amount: Number(expAmount),
@@ -834,7 +834,7 @@ const UserDashboard = () => {
       }
     } else {
       if (window.confirm("This record is older than 24 hours. Request Admin approval to delete?")) {
-        addChangeRequest({
+        await addChangeRequest({
           type: 'DELETE_SITE_EXPENSE',
           targetId: exp.id,
           requestedBy: currentUser.id,

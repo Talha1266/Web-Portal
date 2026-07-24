@@ -33,7 +33,7 @@ const AdminDashboard = () => {
   };
 
   const handleRemoveUser = async (id) => {
-    removeUser(id);
+    await removeUser(id);
     setUsersList(await getUsers());
   };
 
@@ -44,7 +44,7 @@ const AdminDashboard = () => {
 
   const handleAddUser = async (e) => {
     e.preventDefault();
-    addUser({
+    await addUser({
       name: newName,
       email: newEmail,
       password: newPassword,
@@ -77,7 +77,7 @@ const AdminDashboard = () => {
 
   const handleSavePermissions = async (e) => {
     e.preventDefault();
-    updateUserPermissions(userToEdit.id, userToEdit.permissions);
+    await updateUserPermissions(userToEdit.id, userToEdit.permissions);
     setUsersList(await getUsers());
     setIsEditPermsModalOpen(false);
     setUserToEdit(null);

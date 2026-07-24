@@ -132,8 +132,18 @@ export const migrateDataToCloud = async () => {
     if (err) throw new Error('Failed at ' + name + ': ' + err.message);
   };
 
-  const users = getLocal('const_manage_users', 'users');
-  if(users.length) { const { error } = await supabase.from('users').upsert(users); checkErr(error, 'users'); }
+  const usersRaw = getLocal('const_manage_users', 'users');
+  if(usersRaw.length) {
+    const uniqueUsers = [];
+    const seen = new Set();
+    for(let u of usersRaw) {
+      if(u.email) {
+        let e = u.email.toLowerCase();
+        if(!seen.has(e)) { seen.add(e); uniqueUsers.push(u); }
+      } else { uniqueUsers.push(u); }
+    }
+    const { error } = await supabase.from('users').upsert(uniqueUsers); checkErr(error, 'users'); 
+  }
 
   const projects = getLocal('const_manage_projects', 'projects');
   if(projects.length) { const { error } = await supabase.from('projects').upsert(projects); checkErr(error, 'projects'); }

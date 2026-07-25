@@ -239,10 +239,16 @@ const UserDashboard = () => {
     setActiveSubId(null);
   };
 
-  const [profileName, setProfileName] = useState('');
-  const [profilePassword, setProfilePassword] = useState('');
+const [profileName, setProfileName] = useState('');
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
   const [profileMessage, setProfileMessage] = useState('');
+
+  // Password Modal State
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+  const [oldPassword, setOldPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordError, setPasswordError] = useState('');
 
   useEffect(() => {
     if (currentUser) setProfileName(currentUser.name);
@@ -2358,8 +2364,8 @@ const UserDashboard = () => {
                   <input type="text" className="input-field" value={profileName} onChange={(e) => setProfileName(e.target.value)} required />
                 </div>
                 <div className="input-group">
-                  <label className="input-label">New Password (leave blank to keep current)</label>
-                  <input type="password" className="input-field" value={profilePassword} onChange={(e) => setProfilePassword(e.target.value)} placeholder="Enter new password..." />
+                  <label className="input-label">Security</label>
+                  <button type="button" className="btn btn-secondary" onClick={() => setIsPasswordModalOpen(true)}>Change Password</button>
                 </div>
                 <button type="submit" className="btn btn-primary" style={{ marginTop: '1rem' }} disabled={isUpdatingProfile}>
                   {isUpdatingProfile ? 'Saving...' : 'Save Changes'}
@@ -2368,6 +2374,39 @@ const UserDashboard = () => {
             </div>
           </div>
         )}
+      {/* Change Password Modal */}
+      {isPasswordModalOpen && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 60 }}>
+          <div className="glass-card animate-fade-in" style={{ padding: '2.5rem', width: '100%', maxWidth: '400px', position: 'relative' }}>
+            <button onClick={() => setIsPasswordModalOpen(false)} style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}>
+              <X size={24} />
+            </button>
+            <h2 className="heading-2" style={{ marginBottom: '1.5rem' }}>Change Password</h2>
+            
+            {passwordError && (
+              <div style={{ padding: '1rem', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid var(--danger)', borderRadius: 'var(--radius-md)', color: 'var(--danger)', marginBottom: '1.5rem' }}>
+                {passwordError}
+              </div>
+            )}
+
+            <form onSubmit={handleChangePassword} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div className="input-group">
+                <label className="input-label">Old Password</label>
+                <input type="password" className="input-field" required value={oldPassword} onChange={e => setOldPassword(e.target.value)} />
+              </div>
+              <div className="input-group">
+                <label className="input-label">New Password</label>
+                <input type="password" className="input-field" required value={newPassword} onChange={e => setNewPassword(e.target.value)} />
+              </div>
+              <div className="input-group">
+                <label className="input-label">Confirm New Password</label>
+                <input type="password" className="input-field" required value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} />
+              </div>
+              <button type="submit" className="btn btn-primary" style={{ marginTop: '1rem' }}>Update Password</button>
+            </form>
+          </div>
+        </div>
+      )}
       </main>
 
       {/* ================= MODALS ================= */}

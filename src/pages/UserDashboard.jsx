@@ -2017,9 +2017,9 @@ const [profileName, setProfileName] = useState('');
 
               return (
                 <div className="glass-card animate-fade-in" style={{ padding: '2.5rem', minHeight: '500px' }}>
-                  <div className="flex-between" style={{ marginBottom: '2rem' }}>
+                  <div className="flex-between" style={{ marginBottom: '2rem', flexWrap: 'wrap', gap: '1.5rem' }}>
                     <h3 className="heading-3" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Package size={20} className="text-gradient"/> Material Procurement</h3>
-                    <div style={{ display: 'flex', gap: '1rem' }}>
+                    <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
                       <button className="btn btn-secondary" onClick={() => setIsCategoryModalOpen(true)}>+ New Category</button>
                       <button className="btn btn-primary" onClick={() => setIsMaterialModalOpen(true)}>+ Log Material Order</button>
                     </div>
@@ -2128,9 +2128,9 @@ const [profileName, setProfileName] = useState('');
 
               return (
                 <div className="glass-card animate-fade-in" style={{ padding: '2.5rem', minHeight: '500px' }}>
-                  <div className="flex-between" style={{ marginBottom: '2.5rem' }}>
+                  <div className="flex-between" style={{ marginBottom: '2.5rem', flexWrap: 'wrap', gap: '1.5rem' }}>
                     <h3 className="heading-3" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><CreditCard size={20} className="text-gradient"/> Site Expenses & Petty Cash</h3>
-                    <div style={{ display: 'flex', gap: '1rem' }}>
+                    <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
                       <button className="btn btn-secondary" onClick={() => setIsAdvanceModalOpen(true)}>+ Issue Advance</button>
                       <button className="btn btn-primary" onClick={() => setIsExpenseModalOpen(true)}>+ Submit Expense Report</button>
                     </div>
@@ -2253,12 +2253,12 @@ const [profileName, setProfileName] = useState('');
 
             {projectTab === 'documents' && (
               <div className="glass-card animate-fade-in" style={{ padding: '2.5rem', minHeight: '500px' }}>
-                <div className="flex-between" style={{ marginBottom: '2.5rem' }}>
-                  <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                <div className="flex-between" style={{ marginBottom: '2.5rem', flexWrap: 'wrap', gap: '1.5rem' }}>
+                  <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
                      <button onClick={() => setCurrentFolderId(null)} style={{ background: 'none', border: 'none', color: currentFolderId === null ? 'var(--text-primary)' : 'var(--accent-secondary)', cursor: 'pointer', fontSize: '1.125rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Folder size={18} /> Root</button>
                      {currentFolderId && currentFolder && (<><ChevronRight size={18} color="var(--text-muted)" /><span style={{ fontSize: '1.125rem', fontWeight: 500 }}>{currentFolder.name}</span></>)}
                   </div>
-                  <div style={{ display: 'flex', gap: '1rem' }}>
+                  <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
                      <button className="btn btn-secondary" onClick={() => setIsFolderModalOpen(true)}><FolderPlus size={18} /> New Folder</button>
                      <button className="btn btn-primary" onClick={() => setIsUploadModalOpen(true)} disabled={currentFolderId === null} style={{ opacity: currentFolderId === null ? 0.5 : 1, cursor: currentFolderId === null ? 'not-allowed' : 'pointer' }}><UploadCloud size={18} /> Upload File</button>
                   </div>
@@ -2306,8 +2306,8 @@ const [profileName, setProfileName] = useState('');
 
             {projectTab === 'assets' && (
               <div className="glass-card animate-fade-in" style={{ padding: '2.5rem', minHeight: '500px' }}>
-                <div className="flex-between" style={{ marginBottom: '2.5rem' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+                <div className="flex-between" style={{ marginBottom: '2.5rem', flexWrap: 'wrap', gap: '1.5rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap' }}>
                     <h3 className="heading-3" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Truck size={20} className="text-gradient"/> Mobilized Assets</h3>
                   </div>
                   <button className="btn btn-primary" onClick={() => setIsAssetModalOpen(true)}>+ Add Asset</button>
@@ -2383,8 +2383,8 @@ const [profileName, setProfileName] = useState('');
 
               return (
                 <div className="animate-fade-in" style={{ minHeight: '500px' }}>
-                  <div className="flex-between" style={{ marginBottom: '2.5rem' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+                  <div className="flex-between" style={{ marginBottom: '2.5rem', flexWrap: 'wrap', gap: '1.5rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap' }}>
                       <h3 className="heading-3" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><CheckSquare size={20} className="text-gradient"/> Project Tasks</h3>
                     </div>
                     <button className="btn btn-primary" onClick={() => setIsTaskModalOpen(true)}>+ Add Task</button>

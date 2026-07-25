@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LayoutDashboard, HardHat, FileText, MessageSquare, LogOut, Plus, Edit2, Trash2, PieChart, Shield, X, MapPin, Building, Calendar, Users, Folder, FolderPlus, UploadCloud, ChevronRight, ArrowLeft, CheckSquare, Settings, ClipboardList, DollarSign, CheckCircle, Briefcase, Package, CreditCard, Truck, AlertTriangle, Menu } from 'lucide-react';
-import { getUsers, getProjects, addProject, deleteProject, getDocuments, addDocument, deleteDocument, getWorkers, addWorker, deleteWorker, getAttendance, saveAttendance, markAttendancePaid, markAllAttendancePaid, deleteAttendanceRecords, getSubcontractors, addSubcontractor, updateSubcontractor, deleteSubcontractor, getSubPayments, addSubPayment, deleteSubPayment, updateSubPayment, getChangeRequests, addChangeRequest, updateChangeRequestStatus, getMaterials, addMaterial, updateMaterial, deleteMaterial, getMaterialCategories, addMaterialCategory, getSiteAdvances, addSiteAdvance, updateSiteAdvance, deleteSiteAdvance, getSiteExpenses, addSiteExpense, updateSiteExpense, deleteSiteExpense, addAdvanceOnlyRecord, revertAttendancePaid, getAssets, addAsset, updateAsset, deleteAsset, saveFileContentToDB, getFileContentFromDB, deleteFileContentFromDB, getTasks, addTask, updateTask, deleteTask, getMessages, addMessage, updateUserProfile } from '../utils/db';
+import { getUsers, getProjects, addProject, updateProject, deleteProject, getDocuments, addDocument, deleteDocument, getWorkers, addWorker, deleteWorker, getAttendance, saveAttendance, markAttendancePaid, markAllAttendancePaid, deleteAttendanceRecords, getSubcontractors, addSubcontractor, updateSubcontractor, deleteSubcontractor, getSubPayments, addSubPayment, deleteSubPayment, updateSubPayment, getChangeRequests, addChangeRequest, updateChangeRequestStatus, getMaterials, addMaterial, updateMaterial, deleteMaterial, getMaterialCategories, addMaterialCategory, getSiteAdvances, addSiteAdvance, updateSiteAdvance, deleteSiteAdvance, getSiteExpenses, addSiteExpense, updateSiteExpense, deleteSiteExpense, addAdvanceOnlyRecord, revertAttendancePaid, getAssets, addAsset, updateAsset, deleteAsset, saveFileContentToDB, getFileContentFromDB, deleteFileContentFromDB, getTasks, addTask, updateTask, deleteTask, getMessages, addMessage, updateUserProfile } from '../utils/db';
 import { PieChart as RechartsPieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 
 const UserDashboard = () => {
@@ -41,6 +41,7 @@ const UserDashboard = () => {
   const [pClient, setPClient] = useState('');
   const [pStartDate, setPStartDate] = useState('');
   const [pAssigned, setPAssigned] = useState([]);
+  const [editProjectForm, setEditProjectForm] = useState({ name: '', description: '', location: '', client: '', status: '', assignedUsers: [] });
 
   // Modals - Documents
   const [currentFolderId, setCurrentFolderId] = useState(null);
@@ -219,8 +220,20 @@ const UserDashboard = () => {
       setAttendanceForm(form);
       setIsAttendanceDirty(false); // Clean slate on load
       setAdminUnlockPast(false); // Relock on date change
+
+      const currentProj = projects.find(p => p.id === activeProjectId);
+      if (currentProj) {
+        setEditProjectForm({
+          name: currentProj.name || '',
+          description: currentProj.description || '',
+          location: currentProj.location || '',
+          client: currentProj.client || '',
+          status: currentProj.status || 'Active',
+          assignedUsers: currentProj.assignedUsers || []
+        });
+      }
     }
-  }, [activeProjectId, attendanceDate, allAttendance, allWorkers]);
+  }, [activeProjectId, attendanceDate, allAttendance, allWorkers, projects]);
 
   const handleLogout = async () => {
     if (window.confirm("Are you sure you want to log out?")) {
@@ -341,7 +354,31 @@ const [profileName, setProfileName] = useState('');
   };
 
   const toggleAssignUser = (id) => setPAssigned(prev => prev.includes(id) ? prev.filter(uid => uid !== id) : [...prev, id]);
-  const handleDeleteProject = async (e, id) => { e.stopPropagation(); await deleteProject(id); await loadData(); };
+  const handleDeleteProject = async (e, id) => { 
+    e.stopPropagation(); 
+    if (window.confirm("Are you sure you want to delete this project? This action cannot be undone and will delete all associated data.")) {
+      await deleteProject(id); 
+      await loadData(); 
+    }
+  };
+
+  const handleUpdateProjectDetails = async (e) => {
+    e.preventDefault();
+    try {
+      await updateProject(activeProjectId, {
+        name: editProjectForm.name,
+        description: editProjectForm.description,
+        location: editProjectForm.location,
+        client: editProjectForm.client,
+        status: editProjectForm.status,
+        assignedUsers: [...new Set([currentUser?.id, ...(editProjectForm.assignedUsers || [])])]
+      });
+      await loadData();
+      alert("Project details updated successfully!");
+    } catch (err) {
+      alert("Error updating project: " + err.message);
+    }
+  };
 
   // --- Documents Logic ---
   const handleCreateFolder = async (e) => {
@@ -2391,9 +2428,55 @@ const [profileName, setProfileName] = useState('');
             })()}
 
             {projectTab === 'settings' && (
-              <div className="glass-card flex-center animate-fade-in" style={{ padding: '4rem', flexDirection: 'column', color: 'var(--text-muted)', minHeight: '400px' }}>
-                 <h3 className="heading-3">Coming Soon</h3>
-                 <p style={{ marginTop: '0.5rem' }}>The Project settings module is currently under development.</p>
+              <div className="animate-fade-in" style={{ maxWidth: '800px' }}>
+                <h2 className="heading-2" style={{ marginBottom: '2rem' }}>Project Settings</h2>
+                <div className="glass-card" style={{ padding: '2.5rem' }}>
+                  <form onSubmit={handleUpdateProjectDetails} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                    <div className="input-group">
+                      <label className="input-label">Project Name</label>
+                      <input type="text" className="input-field" required value={editProjectForm.name} onChange={e => setEditProjectForm({...editProjectForm, name: e.target.value})} />
+                    </div>
+                    <div className="input-group">
+                      <label className="input-label">Description</label>
+                      <textarea className="input-field" required rows="3" value={editProjectForm.description} onChange={e => setEditProjectForm({...editProjectForm, description: e.target.value})}></textarea>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+                      <div className="input-group">
+                        <label className="input-label">Location</label>
+                        <input type="text" className="input-field" required value={editProjectForm.location} onChange={e => setEditProjectForm({...editProjectForm, location: e.target.value})} />
+                      </div>
+                      <div className="input-group">
+                        <label className="input-label">Client / Owner</label>
+                        <input type="text" className="input-field" required value={editProjectForm.client} onChange={e => setEditProjectForm({...editProjectForm, client: e.target.value})} />
+                      </div>
+                    </div>
+                    <div className="input-group">
+                      <label className="input-label">Status</label>
+                      <select className="input-field" value={editProjectForm.status} onChange={e => setEditProjectForm({...editProjectForm, status: e.target.value})} style={{ padding: '0.6rem', background: 'rgba(0,0,0,0.3)' }}>
+                        <option value="Active">Active</option>
+                        <option value="On Hold">On Hold</option>
+                        <option value="Completed">Completed</option>
+                      </select>
+                    </div>
+                    <div className="input-group">
+                      <label className="input-label">Assigned Team Members</label>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: '0.5rem' }}>
+                        {allUsers.filter(u => u.id !== currentUser?.id).map(u => (
+                          <label key={u.id} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(0,0,0,0.2)', padding: '0.5rem 1rem', borderRadius: 'var(--radius-md)', cursor: 'pointer', border: (editProjectForm.assignedUsers || []).includes(u.id) ? '1px solid var(--accent-primary)' : '1px solid transparent' }}>
+                            <input type="checkbox" checked={(editProjectForm.assignedUsers || []).includes(u.id)} onChange={(e) => {
+                              if (e.target.checked) setEditProjectForm({...editProjectForm, assignedUsers: [...(editProjectForm.assignedUsers || []), u.id]});
+                              else setEditProjectForm({...editProjectForm, assignedUsers: (editProjectForm.assignedUsers || []).filter(id => id !== u.id)});
+                            }} style={{ accentColor: 'var(--accent-primary)' }}/>
+                            {u.name}
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                    <button type="submit" className="btn btn-primary" style={{ marginTop: '1rem', width: '100%', justifyContent: 'center' }}>
+                      Save Changes
+                    </button>
+                  </form>
+                </div>
               </div>
             )}
 

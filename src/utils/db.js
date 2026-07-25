@@ -344,13 +344,13 @@ export const loginUser = async (email, password) => {
       profile = {
         id: authData.user.id,
         email: authData.user.email,
-        password: 'auth_handled',
         name: authData.user.email.split('@')[0],
         role: isRoot ? 'Super Admin' : 'User',
         permissions: isRoot ? { root: true } : {},
         status: isRoot ? 'Active' : 'Pending'
       };
-      await supabase.from('users').insert(profile);
+      const { error } = await supabase.from('users').insert(profile);
+      if (error) console.error("Auto-create profile error:", error);
     }
     
     return profile;
@@ -384,7 +384,6 @@ export const registerUser = async (email, password, name) => {
       const { error: insertError } = await supabase.from('users').insert({
         id: data.user.id,
         email: data.user.email,
-        password: 'auth_handled',
         name: name || email.split('@')[0],
         role: isRoot ? 'Super Admin' : 'User',
         permissions: isRoot ? { root: true } : {},

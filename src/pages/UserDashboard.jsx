@@ -1580,14 +1580,14 @@ const [profileName, setProfileName] = useState('');
 
               return (
               <div className="glass-card animate-fade-in" style={{ padding: '2.5rem', minHeight: '500px' }}>
-                <div className="flex-between" style={{ marginBottom: '2rem' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+                <div className="flex-between" style={{ marginBottom: '2rem', flexWrap: 'wrap', gap: '1.5rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap' }}>
                     <h3 className="heading-3" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><ClipboardList size={20} className="text-gradient"/> Daily Log</h3>
                     <input type="date" className="input-field" value={attendanceDate} onChange={e => handleNav(() => setAttendanceDate(e.target.value))} style={{ padding: '0.5rem', colorScheme: 'dark', cursor: 'pointer' }} />
                     {!canModify && !perms.root && <span style={{ color: 'var(--warning)', fontSize: '0.875rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Shield size={14}/> Locked (Admin Approval Req.)</span>}
                     {!canModify && perms.root && <span style={{ color: 'var(--warning)', fontSize: '0.875rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Shield size={14}/> Historical Record (Locked)</span>}
                   </div>
-                  <div style={{ display: 'flex', gap: '1rem' }}>
+                  <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
                      <button className="btn btn-secondary" onClick={() => setIsWorkerModalOpen(true)}>+ Register Labourer</button>
                      {!canModify && perms.root && (
                        <button className="btn btn-warning" onClick={() => { if (window.confirm("You are about to edit historical attendance records. This can alter past payroll calculations. Proceed with caution?")) setAdminUnlockPast(true); }} style={{ background: 'transparent', border: '1px solid var(--warning)', color: 'var(--warning)' }}><Shield size={16} style={{ display: 'inline', verticalAlign: 'text-bottom', marginRight: '0.5rem' }}/> Unlock to Edit</button>

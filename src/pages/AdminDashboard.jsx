@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Users, UserPlus, LogOut, Settings, LayoutDashboard, Trash2, X, Shield, ShieldAlert, Crown, CloudUpload, Menu } from 'lucide-react';
-import { getUsers, removeUser, addUser, updateUserPermissions, DEFAULT_PERMISSIONS, migrateDataToCloud, updateUserProfile } from '../utils/db';
+import { Users, UserPlus, LogOut, Settings, LayoutDashboard, Trash2, X, Shield, ShieldAlert, Crown, Menu } from 'lucide-react';
+import { getUsers, removeUser, addUser, updateUserPermissions, DEFAULT_PERMISSIONS, updateUserProfile } from '../utils/db';
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [usersList, setUsersList] = useState([]);
-  const [isMigrating, setIsMigrating] = useState(false);
   
   // Modals
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -152,20 +151,6 @@ const AdminDashboard = () => {
             <p style={{ color: 'var(--text-secondary)' }}>Add, remove, and manage platform users and their permissions.</p>
           </div>
           <div style={{ display: 'flex', gap: '1rem' }}>
-            <button className="btn btn-secondary" onClick={async () => {
-              if (window.confirm("WARNING: This will push all local browser data to the Cloud. Proceed?")) {
-                setIsMigrating(true);
-                try {
-                  await migrateDataToCloud();
-                  alert("Migration Complete!");
-                } catch(e) {
-                  alert("Migration Failed: " + e.message);
-                }
-                setIsMigrating(false);
-              }
-            }} disabled={isMigrating}>
-              <CloudUpload size={20}/> {isMigrating ? "Migrating..." : "Push Data to Cloud"}
-            </button>
             <button className="btn btn-primary" onClick={() => setIsAddModalOpen(true)}>
               <UserPlus size={20}/> Add New User
             </button>

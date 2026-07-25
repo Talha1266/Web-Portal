@@ -70,8 +70,23 @@ const AdminDashboard = () => {
     setNewPermissions(prev => ({ ...prev, [key]: !prev[key] }));
   };
 
+  const validatePassword = (password) => {
+    if (password.length < 8) return "Password must be at least 8 characters long.";
+    if (!/[A-Z]/.test(password)) return "Password must contain at least one uppercase letter.";
+    if (!/[a-z]/.test(password)) return "Password must contain at least one lowercase letter.";
+    if (!/[0-9]/.test(password)) return "Password must contain at least one number.";
+    if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]+/.test(password)) return "Password must contain at least one special character.";
+    return null;
+  };
+
   const handleAddUser = async (e) => {
     e.preventDefault();
+    
+    const pwdError = validatePassword(newPassword);
+    if (pwdError) {
+      alert(pwdError);
+      return;
+    }
     await addUser({
       name: newName,
       email: newEmail,
@@ -105,6 +120,14 @@ const AdminDashboard = () => {
 
   const handleSavePermissions = async (e) => {
     e.preventDefault();
+    
+    if (userToEdit.password) {
+      const pwdError = validatePassword(userToEdit.password);
+      if (pwdError) {
+        alert(pwdError);
+        return;
+      }
+    }
     try {
       await updateUserPermissions(userToEdit.id, userToEdit.permissions);
       await updateUserProfile(userToEdit.id, userToEdit.name, userToEdit.password);

@@ -107,6 +107,10 @@ const UserDashboard = () => {
   const [settleWorkerId, setSettleWorkerId] = useState(null);
   const [settleAdvance, setSettleAdvance] = useState('');
   const [settleAdvancesFlag, setSettleAdvancesFlag] = useState(true);
+  
+  const [isWorkerAdvanceModalOpen, setIsWorkerAdvanceModalOpen] = useState(false);
+  const [workerAdvanceWorkerId, setWorkerAdvanceWorkerId] = useState(null);
+  const [workerAdvanceAmount, setWorkerAdvanceAmount] = useState('');
 
   const [isEditWorkerModalOpen, setIsEditWorkerModalOpen] = useState(false);
   const [editWorkerObj, setEditWorkerObj] = useState(null);
@@ -547,6 +551,24 @@ const [profileName, setProfileName] = useState('');
       setSettleWorkerId(null);
       setSettleAdvance('');
       await loadData();
+    }
+  };
+
+  const handleOpenWorkerAdvanceModal = (wId) => {
+    setWorkerAdvanceWorkerId(wId);
+    setWorkerAdvanceAmount('');
+    setIsWorkerAdvanceModalOpen(true);
+  };
+  
+  const handleConfirmWorkerAdvance = async (e) => {
+    e.preventDefault();
+    if (Number(workerAdvanceAmount) > 0) {
+      await addAdvanceOnlyRecord(activeProjectId, workerAdvanceWorkerId, Number(workerAdvanceAmount), currentUser.id);
+      setIsWorkerAdvanceModalOpen(false);
+      setWorkerAdvanceWorkerId(null);
+      setWorkerAdvanceAmount('');
+      await loadData();
+      alert("Advance issued successfully!");
     }
   };
 
@@ -1776,6 +1798,9 @@ const [profileName, setProfileName] = useState('');
                                      <button className={`btn ${owed > 0 ? 'btn-primary' : 'btn-secondary'}`} onClick={() => handleOpenSettleModal(wId)} style={{ padding: '0.4rem 0.75rem', fontSize: '0.75rem' }} title={owed > 0 ? "Mark as Paid" : "Clear Account"}>
                                        <CheckCircle size={14} /> {owed > 0 ? 'Settle' : 'Clear'}
                                      </button>
+                                     <button className="btn btn-secondary" onClick={() => handleOpenWorkerAdvanceModal(wId)} style={{ padding: '0.4rem 0.75rem', fontSize: '0.75rem', background: 'transparent', border: '1px solid var(--accent-primary)', color: 'var(--accent-primary)' }} title="Issue Cash Advance">
+                                       <CreditCard size={14} /> Advance
+                                     </button>
                                      {perms.root && (
                                        <button className="btn btn-danger" onClick={() => handleDeletePayrollRecord(wId)} style={{ padding: '0.4rem', fontSize: '0.75rem' }} title="Delete Records">
                                          <Trash2 size={14} />
@@ -2875,6 +2900,24 @@ const [profileName, setProfileName] = useState('');
                 <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>This amount will be deducted from their future earnings.</p>
               </div>
               <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '1rem', background: 'var(--success)', borderColor: 'var(--success)' }}><CheckCircle size={20}/> Confirm Settlement</button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Issue Worker Advance Modal */}
+      {isWorkerAdvanceModalOpen && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}>
+          <div className="glass-card animate-fade-in" style={{ padding: '2.5rem', width: '100%', maxWidth: '400px', position: 'relative' }}>
+            <button onClick={() => { setIsWorkerAdvanceModalOpen(false); setWorkerAdvanceWorkerId(null); }} style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}><X size={24} /></button>
+            <h2 className="heading-2" style={{ marginBottom: '1.5rem' }}>Issue Cash Advance</h2>
+            <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem', fontSize: '0.875rem' }}>This will issue a mid-week cash advance without marking their current wages as paid. It will automatically be deducted from their final settlement.</p>
+            <form onSubmit={handleConfirmWorkerAdvance}>
+              <div className="input-group">
+                <label className="input-label">Advance Amount (Rs)</label>
+                <input type="number" className="input-field" required min="1" step="1" value={workerAdvanceAmount} onChange={e => setWorkerAdvanceAmount(e.target.value)} placeholder="e.g. 2000" />
+              </div>
+              <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '1rem', background: 'var(--accent-primary)' }}><CreditCard size={20}/> Issue Advance</button>
             </form>
           </div>
         </div>

@@ -153,7 +153,7 @@ const UserDashboard = () => {
     setAllSubcontractors(subs);
     
     // Clean up orphaned payments on load in case they were left behind before the cascade delete patch
-    const subPayments = await getSubPayments().filter(p => subs.some(s => s.id === p.subId));
+    const subPayments = (await getSubPayments()).filter(p => subs.some(s => s.id === p.subId));
     setAllSubPayments(subPayments);
     
     setAllChangeRequests(await getChangeRequests());

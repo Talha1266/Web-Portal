@@ -7,6 +7,7 @@ const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [showForgotModal, setShowForgotModal] = useState(false);
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
@@ -68,7 +69,16 @@ const Login = () => {
             />
           </div>
           <div className="input-group">
-            <label className="input-label">Password</label>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <label className="input-label" style={{ marginBottom: 0 }}>Password</label>
+              <button 
+                type="button" 
+                onClick={() => setShowForgotModal(true)}
+                style={{ background: 'none', border: 'none', color: 'var(--accent-primary)', fontSize: '0.75rem', cursor: 'pointer', textDecoration: 'underline' }}
+              >
+                Forgot Password?
+              </button>
+            </div>
             <input 
               type="password" 
               className="input-field" 
@@ -85,15 +95,29 @@ const Login = () => {
         </form>
         
         <div style={{ marginTop: '2rem', textAlign: 'center', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
-          <p>Admin Login: <strong>admin@const.com</strong></p>
-          <p>User Login: <strong>user@const.com</strong></p>
-          <p style={{ marginTop: '0.5rem' }}>Password for both: <strong>password123</strong></p>
+          <p>Super Admin: <strong>admin@admin.com</strong></p>
+          <p style={{ marginTop: '0.5rem' }}>Password: <strong>admin</strong></p>
         </div>
       </div>
       
       <button onClick={handleReset} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', textDecoration: 'underline' }}>
-        <RefreshCw size={14} /> Reset Database to Defaults
+        <RefreshCw size={14} /> Reset Local Cache
       </button>
+
+      {/* Forgot Password Modal */}
+      {showForgotModal && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}>
+          <div className="glass-card animate-fade-in" style={{ padding: '2.5rem', width: '100%', maxWidth: '400px', textAlign: 'center' }}>
+            <h2 className="heading-3" style={{ marginBottom: '1rem' }}>Password Recovery</h2>
+            <p style={{ color: 'var(--text-secondary)', marginBottom: '2rem', lineHeight: '1.6' }}>
+              For security purposes, automated password resets are disabled. Please contact your <strong>System Administrator</strong> to have your password manually reset via the Admin Dashboard.
+            </p>
+            <button className="btn btn-primary" onClick={() => setShowForgotModal(false)} style={{ width: '100%' }}>
+              Return to Login
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -1459,17 +1459,12 @@ const [profileName, setProfileName] = useState('');
               const projTasks = allTasks.filter(t => t.projectId === activeProj.id);
               const doneTasks = projTasks.filter(t => t.status === 'DONE').length;
               const pendingTasks = projTasks.filter(t => t.status !== 'DONE').length;
-              const taskProgress = projTasks.length > 0 ? Math.round((doneTasks / projTasks.length) * 100) : 0;
-              
-              const todayStr = new Date().toISOString().split('T')[0];
-              const overdueTasks = projTasks.filter(t => t.status !== 'DONE' && t.dueDate && t.dueDate < todayStr);
-
-              return (
-              <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '2rem' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+              <div className="animate-fade-in pb-8">
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 600px), 1fr))', gap: '2rem' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
                   
                   {/* METRICS ROW */}
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1.5rem' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))', gap: '1.5rem' }}>
                     <div className="glass-card" style={{ padding: '1.5rem' }}>
                       <p style={{ color: 'var(--text-secondary)', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem' }}><DollarSign size={14}/> Total Expenditure</p>
                       <h2 className="heading-2 text-gradient" style={{ fontSize: '1.5rem' }}>Rs {calculateTotalProjectCost(activeProj.id).toLocaleString()}</h2>
@@ -1508,7 +1503,7 @@ const [profileName, setProfileName] = useState('');
                   <div className="glass-card" style={{ padding: '2.5rem' }}>
                     <h3 className="heading-3" style={{ marginBottom: '1.5rem' }}>Project Details</h3>
                     <p style={{ color: 'var(--text-secondary)', lineHeight: 1.7, fontSize: '1.05rem' }}>{activeProj.description}</p>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '2rem', marginTop: '2.5rem', paddingTop: '2.5rem', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 150px), 1fr))', gap: '2rem', marginTop: '2.5rem', paddingTop: '2.5rem', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
                       <div><p style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '0.5rem', letterSpacing: '1px' }}>Location</p><p style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 500 }}><MapPin size={16} color="var(--accent-primary)"/> {activeProj.location}</p></div>
                       <div><p style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '0.5rem', letterSpacing: '1px' }}>Client</p><p style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 500 }}><Building size={16} color="var(--accent-primary)"/> {activeProj.client}</p></div>
                       <div><p style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '0.5rem', letterSpacing: '1px' }}>Start Date</p><p style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 500 }}><Calendar size={16} color="var(--accent-primary)"/> {activeProj.startDate}</p></div>
@@ -1936,7 +1931,7 @@ const [profileName, setProfileName] = useState('');
                         </div>
                       </div>
 
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1.5rem', marginBottom: '2.5rem' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))', gap: '1.5rem', marginBottom: '2.5rem' }}>
                          <div style={{ background: 'rgba(0,0,0,0.2)', padding: '1.5rem', borderRadius: 'var(--radius-md)' }}>
                            <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginBottom: '0.5rem' }}>Final Value</p>
                            <p style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{sub.finalValue !== null ? `Rs ${sub.finalValue.toFixed(2)}` : 'Pending'}</p>
@@ -2032,7 +2027,7 @@ const [profileName, setProfileName] = useState('');
                     ))}
                   </div>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1.5rem', marginBottom: '2.5rem' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))', gap: '1.5rem', marginBottom: '2.5rem' }}>
                      <div style={{ background: 'rgba(0,0,0,0.2)', padding: '1.5rem', borderRadius: 'var(--radius-md)' }}>
                        <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginBottom: '0.5rem' }}>Total Ordered</p>
                        <p style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>Rs {totalOrdered.toFixed(2)}</p>
@@ -2136,7 +2131,7 @@ const [profileName, setProfileName] = useState('');
                     </div>
                   </div>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1.5rem', marginBottom: '2.5rem' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))', gap: '1.5rem', marginBottom: '2.5rem' }}>
                      <div style={{ background: 'rgba(0,0,0,0.2)', padding: '1.5rem', borderRadius: 'var(--radius-md)' }}>
                        <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginBottom: '0.5rem' }}>Total Advance Issued</p>
                        <p style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--text-primary)' }}>Rs {totalAdvance.toFixed(2)}</p>
@@ -2152,7 +2147,7 @@ const [profileName, setProfileName] = useState('');
                      </div>
                   </div>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2.5rem' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 350px), 1fr))', gap: '2.5rem' }}>
                     {/* Advances Ledger */}
                     <div>
                       <h4 style={{ marginBottom: '1rem', color: 'var(--text-secondary)', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '0.5rem' }}><DollarSign size={16}/> Advances Issued</h4>
@@ -2390,7 +2385,7 @@ const [profileName, setProfileName] = useState('');
                     <button className="btn btn-primary" onClick={() => setIsTaskModalOpen(true)}>+ Add Task</button>
                   </div>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1.5rem', alignItems: 'start' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 250px), 1fr))', gap: '1.5rem', alignItems: 'start' }}>
                     {columns.map(col => (
                       <div 
                         key={col.id} 
@@ -2465,7 +2460,7 @@ const [profileName, setProfileName] = useState('');
                       <label className="input-label">Description</label>
                       <textarea className="input-field" required rows="3" value={editProjectForm.description} onChange={e => setEditProjectForm({...editProjectForm, description: e.target.value})}></textarea>
                     </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 250px), 1fr))', gap: '1.5rem' }}>
                       <div className="input-group">
                         <label className="input-label">Location</label>
                         <input type="text" className="input-field" required value={editProjectForm.location} onChange={e => setEditProjectForm({...editProjectForm, location: e.target.value})} />

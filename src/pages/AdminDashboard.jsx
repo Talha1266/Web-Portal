@@ -20,7 +20,16 @@ const AdminDashboard = () => {
   const [newRole, setNewRole] = useState('Project Manager');
   const [newPermissions, setNewPermissions] = useState({ ...DEFAULT_PERMISSIONS });
 
+  const [currentUser, setCurrentUser] = useState(null);
+
   useEffect(() => {
+    const userStr = localStorage.getItem('currentUser');
+    if (!userStr) {
+      navigate('/login');
+      return;
+    }
+    setCurrentUser(JSON.parse(userStr));
+    
     const fetchData = async () => {
       setUsersList(await getUsers());
     };
@@ -119,7 +128,7 @@ const AdminDashboard = () => {
       {/* Sidebar */}
       <aside className={`sidebar ${isMobileMenuOpen ? "open" : ""}`}>
         <button onClick={() => setIsMobileMenuOpen(false)} style={{ position: "absolute", top: "1rem", right: "1rem", background: "transparent", border: "none", color: "var(--text-secondary)" }} className="hide-on-desktop"><X size={20}/></button>
-        <h2 className="heading-3 text-gradient" style={{ marginBottom: '2rem' }}>ConstManage Admin</h2>
+        <h2 className="heading-3 text-gradient" style={{ marginBottom: '2rem' }}>{currentUser?.name || 'Admin'}</h2>
         
         <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', flex: 1 }}>
           <button className="btn btn-secondary" style={{ justifyContent: 'flex-start' }}><LayoutDashboard size={20}/> Overview</button>
@@ -140,7 +149,7 @@ const AdminDashboard = () => {
       <div className={`sidebar-overlay ${isMobileMenuOpen ? "open" : ""}`} onClick={() => setIsMobileMenuOpen(false)}></div>
       <main className="main-content">
         <div className="mobile-header">
-          <h2 className="heading-3 text-gradient" style={{ margin: 0 }}>ConstManage Admin</h2>
+          <h2 className="heading-3 text-gradient" style={{ margin: 0 }}>{currentUser?.name || 'Admin'}</h2>
           <button onClick={() => setIsMobileMenuOpen(true)} style={{ background: 'transparent', border: 'none', color: 'var(--text-primary)', cursor: 'pointer' }}>
             <Menu size={24} />
           </button>

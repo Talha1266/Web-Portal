@@ -930,7 +930,7 @@ const UserDashboard = () => {
       <div className={`sidebar-overlay ${isMobileMenuOpen ? "open" : ""}`} onClick={() => setIsMobileMenuOpen(false)}></div>
       <main className="main-content">
         <div className="mobile-header">
-          <h2 className="heading-3 text-gradient" style={{ margin: 0 }}>ConstManage</h2>
+          <h2 className="heading-3 text-gradient" style={{ margin: 0 }}>{currentUser.name}</h2>
           <button onClick={() => setIsMobileMenuOpen(true)} style={{ background: 'transparent', border: 'none', color: 'var(--text-primary)', cursor: 'pointer' }}>
             <Menu size={24} />
           </button>

@@ -1485,7 +1485,9 @@ const [profileName, setProfileName] = useState('');
               });
 
               const totalSubs = allSubPayments.filter(p => p.projectId === activeProj.id).reduce((acc, p) => acc + (p.amount || 0), 0);
-              const totalMaterials = allMaterials.filter(m => m.projectId === activeProj.id && m.isArrived).reduce((acc, m) => acc + (m.totalCost || 0), 0);
+              const projectMaterials = allMaterials.filter(m => m.projectId === activeProj.id);
+              const totalMaterials = projectMaterials.filter(m => m.isArrived).reduce((acc, m) => acc + (m.totalCost || 0), 0);
+              const outstandingMaterials = projectMaterials.filter(m => !m.isPaid).reduce((acc, m) => acc + (m.totalCost || 0), 0);
               const totalExpenses = allSiteExpenses.filter(e => e.projectId === activeProj.id).reduce((acc, e) => acc + (e.amount || 0), 0);
 
               const pieData = [
@@ -1516,6 +1518,10 @@ const [profileName, setProfileName] = useState('');
                     <div className="glass-card" style={{ padding: '1.5rem' }}>
                       <p style={{ color: 'var(--text-secondary)', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem' }}><AlertTriangle size={14}/> Payroll Outstanding</p>
                       <h2 className="heading-2" style={{ color: 'var(--warning)', fontSize: '1.5rem' }}>Rs {outstandingPayroll.toLocaleString()}</h2>
+                    </div>
+                    <div className="glass-card" style={{ padding: '1.5rem' }}>
+                      <p style={{ color: 'var(--text-secondary)', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem' }}><Package size={14}/> Material Pending</p>
+                      <h2 className="heading-2" style={{ color: 'var(--warning)', fontSize: '1.5rem' }}>Rs {outstandingMaterials.toLocaleString()}</h2>
                     </div>
                     <div className="glass-card" style={{ padding: '1.5rem' }}>
                       <p style={{ color: 'var(--text-secondary)', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem' }}><Users size={14}/> Total Man-Hours</p>

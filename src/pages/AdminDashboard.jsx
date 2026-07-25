@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Users, UserPlus, LogOut, Settings, LayoutDashboard, Trash2, X, Shield, ShieldAlert, Crown, Menu } from 'lucide-react';
 import { getUsers, removeUser, addUser, updateUserPermissions, DEFAULT_PERMISSIONS, updateUserProfile } from '../utils/db';
+import { supabase } from '../supabaseClient';
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -50,6 +51,7 @@ const [isEditPermsModalOpen, setIsEditPermsModalOpen] = useState(false);
 
   const handleLogout = async () => {
     if (window.confirm("Are you sure you want to log out?")) {
+      await supabase.auth.signOut();
       localStorage.removeItem('currentUser');
       navigate('/login');
     }

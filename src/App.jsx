@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import Login from './pages/Login';
 import AdminDashboard from './pages/AdminDashboard';
@@ -21,6 +21,29 @@ const AuthListener = ({ children }) => {
   return children;
 };
 
+const ProtectedRoute = ({ children }) => {
+  const [isAuthenticated, setIsAuthenticated] = useState(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      const localUser = localStorage.getItem('currentUser');
+      
+      if (!session || !localUser) {
+        setIsAuthenticated(false);
+      } else {
+        setIsAuthenticated(true);
+      }
+    };
+    checkAuth();
+  }, []);
+
+  if (isAuthenticated === null) return <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-secondary)' }}>Verifying secure session...</div>;
+  if (isAuthenticated === false) return <Navigate to="/login" replace />;
+  return children;
+};
+
 function App() {
   return (
     <BrowserRouter>
@@ -29,8 +52,8 @@ function App() {
           <Route path="/" element={<Navigate to="/login" replace />} />
           <Route path="/login" element={<Login />} />
           <Route path="/reset-password" element={<ResetPassword />} />
-          <Route path="/admin" element={<AdminDashboard />} />
-          <Route path="/dashboard" element={<UserDashboard />} />
+          <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
+          <Route path="/dashboard" element={<ProtectedRoute><UserDashboard /></ProtectedRoute>} />
         </Routes>
       </AuthListener>
     </BrowserRouter>

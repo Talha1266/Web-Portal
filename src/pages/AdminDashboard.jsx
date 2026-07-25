@@ -33,8 +33,20 @@ const AdminDashboard = () => {
   };
 
   const handleRemoveUser = async (id) => {
-    await removeUser(id);
-    setUsersList(await getUsers());
+    const userToDelete = usersList.find(u => u.id === id);
+    if (userToDelete?.email === 'talhanaveed89@gmail.com' || id === '1') {
+      alert("This user account is permanently protected and cannot be deleted.");
+      return;
+    }
+    
+    if (window.confirm("Are you sure you want to permanently delete this user?")) {
+      try {
+        await removeUser(id);
+        setUsersList(await getUsers());
+      } catch (e) {
+        alert("Failed to delete user: " + e.message);
+      }
+    }
   };
 
   // --- Add User Handlers ---
@@ -186,7 +198,7 @@ const AdminDashboard = () => {
                         <ShieldAlert size={16}/>
                       </button>
                       
-                      {user.id !== '1' ? (
+                      {(user.id !== '1' && user.email !== 'talhanaveed89@gmail.com') ? (
                         <button onClick={() => handleRemoveUser(user.id)} className="btn btn-danger" style={{ padding: '0.5rem' }} title="Remove User">
                           <Trash2 size={16}/>
                         </button>

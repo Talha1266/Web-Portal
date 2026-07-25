@@ -10,13 +10,15 @@ export const removeUser = deleteUser;
 export const updateUserPermissions = async (id, perms) => {  const { error } = await supabase.from('users').update({ permissions: perms }).eq('id', id); if (error) throw new Error(error.message); };
 
 export const DEFAULT_PERMISSIONS = {
-  view_reports: true,
-  manage_workers: false,
-  manage_subcontractors: false,
-  manage_payroll: false,
-  manage_finances: false,
-  manage_tasks: false,
-  manage_inventory: false
+  overview: false,
+  attendance: false,
+  payroll: false,
+  subcontractors: false,
+  materials: false,
+  site_expenses: false,
+  assets: false,
+  documents: false,
+  tasks: false
 };
 
 export const getProjects = async () => { const { data } = await supabase.from('projects').select('*'); return data || []; };

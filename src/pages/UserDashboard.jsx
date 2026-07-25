@@ -1081,16 +1081,16 @@ const [profileName, setProfileName] = useState('');
             
             <h3 style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '0.5rem', letterSpacing: '1px', paddingLeft: '0.5rem' }}>Project Menu</h3>
             
-            <button className={projectTab === 'overview' ? "btn btn-primary" : "btn btn-secondary"} onClick={() => handleNav(() => setProjectTab('overview'))} style={{ justifyContent: 'flex-start' }}><LayoutDashboard size={20}/> Overview</button>
-            <button className={projectTab === 'attendance' ? "btn btn-primary" : "btn btn-secondary"} onClick={() => handleNav(() => setProjectTab('attendance'))} style={{ justifyContent: 'flex-start' }}><ClipboardList size={20}/> Attendance</button>
-            <button className={projectTab === 'payroll' ? "btn btn-primary" : "btn btn-secondary"} onClick={() => handleNav(() => setProjectTab('payroll'))} style={{ justifyContent: 'flex-start' }}><DollarSign size={20}/> Payroll & Wages</button>
-            <button className={projectTab === 'subcontractors' ? "btn btn-primary" : "btn btn-secondary"} onClick={() => handleNav(() => { setProjectTab('subcontractors'); setActiveSubId(null); })} style={{ justifyContent: 'flex-start' }}><Briefcase size={20}/> Subcontractors</button>
-            <button className={projectTab === 'materials' ? "btn btn-primary" : "btn btn-secondary"} onClick={() => handleNav(() => { setProjectTab('materials'); setActiveMaterialCategory('All'); })} style={{ justifyContent: 'flex-start' }}><Package size={20}/> Materials</button>
-            <button className={projectTab === 'site_expenses' ? "btn btn-primary" : "btn btn-secondary"} onClick={() => handleNav(() => setProjectTab('site_expenses'))} style={{ justifyContent: 'flex-start' }}><CreditCard size={20}/> Site Expenses</button>
-            <button className={projectTab === 'assets' ? "btn btn-primary" : "btn btn-secondary"} onClick={() => handleNav(() => setProjectTab('assets'))} style={{ justifyContent: 'flex-start' }}><Truck size={20}/> Assets</button>
-            {perms.manage_documents && <button className={projectTab === 'documents' ? "btn btn-primary" : "btn btn-secondary"} onClick={() => handleNav(() => setProjectTab('documents'))} style={{ justifyContent: 'flex-start' }}><FileText size={20}/> Documents</button>}
-            <button className={projectTab === 'tasks' ? "btn btn-primary" : "btn btn-secondary"} onClick={() => handleNav(() => setProjectTab('tasks'))} style={{ justifyContent: 'flex-start' }}><CheckSquare size={20}/> Tasks</button>
-            {perms.edit_projects && <button className={projectTab === 'settings' ? "btn btn-primary" : "btn btn-secondary"} onClick={() => handleNav(() => setProjectTab('settings'))} style={{ justifyContent: 'flex-start' }}><Settings size={20}/> Settings</button>}
+            {(perms.root || perms.overview) && <button className={projectTab === 'overview' ? "btn btn-primary" : "btn btn-secondary"} onClick={() => handleNav(() => setProjectTab('overview'))} style={{ justifyContent: 'flex-start' }}><LayoutDashboard size={20}/> Overview</button>}
+            {(perms.root || perms.attendance) && <button className={projectTab === 'attendance' ? "btn btn-primary" : "btn btn-secondary"} onClick={() => handleNav(() => setProjectTab('attendance'))} style={{ justifyContent: 'flex-start' }}><ClipboardList size={20}/> Attendance</button>}
+            {(perms.root || perms.payroll) && <button className={projectTab === 'payroll' ? "btn btn-primary" : "btn btn-secondary"} onClick={() => handleNav(() => setProjectTab('payroll'))} style={{ justifyContent: 'flex-start' }}><DollarSign size={20}/> Payroll & Wages</button>}
+            {(perms.root || perms.subcontractors) && <button className={projectTab === 'subcontractors' ? "btn btn-primary" : "btn btn-secondary"} onClick={() => handleNav(() => { setProjectTab('subcontractors'); setActiveSubId(null); })} style={{ justifyContent: 'flex-start' }}><Briefcase size={20}/> Subcontractors</button>}
+            {(perms.root || perms.materials) && <button className={projectTab === 'materials' ? "btn btn-primary" : "btn btn-secondary"} onClick={() => handleNav(() => { setProjectTab('materials'); setActiveMaterialCategory('All'); })} style={{ justifyContent: 'flex-start' }}><Package size={20}/> Materials</button>}
+            {(perms.root || perms.site_expenses) && <button className={projectTab === 'site_expenses' ? "btn btn-primary" : "btn btn-secondary"} onClick={() => handleNav(() => setProjectTab('site_expenses'))} style={{ justifyContent: 'flex-start' }}><CreditCard size={20}/> Site Expenses</button>}
+            {(perms.root || perms.assets) && <button className={projectTab === 'assets' ? "btn btn-primary" : "btn btn-secondary"} onClick={() => handleNav(() => setProjectTab('assets'))} style={{ justifyContent: 'flex-start' }}><Truck size={20}/> Assets</button>}
+            {(perms.root || perms.documents) && <button className={projectTab === 'documents' ? "btn btn-primary" : "btn btn-secondary"} onClick={() => handleNav(() => setProjectTab('documents'))} style={{ justifyContent: 'flex-start' }}><FileText size={20}/> Documents</button>}
+            {(perms.root || perms.tasks) && <button className={projectTab === 'tasks' ? "btn btn-primary" : "btn btn-secondary"} onClick={() => handleNav(() => setProjectTab('tasks'))} style={{ justifyContent: 'flex-start' }}><CheckSquare size={20}/> Tasks</button>}
+            {perms.root && <button className={projectTab === 'settings' ? "btn btn-primary" : "btn btn-secondary"} onClick={() => handleNav(() => setProjectTab('settings'))} style={{ justifyContent: 'flex-start' }}><Settings size={20}/> Settings</button>}
           </nav>
         )}
 
@@ -1460,7 +1460,15 @@ const [profileName, setProfileName] = useState('');
               </div>
             </header>
 
-            {projectTab === 'overview' && (() => {
+            {projectTab === 'overview' && !(perms.root || perms.overview) && (
+              <div className="glass-card flex-center" style={{ padding: '4rem', flexDirection: 'column', textAlign: 'center' }}>
+                <Shield size={48} style={{ color: 'var(--warning)', marginBottom: '1rem' }} />
+                <h3 className="heading-3">Access Restricted</h3>
+                <p style={{ color: 'var(--text-secondary)' }}>You do not have permission to view this project's overview. Please request access from an Administrator.</p>
+              </div>
+            )}
+
+            {projectTab === 'overview' && (perms.root || perms.overview) && (() => {
               // Calculate Aggregates for THIS project
               let totalLabour = 0;
               let totalManHours = 0;

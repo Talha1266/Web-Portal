@@ -158,12 +158,16 @@ const AdminDashboard = () => {
   };
 
   const PERMISSION_LABELS = {
-    root: "Root Power (Manage Users)",
-    add_projects: "Create Projects",
-    edit_projects: "Edit Projects",
-    delete_projects: "Delete Projects",
-    manage_documents: "Manage Documents",
-    view_reports: "View Reports"
+    root: "Admin Access (Manage Users)",
+    overview: "Overview",
+    attendance: "Attendance",
+    payroll: "Payroll & Wages",
+    subcontractors: "Subcontractors",
+    materials: "Materials",
+    site_expenses: "Site Expenses",
+    assets: "Assets",
+    documents: "Documents",
+    tasks: "Tasks"
   };
 
   return (

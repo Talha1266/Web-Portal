@@ -71,7 +71,7 @@ const Login = () => {
           <div className="flex-center" style={{ width: '64px', height: '64px', borderRadius: '50%', background: 'var(--accent-gradient)', margin: '0 auto 1rem', boxShadow: 'var(--shadow-glow)' }}>
             <HardHat size={32} color="white" />
           </div>
-          <h1 className="heading-2 text-gradient">ConstManage</h1>
+          <h1 className="heading-2 text-gradient">N.M.T Engineers and Builders</h1>
           <p style={{ color: 'var(--text-secondary)', marginTop: '0.5rem' }}>
             {mode === 'login' && 'Welcome back. Please enter your details.'}
             {mode === 'register' && 'Create a new account.'}

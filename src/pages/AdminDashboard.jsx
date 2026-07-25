@@ -118,7 +118,8 @@ const AdminDashboard = () => {
   return (
     <div className="app-layout">
       {/* Sidebar */}
-      <aside className="glass-panel" style={{ width: '280px', height: '100vh', overflowY: 'auto', borderRadius: '0', borderLeft: 'none', borderTop: 'none', borderBottom: 'none', padding: '2rem 1.5rem', display: 'flex', flexDirection: 'column' }}>
+      <aside className={`sidebar ${isMobileMenuOpen ? "open" : ""}`}>
+        <button onClick={() => setIsMobileMenuOpen(false)} style={{ position: "absolute", top: "1rem", right: "1rem", background: "transparent", border: "none", color: "var(--text-secondary)" }} className="hide-on-desktop"><X size={20}/></button>
         <h2 className="heading-3 text-gradient" style={{ marginBottom: '2rem' }}>ConstManage Admin</h2>
         
         <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', flex: 1 }}>
@@ -137,7 +138,14 @@ const AdminDashboard = () => {
       </aside>
 
       {/* Main Content */}
-      <main style={{ flex: 1, padding: '3rem', width: 'calc(100% - 280px)' }}>
+      <div className={`sidebar-overlay ${isMobileMenuOpen ? "open" : ""}`} onClick={() => setIsMobileMenuOpen(false)}></div>
+      <main className="main-content">
+        <div className="mobile-header">
+          <h2 className="heading-3 text-gradient" style={{ margin: 0 }}>ConstManage Admin</h2>
+          <button onClick={() => setIsMobileMenuOpen(true)} style={{ background: 'transparent', border: 'none', color: 'var(--text-primary)', cursor: 'pointer' }}>
+            <Menu size={24} />
+          </button>
+        </div>
         <header className="flex-between animate-fade-in" style={{ marginBottom: '3rem' }}>
           <div>
             <h1 className="heading-1">User Management</h1>

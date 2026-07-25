@@ -110,9 +110,9 @@ const AdminDashboard = () => {
   };
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', width: '100%' }}>
+    <div style={{ display: 'flex', height: '100vh', width: '100%', overflow: 'hidden' }}>
       {/* Sidebar */}
-      <aside className="glass-panel" style={{ width: '280px', borderRadius: '0', borderLeft: 'none', borderTop: 'none', borderBottom: 'none', padding: '2rem 1.5rem', display: 'flex', flexDirection: 'column' }}>
+      <aside className="glass-panel" style={{ width: '280px', height: '100vh', overflowY: 'auto', borderRadius: '0', borderLeft: 'none', borderTop: 'none', borderBottom: 'none', padding: '2rem 1.5rem', display: 'flex', flexDirection: 'column' }}>
         <h2 className="heading-3 text-gradient" style={{ marginBottom: '2rem' }}>ConstManage Admin</h2>
         
         <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', flex: 1 }}>

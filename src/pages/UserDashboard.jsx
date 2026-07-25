@@ -879,9 +879,9 @@ const UserDashboard = () => {
   const activeProj = activeProjectId ? projects.find(p => p.id === activeProjectId) : null;
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', width: '100%' }}>
+    <div style={{ display: 'flex', height: '100vh', width: '100%', overflow: 'hidden' }}>
       {/* Sidebar */}
-      <aside className="glass-panel" style={{ width: '280px', borderRadius: '0', borderLeft: 'none', borderTop: 'none', borderBottom: 'none', padding: '2rem 1.5rem', display: 'flex', flexDirection: 'column', zIndex: 10 }}>
+      <aside className="glass-panel" style={{ width: '280px', height: '100vh', overflowY: 'auto', borderRadius: '0', borderLeft: 'none', borderTop: 'none', borderBottom: 'none', padding: '2rem 1.5rem', display: 'flex', flexDirection: 'column', zIndex: 10 }}>
         <h2 className="heading-3 text-gradient" style={{ marginBottom: '2rem' }}>{currentUser.name}</h2>
         
         {activeProjectId === null ? (

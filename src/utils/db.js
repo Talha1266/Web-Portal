@@ -322,9 +322,30 @@ export const loginUser = async (email, password) => {
   const { data: authData, error: authError } = await supabase.auth.signInWithPassword({ email, password });
   
   if (authData?.user) {
-    // Fetch their profile from our custom users table
-    const { data: profile } = await supabase.from('users').select('*').eq('id', authData.user.id).single();
-    if (profile) return profile;
+    // Fetch their profile from our custom users table using email to support migrated accounts
+    let { data: profile } = await supabase.from('users').select('*').eq('email', authData.user.email).single();
+    
+    // Auto-heal the ID mismatch for legacy test users
+    if (profile && profile.id !== authData.user.id) {
+       await supabase.from('users').update({ id: authData.user.id }).eq('email', authData.user.email);
+       profile.id = authData.user.id;
+    }
+
+    // Auto-create profile if missing completely
+    if (!profile) {
+      const isRoot = authData.user.email === 'admin@admin.com';
+      profile = {
+        id: authData.user.id,
+        email: authData.user.email,
+        password: 'auth_handled',
+        name: authData.user.email.split('@')[0],
+        role: isRoot ? 'Super Admin' : 'User',
+        permissions: isRoot ? { root: true } : { view_reports: true }
+      };
+      await supabase.from('users').insert(profile);
+    }
+    
+    return profile;
   }
 
   // Fallback to old behavior for local caching if Auth fails

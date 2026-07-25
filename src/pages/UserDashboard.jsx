@@ -1458,7 +1458,12 @@ const [profileName, setProfileName] = useState('');
 
               const projTasks = allTasks.filter(t => t.projectId === activeProj.id);
               const doneTasks = projTasks.filter(t => t.status === 'DONE').length;
-              const pendingTasks = projTasks.filter(t => t.status !== 'DONE').length;
+              const taskProgress = projTasks.length > 0 ? Math.round((doneTasks / projTasks.length) * 100) : 0;
+              
+              const todayStr = new Date().toISOString().split('T')[0];
+              const overdueTasks = projTasks.filter(t => t.status !== 'DONE' && t.dueDate && t.dueDate < todayStr);
+
+              return (
               <div className="animate-fade-in pb-8">
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 600px), 1fr))', gap: '2rem' }}>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Users, UserPlus, LogOut, Settings, LayoutDashboard, Trash2, X, Shield, ShieldAlert, Crown, CloudUpload } from 'lucide-react';
-import { getUsers, removeUser, addUser, updateUserPermissions, DEFAULT_PERMISSIONS, migrateDataToCloud } from '../utils/db';
+import { getUsers, removeUser, addUser, updateUserPermissions, DEFAULT_PERMISSIONS, migrateDataToCloud, updateUserProfile } from '../utils/db';
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -89,10 +89,15 @@ const AdminDashboard = () => {
 
   const handleSavePermissions = async (e) => {
     e.preventDefault();
-    await updateUserPermissions(userToEdit.id, userToEdit.permissions);
-    setUsersList(await getUsers());
-    setIsEditPermsModalOpen(false);
-    setUserToEdit(null);
+    try {
+      await updateUserPermissions(userToEdit.id, userToEdit.permissions);
+      await updateUserProfile(userToEdit.id, userToEdit.name, userToEdit.password);
+      setUsersList(await getUsers());
+      setIsEditPermsModalOpen(false);
+      setUserToEdit(null);
+    } catch(err) {
+      alert("Error saving user: " + err.message);
+    }
   };
 
   const PERMISSION_LABELS = {
@@ -301,12 +306,22 @@ const AdminDashboard = () => {
             </button>
             
             <h2 className="heading-2" style={{ marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-               Edit Access
+               Edit User Profile
             </h2>
-            <p style={{ color: 'var(--text-secondary)', marginBottom: '2rem' }}>Managing permissions for <strong>{userToEdit.name}</strong></p>
+            <p style={{ color: 'var(--text-secondary)', marginBottom: '2rem' }}>Managing settings for <strong>{userToEdit.email}</strong></p>
             
             <form onSubmit={handleSavePermissions}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                <div className="input-group">
+                  <label className="input-label">Full Name</label>
+                  <input type="text" className="input-field" value={userToEdit.name} onChange={(e) => setUserToEdit({...userToEdit, name: e.target.value})} required />
+                </div>
+                <div className="input-group">
+                  <label className="input-label">Reset Password</label>
+                  <input type="text" className="input-field" value={userToEdit.password || ''} onChange={(e) => setUserToEdit({...userToEdit, password: e.target.value})} placeholder="Leave blank to keep unchanged" />
+                </div>
+                <hr style={{ borderColor: 'rgba(255,255,255,0.1)', margin: '0.5rem 0' }} />
+                
                 {Object.entries(PERMISSION_LABELS).map(([key, label]) => (
                   <label key={key} style={{ 
                     display: 'flex', alignItems: 'center', justifyContent: 'space-between', 

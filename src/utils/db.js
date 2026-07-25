@@ -298,3 +298,9 @@ export const loginUser = async (email, password) => {
 
   return null;
 };
+export const updateUserProfile = async (id, name, password) => { 
+  const updateData = { name };
+  if (password) updateData.password = password;
+  const { error } = await supabase.from('users').update(updateData).eq('id', id); 
+  if (error) throw new Error(error.message); 
+};

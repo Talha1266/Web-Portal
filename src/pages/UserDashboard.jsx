@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LayoutDashboard, HardHat, FileText, MessageSquare, LogOut, Plus, Edit2, Trash2, PieChart, Shield, X, MapPin, Building, Calendar, Users, Folder, FolderPlus, UploadCloud, ChevronRight, ArrowLeft, CheckSquare, Settings, ClipboardList, DollarSign, CheckCircle, Briefcase, Package, CreditCard, Truck, AlertTriangle } from 'lucide-react';
-import { getUsers, getProjects, addProject, deleteProject, getDocuments, addDocument, deleteDocument, getWorkers, addWorker, deleteWorker, getAttendance, saveAttendance, markAttendancePaid, markAllAttendancePaid, deleteAttendanceRecords, getSubcontractors, addSubcontractor, updateSubcontractor, deleteSubcontractor, getSubPayments, addSubPayment, deleteSubPayment, updateSubPayment, getChangeRequests, addChangeRequest, updateChangeRequestStatus, getMaterials, addMaterial, updateMaterial, deleteMaterial, getMaterialCategories, addMaterialCategory, getSiteAdvances, addSiteAdvance, updateSiteAdvance, deleteSiteAdvance, getSiteExpenses, addSiteExpense, updateSiteExpense, deleteSiteExpense, addAdvanceOnlyRecord, revertAttendancePaid, getAssets, addAsset, updateAsset, deleteAsset, saveFileContentToDB, getFileContentFromDB, deleteFileContentFromDB, getTasks, addTask, updateTask, deleteTask, getMessages, addMessage } from '../utils/db';
+import { getUsers, getProjects, addProject, deleteProject, getDocuments, addDocument, deleteDocument, getWorkers, addWorker, deleteWorker, getAttendance, saveAttendance, markAttendancePaid, markAllAttendancePaid, deleteAttendanceRecords, getSubcontractors, addSubcontractor, updateSubcontractor, deleteSubcontractor, getSubPayments, addSubPayment, deleteSubPayment, updateSubPayment, getChangeRequests, addChangeRequest, updateChangeRequestStatus, getMaterials, addMaterial, updateMaterial, deleteMaterial, getMaterialCategories, addMaterialCategory, getSiteAdvances, addSiteAdvance, updateSiteAdvance, deleteSiteAdvance, getSiteExpenses, addSiteExpense, updateSiteExpense, deleteSiteExpense, addAdvanceOnlyRecord, revertAttendancePaid, getAssets, addAsset, updateAsset, deleteAsset, saveFileContentToDB, getFileContentFromDB, deleteFileContentFromDB, getTasks, addTask, updateTask, deleteTask, getMessages, addMessage, updateUserProfile } from '../utils/db';
 import { PieChart as RechartsPieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 
 const UserDashboard = () => {
@@ -233,6 +233,33 @@ const UserDashboard = () => {
     setProjectTab('overview');
     setCurrentFolderId(null);
     setActiveSubId(null);
+  };
+
+  const [profileName, setProfileName] = useState('');
+  const [profilePassword, setProfilePassword] = useState('');
+  const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
+  const [profileMessage, setProfileMessage] = useState('');
+
+  useEffect(() => {
+    if (currentUser) setProfileName(currentUser.name);
+  }, [currentUser]);
+
+  const handleUpdateProfile = async (e) => {
+    e.preventDefault();
+    setIsUpdatingProfile(true);
+    setProfileMessage('');
+    try {
+      await updateUserProfile(currentUser.id, profileName, profilePassword || currentUser.password);
+      const updated = { ...currentUser, name: profileName };
+      if (profilePassword) updated.password = profilePassword;
+      localStorage.setItem('currentUser', JSON.stringify(updated));
+      setCurrentUser(updated);
+      setProfileMessage('Profile updated successfully!');
+      setProfilePassword('');
+    } catch(err) {
+      setProfileMessage('Error: ' + err.message);
+    }
+    setIsUpdatingProfile(false);
   };
 
   const handleCloseProject = () => setActiveProjectId(null);
@@ -862,6 +889,7 @@ const UserDashboard = () => {
             <button className={activeTab === 'overview' ? "btn btn-primary" : "btn btn-secondary"} onClick={() => handleNav(() => setActiveTab('overview'))} style={{ justifyContent: 'flex-start' }}><LayoutDashboard size={20}/> My Dashboard</button>
             <button className={activeTab === 'projects' ? "btn btn-primary" : "btn btn-secondary"} onClick={() => handleNav(() => setActiveTab('projects'))} style={{ justifyContent: 'flex-start' }}><HardHat size={20}/> Active Projects</button>
             <button className={activeTab === 'messages' ? "btn btn-primary" : "btn btn-secondary"} onClick={() => handleNav(() => setActiveTab('messages'))} style={{ justifyContent: 'flex-start' }}><MessageSquare size={20}/> Messages</button>
+            <button className={activeTab === 'profile' ? "btn btn-primary" : "btn btn-secondary"} onClick={() => handleNav(() => setActiveTab('profile'))} style={{ justifyContent: 'flex-start' }}><Settings size={20}/> My Profile</button>
 
             {perms.root && (
               <button className="btn btn-secondary" onClick={() => handleNav(() => navigate('/admin'))} style={{ justifyContent: 'flex-start', marginTop: '1rem', border: '1px solid var(--accent-primary)', color: 'var(--accent-primary)' }}>
@@ -2255,6 +2283,38 @@ const UserDashboard = () => {
               </div>
             )}
 
+          </div>
+        )}
+
+        {activeProjectId === null && activeTab === 'profile' && (
+          <div className="animate-fade-in" style={{ maxWidth: '600px', margin: '0 auto', paddingTop: '2rem' }}>
+            <h2 className="heading-2" style={{ marginBottom: '2rem' }}>My Profile</h2>
+            <div className="glass-card" style={{ padding: '2.5rem' }}>
+              <form onSubmit={handleUpdateProfile} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                
+                {profileMessage && (
+                  <div style={{ padding: '1rem', background: profileMessage.includes('Error') ? 'rgba(239, 68, 68, 0.1)' : 'rgba(16, 185, 129, 0.1)', color: profileMessage.includes('Error') ? 'var(--danger)' : 'var(--success)', borderRadius: 'var(--radius-sm)', border: `1px solid ${profileMessage.includes('Error') ? 'rgba(239, 68, 68, 0.2)' : 'rgba(16, 185, 129, 0.2)'}` }}>
+                    {profileMessage}
+                  </div>
+                )}
+
+                <div className="input-group">
+                  <label className="input-label">Email (Read-only)</label>
+                  <input type="email" className="input-field" value={currentUser?.email || ''} readOnly style={{ opacity: 0.7, cursor: 'not-allowed' }} />
+                </div>
+                <div className="input-group">
+                  <label className="input-label">Full Name</label>
+                  <input type="text" className="input-field" value={profileName} onChange={(e) => setProfileName(e.target.value)} required />
+                </div>
+                <div className="input-group">
+                  <label className="input-label">New Password (leave blank to keep current)</label>
+                  <input type="password" className="input-field" value={profilePassword} onChange={(e) => setProfilePassword(e.target.value)} placeholder="Enter new password..." />
+                </div>
+                <button type="submit" className="btn btn-primary" style={{ marginTop: '1rem' }} disabled={isUpdatingProfile}>
+                  {isUpdatingProfile ? 'Saving...' : 'Save Changes'}
+                </button>
+              </form>
+            </div>
           </div>
         )}
       </main>

@@ -1034,9 +1034,16 @@ const [profileName, setProfileName] = useState('');
           <p style={{ color: 'var(--text-secondary)', marginTop: '1rem', marginBottom: '2.5rem', lineHeight: 1.6 }}>
             Your account has been created successfully, but an Administrator must verify your identity and assign you to specific projects before you can access the dashboard.
           </p>
-          <button className="btn btn-secondary" onClick={handleLogout}>
-            <LogOut size={20} /> Logout
-          </button>
+          <div style={{ display: 'flex', gap: '1rem' }}>
+            {currentUser?.permissions?.root && (
+              <button className="btn btn-primary" onClick={() => navigate('/admin')}>
+                <Shield size={20} /> Go to Admin Dashboard
+              </button>
+            )}
+            <button className="btn btn-secondary" onClick={handleLogout}>
+              <LogOut size={20} /> Logout
+            </button>
+          </div>
         </div>
       </div>
     );

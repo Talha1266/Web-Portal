@@ -278,22 +278,37 @@ export const saveAttendance = async (projectId, date, records) => {
   }
 };
 
-export const markAttendancePaid = async (id) => {
-   const { error } = await supabase.from('attendance').update({ paid: true }).eq('id', id); if (error) throw new Error(error.message);
+export const markAttendancePaid = async (projectId, workerId, startDate, endDate, settleAdvances) => {
+   const { error } = await supabase.from('attendance')
+     .update({ paid: true })
+     .eq('projectId', projectId)
+     .eq('workerId', workerId)
+     .gte('date', startDate)
+     .lte('date', endDate);
+   if (error) throw new Error(error.message);
 };
-
-export const revertAttendancePaid = async (id) => {
-   const { error } = await supabase.from('attendance').update({ paid: false }).eq('id', id); if (error) throw new Error(error.message);
+export const markAllAttendancePaid = async (projectId, startDate, endDate) => {
+   const { error } = await supabase.from('attendance')
+     .update({ paid: true })
+     .eq('projectId', projectId)
+     .gte('date', startDate)
+     .lte('date', endDate);
+   if (error) throw new Error(error.message);
 };
-
-export const markAllAttendancePaid = async (projectId) => {
-   const { error } = await supabase.from('attendance').update({ paid: true }).eq('projectId', projectId).eq('paid', false); if (error) throw new Error(error.message);
+export const revertAttendancePaid = async (projectId, workerId, startDate, endDate) => {
+   const { error } = await supabase.from('attendance')
+     .update({ paid: false })
+     .eq('projectId', projectId)
+     .eq('workerId', workerId)
+     .gte('date', startDate)
+     .lte('date', endDate);
+   if (error) throw new Error(error.message);
 };
-
-export const addAdvanceOnlyRecord = async (workerId, projectId, date, amount) => {
+export const addAdvanceOnlyRecord = async (projectId, workerId, amount, userId) => {
    const { error } = await supabase.from('attendance').insert({
-    workerId, projectId, date, regularHours: 0, overtimeHours: 0, advance: amount, paid: false, id: Date.now().toString(), createdAt: new Date().toISOString()
-  }); if (error) throw new Error(error.message);
+    projectId, workerId, date: new Date().toISOString().split('T')[0], regularHours: 0, overtimeHours: 0, advance: amount, paid: false, id: Date.now().toString()
+   });
+   if (error) throw new Error(error.message);
 };
 
 export const updateChangeRequestStatus = async (id, status) => {

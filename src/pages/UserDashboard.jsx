@@ -145,27 +145,35 @@ const UserDashboard = () => {
     const user = JSON.parse(userStr);
     setCurrentUser(user);
     
-    setAllUsers(await getUsers());
-    setAllDocs(await getDocuments());
-    setAllWorkers(await getWorkers());
-    setAllAttendance(await getAttendance());
-    const subs = await getSubcontractors();
+    const [
+      users, docs, workers, attendance, subs, 
+      rawSubPayments, crs, mats, matCats, advances, 
+      expenses, assets, tasks, messages, allProj
+    ] = await Promise.all([
+      getUsers(), getDocuments(), getWorkers(), getAttendance(), getSubcontractors(),
+      getSubPayments(), getChangeRequests(), getMaterials(), getMaterialCategories(), getSiteAdvances(),
+      getSiteExpenses(), getAssets(), getTasks(), getMessages(), getProjects()
+    ]);
+
+    setAllUsers(users);
+    setAllDocs(docs);
+    setAllWorkers(workers);
+    setAllAttendance(attendance);
     setAllSubcontractors(subs);
     
     // Clean up orphaned payments on load in case they were left behind before the cascade delete patch
-    const subPayments = (await getSubPayments()).filter(p => subs.some(s => s.id === p.subId));
+    const subPayments = rawSubPayments.filter(p => subs.some(s => s.id === p.subId));
     setAllSubPayments(subPayments);
     
-    setAllChangeRequests(await getChangeRequests());
-    setAllMaterials(await getMaterials());
-    setMaterialCategories(await getMaterialCategories());
-    setAllSiteAdvances(await getSiteAdvances());
-    setAllSiteExpenses(await getSiteExpenses());
-    setAllAssets(await getAssets());
-    setAllTasks(await getTasks());
-    setAllMessages(await getMessages());
+    setAllChangeRequests(crs);
+    setAllMaterials(mats);
+    setMaterialCategories(matCats);
+    setAllSiteAdvances(advances);
+    setAllSiteExpenses(expenses);
+    setAllAssets(assets);
+    setAllTasks(tasks);
+    setAllMessages(messages);
     
-    const allProj = await getProjects();
     if (user.permissions?.root) {
       setProjects(allProj);
     } else {

@@ -361,3 +361,32 @@ body {
     display: block;
   }
 }
+
+/* Admin Modal & Header Responsiveness */
+.modal-right-col {
+  border-left: 1px solid rgba(255,255,255,0.1);
+  padding-left: 2rem;
+}
+
+@media (max-width: 768px) {
+  .mobile-stack {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 1rem !important;
+  }
+  
+  .mobile-stack > div {
+    width: 100% !important;
+  }
+
+  .modal-right-col {
+    border-left: none;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    padding-left: 0;
+    padding-top: 2rem;
+  }
+  
+  .glass-card {
+    padding: 1.5rem !important;
+  }
+}

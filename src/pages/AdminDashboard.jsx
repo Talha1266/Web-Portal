@@ -145,7 +145,7 @@ const AdminDashboard = () => {
             <Menu size={24} />
           </button>
         </div>
-        <header className="flex-between animate-fade-in" style={{ marginBottom: '3rem' }}>
+        <header className="flex-between animate-fade-in mobile-stack" style={{ marginBottom: '3rem' }}>
           <div>
             <h1 className="heading-1">User Management</h1>
             <p style={{ color: 'var(--text-secondary)' }}>Add, remove, and manage platform users and their permissions.</p>
@@ -229,12 +229,12 @@ const AdminDashboard = () => {
           background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)',
           display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 
         }}>
-          <div className="glass-card animate-fade-in" style={{ padding: '2.5rem', width: '100%', maxWidth: '800px', position: 'relative', display: 'flex', gap: '2rem' }}>
+          <div className="glass-card animate-fade-in" style={{ padding: '2.5rem', width: '100%', maxWidth: '800px', position: 'relative' }}>
             <button onClick={() => setIsAddModalOpen(false)} style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}>
               <X size={24} />
             </button>
             
-            <form onSubmit={handleAddUser} style={{ display: 'flex', width: '100%', gap: '2rem' }}>
+            <form onSubmit={handleAddUser} className="mobile-stack" style={{ display: 'flex', width: '100%', gap: '2rem' }}>
               {/* Left Column: Basic Details */}
               <div style={{ flex: 1 }}>
                 <h2 className="heading-2" style={{ marginBottom: '0.5rem' }}>Add New User</h2>
@@ -264,7 +264,7 @@ const AdminDashboard = () => {
               </div>
 
               {/* Right Column: Permissions */}
-              <div style={{ flex: 1, borderLeft: '1px solid rgba(255,255,255,0.1)', paddingLeft: '2rem' }}>
+              <div className="modal-right-col" style={{ flex: 1 }}>
                 <h3 className="heading-3" style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <Shield size={20} className="text-gradient" /> Assign Permissions
                 </h3>

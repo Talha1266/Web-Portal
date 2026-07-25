@@ -1079,7 +1079,7 @@ const [profileName, setProfileName] = useState('');
                   )}
                 </header>
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '2rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 350px), 1fr))', gap: '2rem' }}>
                   {projects.length === 0 ? (
                     <div className="glass-card flex-center" style={{ padding: '4rem', gridColumn: '1 / -1', flexDirection: 'column', color: 'var(--text-muted)' }}>
                       <HardHat size={64} style={{ marginBottom: '1.5rem', opacity: 0.5, color: 'var(--accent-secondary)' }} />
@@ -2172,7 +2172,7 @@ const [profileName, setProfileName] = useState('');
                   </div>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '1.5rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 200px), 1fr))', gap: '1.5rem' }}>
                    {allDocs.filter(d => d.projectId === activeProjectId && d.parentId === currentFolderId).map(doc => (
                      <div key={doc.id} className="glass-card" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', cursor: 'pointer', transition: 'var(--transition)', background: doc.type === 'folder' ? 'rgba(0,0,0,0.3)' : 'rgba(255,255,255,0.03)', position: 'relative' }} onClick={() => {
                         if (doc.type === 'folder') {

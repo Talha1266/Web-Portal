@@ -358,7 +358,7 @@ const AdminDashboard = () => {
                 </div>
                 <div className="input-group">
                   <label className="input-label">Reset Password</label>
-                  <input type="text" className="input-field" value={userToEdit.password || ''} onChange={(e) => setUserToEdit({...userToEdit, password: e.target.value})} placeholder="Leave blank to keep unchanged" />
+                  <input type="password" className="input-field" value={userToEdit.password || ''} onChange={(e) => setUserToEdit({...userToEdit, password: e.target.value})} placeholder="Leave blank to keep unchanged" />
                 </div>
                 <hr style={{ borderColor: 'rgba(255,255,255,0.1)', margin: '0.5rem 0' }} />
                 

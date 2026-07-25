@@ -1850,7 +1850,7 @@ const [profileName, setProfileName] = useState('');
               <div className="glass-card animate-fade-in" style={{ padding: '2.5rem', minHeight: '500px' }}>
                 {activeSubId === null ? (
                   <>
-                    <div className="flex-between" style={{ marginBottom: '2.5rem' }}>
+                    <div className="flex-between" style={{ marginBottom: '2.5rem', flexWrap: 'wrap', gap: '1.5rem' }}>
                       <h3 className="heading-3" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Briefcase size={20} className="text-gradient"/> Subcontractors</h3>
                       <button className="btn btn-primary" onClick={() => setIsSubModalOpen(true)}>+ Hire Subcontractor</button>
                     </div>
@@ -1918,12 +1918,12 @@ const [profileName, setProfileName] = useState('');
                     <div className="animate-fade-in">
                       <button className="btn btn-secondary" onClick={() => setActiveSubId(null)} style={{ marginBottom: '1.5rem', background: 'transparent', border: 'none', color: 'var(--text-secondary)' }}><ArrowLeft size={18}/> Back to Subcontractors</button>
                       
-                      <div className="flex-between" style={{ marginBottom: '2.5rem', paddingBottom: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+                      <div className="flex-between" style={{ marginBottom: '2.5rem', paddingBottom: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.1)', flexWrap: 'wrap', gap: '1.5rem' }}>
                         <div>
                           <h2 className="heading-2">{sub.name} <span style={{ fontSize: '1rem', fontWeight: 'normal', color: 'var(--text-secondary)', marginLeft: '0.5rem' }}>({sub.trade})</span></h2>
                         </div>
-                        <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
-                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+                        <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
                             <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px' }}>Final Measured Value</label>
                             <input 
                               type="number" className="input-field" placeholder="Enter Final Value" 

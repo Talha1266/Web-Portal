@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LayoutDashboard, HardHat, FileText, MessageSquare, LogOut, Plus, Edit2, Trash2, PieChart, Shield, X, MapPin, Building, Calendar, Users, Folder, FolderPlus, UploadCloud, ChevronRight, ArrowLeft, CheckSquare, Settings, ClipboardList, DollarSign, CheckCircle, Briefcase, Package, CreditCard, Truck, AlertTriangle } from 'lucide-react';
+import { LayoutDashboard, HardHat, FileText, MessageSquare, LogOut, Plus, Edit2, Trash2, PieChart, Shield, X, MapPin, Building, Calendar, Users, Folder, FolderPlus, UploadCloud, ChevronRight, ArrowLeft, CheckSquare, Settings, ClipboardList, DollarSign, CheckCircle, Briefcase, Package, CreditCard, Truck, AlertTriangle, Menu } from 'lucide-react';
 import { getUsers, getProjects, addProject, deleteProject, getDocuments, addDocument, deleteDocument, getWorkers, addWorker, deleteWorker, getAttendance, saveAttendance, markAttendancePaid, markAllAttendancePaid, deleteAttendanceRecords, getSubcontractors, addSubcontractor, updateSubcontractor, deleteSubcontractor, getSubPayments, addSubPayment, deleteSubPayment, updateSubPayment, getChangeRequests, addChangeRequest, updateChangeRequestStatus, getMaterials, addMaterial, updateMaterial, deleteMaterial, getMaterialCategories, addMaterialCategory, getSiteAdvances, addSiteAdvance, updateSiteAdvance, deleteSiteAdvance, getSiteExpenses, addSiteExpense, updateSiteExpense, deleteSiteExpense, addAdvanceOnlyRecord, revertAttendancePaid, getAssets, addAsset, updateAsset, deleteAsset, saveFileContentToDB, getFileContentFromDB, deleteFileContentFromDB, getTasks, addTask, updateTask, deleteTask, getMessages, addMessage, updateUserProfile } from '../utils/db';
 import { PieChart as RechartsPieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 
@@ -9,6 +9,7 @@ const UserDashboard = () => {
   const [currentUser, setCurrentUser] = useState(null);
   
   // Navigation State
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('overview'); 
   const [activeProjectId, setActiveProjectId] = useState(null); 
   const [projectTab, setProjectTab] = useState('overview'); // overview, documents, attendance, payroll, tasks, settings
@@ -223,9 +224,10 @@ const UserDashboard = () => {
       if (!window.confirm("You have unsaved attendance changes. Are you sure you want to leave without saving?")) {
         return;
       }
+      setIsAttendanceDirty(false);
     }
-    setIsAttendanceDirty(false);
     action();
+    setIsMobileMenuOpen(false);
   };
 
   const handleOpenProject = async (id) => {
@@ -879,10 +881,11 @@ const UserDashboard = () => {
   const activeProj = activeProjectId ? projects.find(p => p.id === activeProjectId) : null;
 
   return (
-    <div style={{ display: 'flex', height: '100vh', width: '100%', overflow: 'hidden' }}>
+    <div className="app-layout">
       {/* Sidebar */}
-      <aside className="glass-panel" style={{ width: '280px', height: '100vh', overflowY: 'auto', borderRadius: '0', borderLeft: 'none', borderTop: 'none', borderBottom: 'none', padding: '2rem 1.5rem', display: 'flex', flexDirection: 'column', zIndex: 10 }}>
+      <aside className={`sidebar ${isMobileMenuOpen ? "open" : ""}`}>
         <h2 className="heading-3 text-gradient" style={{ marginBottom: '2rem' }}>{currentUser.name}</h2>
+        <button onClick={() => setIsMobileMenuOpen(false)} style={{ position: 'absolute', top: '1rem', right: '1rem', background: 'transparent', border: 'none', color: 'var(--text-secondary)' }} className="hide-on-desktop"><X size={20}/></button>
         
         {activeProjectId === null ? (
           <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', flex: 1 }}>
@@ -924,7 +927,14 @@ const UserDashboard = () => {
       </aside>
 
       {/* Main Content */}
-      <main style={{ flex: 1, padding: '3rem', width: 'calc(100% - 280px)', overflowY: 'auto', height: '100vh' }}>
+      <div className={`sidebar-overlay ${isMobileMenuOpen ? "open" : ""}`} onClick={() => setIsMobileMenuOpen(false)}></div>
+      <main className="main-content">
+        <div className="mobile-header">
+          <h2 className="heading-3 text-gradient" style={{ margin: 0 }}>ConstManage</h2>
+          <button onClick={() => setIsMobileMenuOpen(true)} style={{ background: 'transparent', border: 'none', color: 'var(--text-primary)', cursor: 'pointer' }}>
+            <Menu size={24} />
+          </button>
+        </div>
         
         {/* ========================================================= */}
         {/* GLOBAL CONTEXT */}
@@ -940,7 +950,7 @@ const UserDashboard = () => {
                   </div>
                 </header>
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '2rem' }}>
                   <div className="glass-card" style={{ padding: '2rem', cursor: 'pointer', transition: 'var(--transition)' }} onClick={() => handleNav(() => setActiveTab('projects'))}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
                       <div style={{ padding: '1rem', background: 'var(--bg-tertiary)', borderRadius: 'var(--radius-md)' }}><HardHat size={24} color="var(--accent-primary)" /></div>
@@ -1447,7 +1457,8 @@ const UserDashboard = () => {
                    </div>
                 ) : (
                   <div style={{ overflowX: 'auto' }}>
-                    <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '800px' }}>
+                    <div className="table-wrapper">
+<table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '800px' }}>
                       <thead>
                         <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)', color: 'var(--text-muted)' }}>
                           <th style={{ padding: '1rem 0.5rem', fontWeight: 500 }}>Name</th>
@@ -1527,6 +1538,7 @@ const UserDashboard = () => {
                         })}
                       </tbody>
                     </table>
+</div>
                   </div>
                 )}
               </div>
@@ -1588,7 +1600,8 @@ const UserDashboard = () => {
 
                    return (
                      <div style={{ overflowX: 'auto' }}>
-                       <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '800px' }}>
+                       <div className="table-wrapper">
+<table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '800px' }}>
                          <thead>
                            <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)', color: 'var(--text-muted)' }}>
                              <th style={{ padding: '1rem 0.5rem', fontWeight: 500 }}>Name</th>
@@ -1676,6 +1689,7 @@ const UserDashboard = () => {
                            </tr>
                          </tfoot>
                        </table>
+</div>
                      </div>
                    );
                 })()}
@@ -1698,7 +1712,8 @@ const UserDashboard = () => {
                       </div>
                     ) : (
                       <div style={{ overflowX: 'auto' }}>
-                        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '800px' }}>
+                        <div className="table-wrapper">
+<table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '800px' }}>
                           <thead>
                             <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)', color: 'var(--text-muted)' }}>
                               <th style={{ padding: '1rem 0.5rem', fontWeight: 500 }}>Company Name</th>
@@ -1738,6 +1753,7 @@ const UserDashboard = () => {
                             })}
                           </tbody>
                         </table>
+</div>
                       </div>
                     )}
                   </>
@@ -1793,7 +1809,8 @@ const UserDashboard = () => {
                           <p>No payments recorded yet.</p>
                         </div>
                       ) : (
-                        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                        <div className="table-wrapper">
+<table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
                           <thead>
                             <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)', color: 'var(--text-muted)' }}>
                               <th style={{ padding: '1rem 0.5rem', fontWeight: 500, width: '120px' }}>Date</th>
@@ -1832,6 +1849,7 @@ const UserDashboard = () => {
                             })}
                           </tbody>
                         </table>
+</div>
                       )}
                     </div>
                   );
@@ -1886,7 +1904,8 @@ const UserDashboard = () => {
                     </div>
                   ) : (
                     <div style={{ overflowX: 'auto' }}>
-                      <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '800px' }}>
+                      <div className="table-wrapper">
+<table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '800px' }}>
                         <thead>
                           <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)', color: 'var(--text-muted)' }}>
                             <th style={{ padding: '1rem 0.5rem', fontWeight: 500 }}>Order Date</th>
@@ -1941,6 +1960,7 @@ const UserDashboard = () => {
                           })}
                         </tbody>
                       </table>
+</div>
                     </div>
                   )}
                 </div>
@@ -1987,7 +2007,8 @@ const UserDashboard = () => {
                     <div>
                       <h4 style={{ marginBottom: '1rem', color: 'var(--text-secondary)', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '0.5rem' }}><DollarSign size={16}/> Advances Issued</h4>
                       <div className="glass-card" style={{ padding: '0', background: 'rgba(0,0,0,0.1)' }}>
-                        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                        <div className="table-wrapper">
+<table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
                           <thead>
                             <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', color: 'var(--text-muted)' }}>
                               <th style={{ padding: '1rem', fontWeight: 500 }}>Date</th>
@@ -2018,6 +2039,7 @@ const UserDashboard = () => {
                             )}
                           </tbody>
                         </table>
+</div>
                       </div>
                     </div>
 
@@ -2025,7 +2047,8 @@ const UserDashboard = () => {
                     <div>
                       <h4 style={{ marginBottom: '1rem', color: 'var(--text-secondary)', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '0.5rem' }}><FileText size={16}/> Expense Reports</h4>
                       <div className="glass-card" style={{ padding: '0', background: 'rgba(0,0,0,0.1)' }}>
-                        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                        <div className="table-wrapper">
+<table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
                           <thead>
                             <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', color: 'var(--text-muted)' }}>
                               <th style={{ padding: '1rem', fontWeight: 500 }}>Date</th>
@@ -2070,6 +2093,7 @@ const UserDashboard = () => {
                             )}
                           </tbody>
                         </table>
+</div>
                       </div>
                     </div>
                   </div>
@@ -2145,7 +2169,8 @@ const UserDashboard = () => {
                   </div>
                 ) : (
                   <div style={{ overflowX: 'auto' }}>
-                    <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '800px' }}>
+                    <div className="table-wrapper">
+<table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '800px' }}>
                       <thead>
                         <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)', color: 'var(--text-muted)' }}>
                           <th style={{ padding: '1rem 0.5rem', fontWeight: 500 }}>Asset Name</th>
@@ -2184,6 +2209,7 @@ const UserDashboard = () => {
                         ))}
                       </tbody>
                     </table>
+</div>
                   </div>
                 )}
               </div>

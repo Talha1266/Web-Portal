@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Users, UserPlus, LogOut, Settings, LayoutDashboard, Trash2, X, Shield, ShieldAlert, Crown, CloudUpload } from 'lucide-react';
+import { Users, UserPlus, LogOut, Settings, LayoutDashboard, Trash2, X, Shield, ShieldAlert, Crown, CloudUpload, Menu } from 'lucide-react';
 import { getUsers, removeUser, addUser, updateUserPermissions, DEFAULT_PERMISSIONS, migrateDataToCloud, updateUserProfile } from '../utils/db';
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [usersList, setUsersList] = useState([]);
   const [isMigrating, setIsMigrating] = useState(false);
   
@@ -26,6 +27,11 @@ const AdminDashboard = () => {
     };
     fetchData();
   }, []);
+
+  const handleNav = (action) => {
+    setIsMobileMenuOpen(false);
+    action();
+  };
 
   const handleLogout = async () => {
     localStorage.removeItem('currentUser');
@@ -110,7 +116,7 @@ const AdminDashboard = () => {
   };
 
   return (
-    <div style={{ display: 'flex', height: '100vh', width: '100%', overflow: 'hidden' }}>
+    <div className="app-layout">
       {/* Sidebar */}
       <aside className="glass-panel" style={{ width: '280px', height: '100vh', overflowY: 'auto', borderRadius: '0', borderLeft: 'none', borderTop: 'none', borderBottom: 'none', padding: '2rem 1.5rem', display: 'flex', flexDirection: 'column' }}>
         <h2 className="heading-3 text-gradient" style={{ marginBottom: '2rem' }}>ConstManage Admin</h2>
@@ -125,7 +131,7 @@ const AdminDashboard = () => {
           </button>
         </nav>
 
-        <button className="btn btn-danger" onClick={handleLogout} style={{ justifyContent: 'flex-start' }}>
+        <button className="btn btn-danger" onClick={() => handleNav(handleLogout)} style={{ justifyContent: 'flex-start' }}>
           <LogOut size={20}/> Logout
         </button>
       </aside>
@@ -159,7 +165,8 @@ const AdminDashboard = () => {
         </header>
 
         <div className="glass-card animate-fade-in" style={{ padding: '1.5rem', overflowX: 'auto', animationDelay: '0.1s' }}>
-          <table className="data-table">
+          <div className="table-wrapper">
+<table className="data-table">
             <thead>
               <tr>
                 <th>Name</th>
@@ -216,6 +223,7 @@ const AdminDashboard = () => {
               ))}
             </tbody>
           </table>
+</div>
         </div>
       </main>
 

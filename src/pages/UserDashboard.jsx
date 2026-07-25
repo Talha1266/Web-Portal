@@ -915,17 +915,22 @@ const [profileName, setProfileName] = useState('');
 
   const handleCreateExpense = async (e) => {
     e.preventDefault();
-    await addSiteExpense({
-      projectId: activeProjectId,
-      date: expDate,
-      amount: Number(expAmount),
-      description: expDesc,
-      paidBy: expPaidBy,
-      receiptImage: expReceipt
-    });
-    setExpAmount(''); setExpDesc(''); setExpReceipt(null); setExpPaidBy('Engineer'); setExpDate(new Date().toISOString().split('T')[0]);
-    setIsExpenseModalOpen(false);
-    await loadData();
+    try {
+      await addSiteExpense({
+        projectId: activeProjectId,
+        date: expDate,
+        amount: Number(expAmount),
+        description: expDesc,
+        paidBy: expPaidBy,
+        receiptImage: expReceipt
+      });
+      setExpAmount(''); setExpDesc(''); setExpReceipt(null); setExpPaidBy('Engineer'); setExpDate(new Date().toISOString().split('T')[0]);
+      setIsExpenseModalOpen(false);
+      await loadData();
+      alert("Expense added successfully!");
+    } catch (err) {
+      alert("Error adding expense: " + err.message);
+    }
   };
 
   const handleDeleteExpense = async (e, exp) => {

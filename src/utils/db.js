@@ -56,7 +56,7 @@ export const addMaterial = async (m) => {  const { error } = await supabase.from
 export const updateMaterial = async (id, updates) => {  const { error } = await supabase.from('materials').update(updates).eq('id', id); if (error) throw new Error(error.message); };
 export const deleteMaterial = async (id) => {  const { error } = await supabase.from('materials').delete().eq('id', id); if (error) throw new Error(error.message); };
 
-export const getMaterialCategories = async () => { const { data } = await supabase.from('material_categories').select('*'); return data ? data.map(d => d.name) : []; };
+export const getMaterialCategories = async () => { const { data } = await supabase.from('material_categories').select('*'); return data || []; };
 export const addMaterialCategory = async (name) => {  const { error } = await supabase.from('material_categories').insert({ name, id: name }); if (error) throw new Error(error.message); };
 export const deleteMaterialCategory = async (name) => {  const { error } = await supabase.from('material_categories').delete().eq('name', name); if (error) throw new Error(error.message); };
 

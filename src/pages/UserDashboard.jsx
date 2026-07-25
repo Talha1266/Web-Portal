@@ -931,9 +931,14 @@ const UserDashboard = () => {
       <main className="main-content">
         <div className="mobile-header">
           <h2 className="heading-3 text-gradient" style={{ margin: 0 }}>{currentUser.name}</h2>
-          <button onClick={() => setIsMobileMenuOpen(true)} style={{ background: 'transparent', border: 'none', color: 'var(--text-primary)', cursor: 'pointer' }}>
-            <Menu size={24} />
-          </button>
+          <div style={{ display: 'flex', gap: '1.25rem', alignItems: 'center' }}>
+            <button onClick={handleLogout} style={{ background: 'transparent', border: 'none', color: 'var(--danger)', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: 0 }}>
+              <LogOut size={22} />
+            </button>
+            <button onClick={() => setIsMobileMenuOpen(true)} style={{ background: 'transparent', border: 'none', color: 'var(--text-primary)', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: 0 }}>
+              <Menu size={26} />
+            </button>
+          </div>
         </div>
         
         {/* ========================================================= */}

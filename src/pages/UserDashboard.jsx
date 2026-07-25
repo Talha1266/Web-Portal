@@ -443,48 +443,50 @@ const [profileName, setProfileName] = useState('');
   };
 
   const handleSaveAttendance = async () => {
-    const recordsToSave = [];
-    Object.keys(attendanceForm).forEach(wId => {
-      const data = attendanceForm[wId];
-      if (data.regularHours > 0 || data.overtimeHours > 0 || data.advance > 0) {
-        const worker = allWorkers.find(w => w.id === wId);
-        recordsToSave.push({
-          id: data.id || (Date.now().toString() + Math.random()),
-          projectId: activeProjectId,
-          date: attendanceDate,
-          workerId: wId,
-          regularHours: Number(data.regularHours) || 0,
-          overtimeHours: Number(data.overtimeHours) || 0,
-          advance: Number(data.advance) || 0,
-          dailyWage: data.dailyWage !== undefined ? data.dailyWage : (worker ? worker.dailyWage : 0),
-          isPaid: data.isPaid || false,
-          loggedBy: currentUser.id
-        });
-      }
-    });
-
-    const ONE_DAY = 24 * 60 * 60 * 1000;
-    // Check if the selected attendance date is older than 24 hours
-    // Since attendanceDate is just 'YYYY-MM-DD', we append T00:00:00 to keep it local or parse it simply
-    const logDate = new Date(attendanceDate);
-    const isOld = (new Date() - logDate) > ONE_DAY;
-    const canModify = currentUser.permissions?.root || !isOld;
-
-    if (canModify) {
-      await saveAttendance(activeProjectId, attendanceDate, recordsToSave);
-      setIsAttendanceDirty(false);
-      await loadData();
-      alert('Attendance Saved Successfully');
-    } else {
-      await addChangeRequest({
-        type: 'EDIT_ATTENDANCE',
-        targetId: `${activeProjectId}-${attendanceDate}`,
-        requestedBy: currentUser.id,
-        payload: { projectId: activeProjectId, date: attendanceDate, recordsToSave }
+    try {
+      const recordsToSave = [];
+      Object.keys(attendanceForm).forEach(wId => {
+        const data = attendanceForm[wId];
+        if (data.regularHours > 0 || data.overtimeHours > 0 || data.advance > 0) {
+          const worker = allWorkers.find(w => w.id === wId);
+          recordsToSave.push({
+            id: data.id || (Date.now().toString() + Math.random()),
+            projectId: activeProjectId,
+            date: attendanceDate,
+            workerId: wId,
+            regularHours: Number(data.regularHours) || 0,
+            overtimeHours: Number(data.overtimeHours) || 0,
+            advance: Number(data.advance) || 0,
+            dailyWage: data.dailyWage !== undefined ? data.dailyWage : (worker ? worker.dailyWage : 0),
+            isPaid: data.isPaid || false,
+            loggedBy: currentUser.id
+          });
+        }
       });
-      setIsAttendanceDirty(false);
-      await loadData();
-      alert('Attendance modification request sent to Admin.');
+
+      const ONE_DAY = 24 * 60 * 60 * 1000;
+      const logDate = new Date(attendanceDate);
+      const isOld = (new Date() - logDate) > ONE_DAY;
+      const canModify = currentUser.permissions?.root || !isOld;
+
+      if (canModify) {
+        await saveAttendance(activeProjectId, attendanceDate, recordsToSave);
+        setIsAttendanceDirty(false);
+        await loadData();
+        alert('Attendance Saved Successfully');
+      } else {
+        await addChangeRequest({
+          type: 'EDIT_ATTENDANCE',
+          targetId: `${activeProjectId}-${attendanceDate}`,
+          requestedBy: currentUser.id,
+          payload: { projectId: activeProjectId, date: attendanceDate, recordsToSave }
+        });
+        setIsAttendanceDirty(false);
+        await loadData();
+        alert('Attendance modification request sent to Admin.');
+      }
+    } catch (err) {
+      alert("Error saving attendance: " + err.message);
     }
   };
 

@@ -245,18 +245,36 @@ export const deleteFileContentFromDB = async (id) => {
     req.onerror = () => reject(req.error);
   });
 };
-export const saveAttendance = async (workerId, projectId, date, present, regularHours, overtimeHours, advance, existingId) => {
-  if (!present && advance === 0) {
-    if (existingId) {
-      await supabase.from('attendance').delete().eq('id', existingId);
-    }
-    return;
+export const saveAttendance = async (projectId, date, records) => {
+  const { data: existing } = await supabase.from('attendance')
+    .select('id, workerId')
+    .eq('projectId', projectId)
+    .eq('date', date);
+
+  const recordsWorkerIds = records.map(r => r.workerId);
+  const toDelete = existing ? existing.filter(e => !recordsWorkerIds.includes(e.workerId)).map(e => e.id) : [];
+
+  if (toDelete.length > 0) {
+    await supabase.from('attendance').delete().in('id', toDelete);
   }
-  const payload = { workerId, projectId, date, regularHours, overtimeHours, advance, paid: false };
-  if (existingId) {
-    await supabase.from('attendance').update(payload).eq('id', existingId);
-  } else {
-    await supabase.from('attendance').insert({ ...payload, id: Date.now().toString(), createdAt: new Date().toISOString() });
+
+  const payload = records.map(r => {
+    const existingRec = existing ? existing.find(e => e.workerId === r.workerId) : null;
+    return {
+      id: existingRec ? existingRec.id : r.id,
+      projectId: projectId,
+      workerId: r.workerId,
+      date: date,
+      regularHours: r.regularHours,
+      overtimeHours: r.overtimeHours,
+      advance: r.advance,
+      paid: r.isPaid || false
+    };
+  });
+
+  if (payload.length > 0) {
+    const { error } = await supabase.from('attendance').upsert(payload, { onConflict: 'id' });
+    if (error) throw new Error(error.message);
   }
 };
 

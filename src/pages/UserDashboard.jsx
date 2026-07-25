@@ -265,25 +265,14 @@ const [profileName, setProfileName] = useState('');
 
   const handleUpdateProfile = async (e) => {
     e.preventDefault();
-    
-    if (profilePassword) {
-      const pwdError = validatePassword(profilePassword);
-      if (pwdError) {
-        setProfileMessage(pwdError);
-        return;
-      }
-    }
-
     setIsUpdatingProfile(true);
     setProfileMessage('');
     try {
-      await updateUserProfile(currentUser.id, profileName, profilePassword || currentUser.password);
+      await updateUserProfile(currentUser.id, profileName, currentUser.password);
       const updated = { ...currentUser, name: profileName };
-      if (profilePassword) updated.password = profilePassword;
       localStorage.setItem('currentUser', JSON.stringify(updated));
       setCurrentUser(updated);
       setProfileMessage('Profile updated successfully!');
-      setProfilePassword('');
     } catch(err) {
       setProfileMessage('Error: ' + err.message);
     }

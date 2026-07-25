@@ -318,9 +318,16 @@ export const updateChangeRequestStatus = async (id, status) => {
 export const resetDB = async () => {};
 
 export const loginUser = async (email, password) => {
-  const { data } = await supabase.from('users').select('*').eq('email', email).eq('password', password).single();
-  if (data) return data;
+  // Try Supabase Auth first
+  const { data: authData, error: authError } = await supabase.auth.signInWithPassword({ email, password });
+  
+  if (authData?.user) {
+    // Fetch their profile from our custom users table
+    const { data: profile } = await supabase.from('users').select('*').eq('id', authData.user.id).single();
+    if (profile) return profile;
+  }
 
+  // Fallback to old behavior for local caching if Auth fails
   try {
     const local = localStorage.getItem('const_manage_users');
     if (local) {
@@ -331,6 +338,47 @@ export const loginUser = async (email, password) => {
 
   return null;
 };
+
+export const registerUser = async (email, password, name) => {
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      data: { name }
+    }
+  });
+  if (error) throw new Error(error.message);
+
+  if (data?.user) {
+    const isRoot = email === 'admin@admin.com';
+    const { error: insertError } = await supabase.from('users').insert({
+      id: data.user.id,
+      email: data.user.email,
+      password: 'auth_handled',
+      name: name || email.split('@')[0],
+      role: isRoot ? 'Super Admin' : 'User',
+      permissions: isRoot ? { root: true } : { view_reports: true }
+    });
+    // Ignore duplicate key errors if the user was already created
+    if (insertError && insertError.code !== '23505') {
+      console.error("Failed to create profile:", insertError.message);
+    }
+  }
+  return data;
+};
+
+export const sendPasswordResetEmail = async (email) => {
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${window.location.origin}/reset-password`,
+  });
+  if (error) throw new Error(error.message);
+};
+
+export const updatePassword = async (newPassword) => {
+  const { error } = await supabase.auth.updateUser({ password: newPassword });
+  if (error) throw new Error(error.message);
+};
+
 export const updateUserProfile = async (id, name, password) => { 
   const updateData = { name };
   if (password) updateData.password = password;

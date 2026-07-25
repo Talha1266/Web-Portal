@@ -23,10 +23,11 @@ const Login = () => {
 
     try {
       if (mode === 'login') {
-        const userMatch = await loginUser(normalizedEmail, password);
-        
-        if (!userMatch) {
-          setError(`Invalid email or password.`);
+        let userMatch;
+        try {
+          userMatch = await loginUser(normalizedEmail, password);
+        } catch (authErr) {
+          setError(authErr.message);
           setIsLoading(false);
           return;
         }

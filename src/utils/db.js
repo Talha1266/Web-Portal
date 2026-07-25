@@ -321,6 +321,11 @@ export const loginUser = async (email, password) => {
   // Try Supabase Auth first
   const { data: authData, error: authError } = await supabase.auth.signInWithPassword({ email, password });
   
+  if (authError) {
+    // If it's a specific auth error (like Invalid Login Credentials or Email not confirmed)
+    throw new Error(authError.message);
+  }
+
   if (authData?.user) {
     // Fetch their profile from our custom users table using email to support migrated accounts
     let { data: profile } = await supabase.from('users').select('*').eq('email', authData.user.email).single();
@@ -353,11 +358,12 @@ export const loginUser = async (email, password) => {
     const local = localStorage.getItem('const_manage_users');
     if (local) {
       const users = JSON.parse(local);
-      return users.find(u => u.email === email && u.password === password);
+      const matched = users.find(u => u.email === email && u.password === password);
+      if (matched) return matched;
     }
   } catch(e) {}
 
-  return null;
+  throw new Error("Invalid email or password.");
 };
 
 export const registerUser = async (email, password, name) => {

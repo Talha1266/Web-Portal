@@ -263,6 +263,39 @@ const [profileName, setProfileName] = useState('');
     return null;
   };
 
+  const handleChangePassword = async (e) => {
+    e.preventDefault();
+    setPasswordError('');
+
+    if (oldPassword !== currentUser.password) {
+      setPasswordError("Incorrect old password.");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setPasswordError("New passwords do not match.");
+      return;
+    }
+    const pwdError = validatePassword(newPassword);
+    if (pwdError) {
+      setPasswordError(pwdError);
+      return;
+    }
+
+    try {
+      await updateUserProfile(currentUser.id, currentUser.name, newPassword);
+      const updated = { ...currentUser, password: newPassword };
+      localStorage.setItem('currentUser', JSON.stringify(updated));
+      setCurrentUser(updated);
+      setIsPasswordModalOpen(false);
+      setOldPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+      alert("Password updated successfully!");
+    } catch(err) {
+      setPasswordError('Error: ' + err.message);
+    }
+  };
+
   const handleUpdateProfile = async (e) => {
     e.preventDefault();
     setIsUpdatingProfile(true);

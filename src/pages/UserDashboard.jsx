@@ -216,7 +216,7 @@ const UserDashboard = () => {
       projWorkers.forEach(w => {
          const record = todayRecords.find(r => r.workerId === w.id);
          if (record) {
-           form[w.id] = { isPresent: record.regularHours > 0, regularHours: record.regularHours, overtimeHours: record.overtimeHours, advance: record.advance || 0, isPaid: record.isPaid, id: record.id, dailyWage: record.dailyWage };
+           form[w.id] = { isPresent: record.regularHours > 0, regularHours: record.regularHours, overtimeHours: record.overtimeHours, advance: record.advance || 0, isPaid: record.paid || false, id: record.id, dailyWage: record.dailyWage };
          } else {
            form[w.id] = { isPresent: false, regularHours: 0, overtimeHours: 0, advance: 0, isPaid: false, id: null, dailyWage: w.dailyWage };
          }
@@ -1716,7 +1716,7 @@ const [profileName, setProfileName] = useState('');
                      a.projectId === activeProjectId && 
                      a.date >= payrollStart && 
                      a.date <= payrollEnd &&
-                     (payrollViewMode === 'outstanding' ? !a.isPaid : a.isPaid)
+                     (payrollViewMode === 'outstanding' ? !a.paid : a.paid)
                    );
                    if (relevantLogs.length === 0) {
                      return (

@@ -317,14 +317,19 @@ const [profileName, setProfileName] = useState('');
   // --- Projects Logic ---
   const handleCreateProject = async (e) => {
     e.preventDefault();
-    await addProject({
-      name: pName, description: pDesc, location: pLocation,
-      client: pClient, startDate: pStartDate, assignedUsers: [...new Set([currentUser?.id, ...pAssigned])],
-      createdBy: currentUser.id
-    });
-    setPName(''); setPDesc(''); setPLocation(''); setPClient(''); setPStartDate(''); setPAssigned([]);
-    setIsCreateModalOpen(false);
-    await loadData();
+    try {
+      await addProject({
+        name: pName, description: pDesc, location: pLocation,
+        client: pClient, startDate: pStartDate, assignedUsers: [...new Set([currentUser?.id, ...pAssigned])],
+        createdBy: currentUser.id
+      });
+      setPName(''); setPDesc(''); setPLocation(''); setPClient(''); setPStartDate(''); setPAssigned([]);
+      setIsCreateModalOpen(false);
+      await loadData();
+      alert("Project created successfully!");
+    } catch (err) {
+      alert("Error adding project: " + err.message);
+    }
   };
 
   const toggleAssignUser = (id) => setPAssigned(prev => prev.includes(id) ? prev.filter(uid => uid !== id) : [...prev, id]);

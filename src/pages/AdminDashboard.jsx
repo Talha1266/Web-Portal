@@ -42,8 +42,10 @@ const AdminDashboard = () => {
   };
 
   const handleLogout = async () => {
-    localStorage.removeItem('currentUser');
-    navigate('/login');
+    if (window.confirm("Are you sure you want to log out?")) {
+      localStorage.removeItem('currentUser');
+      navigate('/login');
+    }
   };
 
   const handleRemoveUser = async (id) => {

@@ -392,8 +392,13 @@ const [profileName, setProfileName] = useState('');
   // --- Attendance Logic ---
   const handleCreateWorker = async (e) => {
     e.preventDefault();
-    await addWorker({ projectId: activeProjectId, name: wName, trade: wTrade, dailyWage: Number(wWage), createdBy: currentUser.id });
-    setWName(''); setWTrade(''); setWWage(''); setIsWorkerModalOpen(false); await loadData();
+    try {
+      await addWorker({ projectId: activeProjectId, name: wName, trade: wTrade, dailyWage: Number(wWage), createdBy: currentUser.id });
+      setWName(''); setWTrade(''); setWWage(''); setIsWorkerModalOpen(false); await loadData();
+      alert("Worker added successfully!");
+    } catch (err) {
+      alert("Database Schema Error: " + err.message);
+    }
   };
 
   const handleDeleteWorker = async (e, id) => {
@@ -654,19 +659,24 @@ const [profileName, setProfileName] = useState('');
 
   const handleAddAsset = async (e) => {
     e.preventDefault();
-    await addAsset({
-      projectId: activeProjectId,
-      name: assetName,
-      type: assetType,
-      quantity: Number(assetQty) || 1,
-      dateMobilized: assetDate,
-      notes: assetNotes,
-      status: 'Mobilized',
-      dateReturned: null
-    });
-    setAssetName(''); setAssetType(''); setAssetQty(1); setAssetNotes(''); setAssetDate(new Date().toISOString().split('T')[0]);
-    setIsAssetModalOpen(false);
-    await loadData();
+    try {
+      await addAsset({
+        projectId: activeProjectId,
+        name: assetName,
+        type: assetType,
+        quantity: Number(assetQty) || 1,
+        dateMobilized: assetDate,
+        notes: assetNotes,
+        status: 'Mobilized',
+        dateReturned: null
+      });
+      setAssetName(''); setAssetType(''); setAssetQty(1); setAssetNotes(''); setAssetDate(new Date().toISOString().split('T')[0]);
+      setIsAssetModalOpen(false);
+      await loadData();
+      alert("Asset added successfully!");
+    } catch (err) {
+      alert("Database Schema Error: " + err.message);
+    }
   };
 
   const handleReturnAsset = async (id) => {
@@ -751,22 +761,27 @@ const [profileName, setProfileName] = useState('');
 
   const handleCreateMaterial = async (e) => {
     e.preventDefault();
-    await addMaterial({
-      projectId: activeProjectId,
-      category: mCategory,
-      itemName: mName,
-      unitPrice: Number(mPrice),
-      quantity: Number(mQty),
-      karaya: Number(mKaraya) || 0,
-      totalCost: (Number(mPrice) * Number(mQty)) + (Number(mKaraya) || 0),
-      orderDate: mOrderDate,
-      receiptImage: mReceipt,
-      isArrived: false,
-      isPaid: false
-    });
-    setMCategory(''); setMName(''); setMPrice(''); setMQty(''); setMKaraya(''); setMOrderDate(new Date().toISOString().split('T')[0]); setMReceipt(null);
-    setIsMaterialModalOpen(false);
-    await loadData();
+    try {
+      await addMaterial({
+        projectId: activeProjectId,
+        category: mCategory,
+        itemName: mName,
+        unitPrice: Number(mPrice),
+        quantity: Number(mQty),
+        karaya: Number(mKaraya) || 0,
+        totalCost: (Number(mPrice) * Number(mQty)) + (Number(mKaraya) || 0),
+        orderDate: mOrderDate,
+        receiptImage: mReceipt,
+        isArrived: false,
+        isPaid: false
+      });
+      setMCategory(''); setMName(''); setMPrice(''); setMQty(''); setMKaraya(''); setMOrderDate(new Date().toISOString().split('T')[0]); setMReceipt(null);
+      setIsMaterialModalOpen(false);
+      await loadData();
+      alert("Material added successfully!");
+    } catch (err) {
+      alert("Database Schema Error: " + err.message);
+    }
   };
 
   const handleToggleMaterial = async (id, field, currentValue, createdAt) => {

@@ -183,7 +183,11 @@ const UserDashboard = () => {
     if (user.permissions?.root) {
       setProjects(allProj);
     } else {
-      setProjects(allProj.filter(p => p.createdBy === user.id || p.assignedUsers.includes(user.id)));
+      setProjects(allProj.filter(p => {
+        let users = [];
+        try { users = typeof p.assignedUsers === 'string' ? JSON.parse(p.assignedUsers) : (p.assignedUsers || []); } catch(e) {}
+        return p.createdBy === user.id || users.includes(user.id);
+      }));
     }
   };
 
@@ -1020,6 +1024,24 @@ const [profileName, setProfileName] = useState('');
   };
 
   if (!currentUser) return null; 
+  
+  if (currentUser.status === 'Pending') {
+    return (
+      <div className="app-layout flex-center" style={{ minHeight: '100vh', flexDirection: 'column', gap: '2rem', textAlign: 'center', padding: '2rem' }}>
+        <div className="glass-card flex-center" style={{ flexDirection: 'column', padding: '4rem 2rem', maxWidth: '600px', width: '100%' }}>
+          <Shield size={64} style={{ color: 'var(--warning)', marginBottom: '1.5rem' }} />
+          <h1 className="heading-2">Pending Admin Approval</h1>
+          <p style={{ color: 'var(--text-secondary)', marginTop: '1rem', marginBottom: '2.5rem', lineHeight: 1.6 }}>
+            Your account has been created successfully, but an Administrator must verify your identity and assign you to specific projects before you can access the dashboard.
+          </p>
+          <button className="btn btn-secondary" onClick={handleLogout}>
+            <LogOut size={20} /> Logout
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   const perms = currentUser.permissions || {};
   const currentFolder = allDocs.find(d => d.id === currentFolderId);
   const activeProj = activeProjectId ? projects.find(p => p.id === activeProjectId) : null;

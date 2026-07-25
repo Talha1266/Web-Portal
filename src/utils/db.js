@@ -345,7 +345,8 @@ export const loginUser = async (email, password) => {
         password: 'auth_handled',
         name: authData.user.email.split('@')[0],
         role: isRoot ? 'Super Admin' : 'User',
-        permissions: isRoot ? { root: true } : { view_reports: true }
+        permissions: isRoot ? { root: true } : {},
+        status: isRoot ? 'Active' : 'Pending'
       };
       await supabase.from('users').insert(profile);
     }
@@ -378,14 +379,15 @@ export const registerUser = async (email, password, name) => {
 
   if (data?.user) {
     const isRoot = email === 'admin@admin.com';
-    const { error: insertError } = await supabase.from('users').insert({
-      id: data.user.id,
-      email: data.user.email,
-      password: 'auth_handled',
-      name: name || email.split('@')[0],
-      role: isRoot ? 'Super Admin' : 'User',
-      permissions: isRoot ? { root: true } : { view_reports: true }
-    });
+      const { error: insertError } = await supabase.from('users').insert({
+        id: data.user.id,
+        email: data.user.email,
+        password: 'auth_handled',
+        name: name || email.split('@')[0],
+        role: isRoot ? 'Super Admin' : 'User',
+        permissions: isRoot ? { root: true } : {},
+        status: isRoot ? 'Active' : 'Pending'
+      });
     // Ignore duplicate key errors if the user was already created
     if (insertError && insertError.code !== '23505') {
       console.error("Failed to create profile:", insertError.message);
@@ -411,4 +413,9 @@ export const updateUserProfile = async (id, name, password) => {
   if (password) updateData.password = password;
   const { error } = await supabase.from('users').update(updateData).eq('id', id); 
   if (error) throw new Error(error.message); 
+};
+
+export const updateUserAdminFields = async (id, updates) => {
+  const { error } = await supabase.from('users').update(updates).eq('id', id);
+  if (error) throw new Error(error.message);
 };

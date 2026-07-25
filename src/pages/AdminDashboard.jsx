@@ -1,18 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Users, UserPlus, LogOut, Settings, LayoutDashboard, Trash2, X, Shield, ShieldAlert, Crown, Menu } from 'lucide-react';
-import { getUsers, removeUser, addUser, updateUserPermissions, DEFAULT_PERMISSIONS, updateUserProfile } from '../utils/db';
+import { Users, LogOut, Settings, LayoutDashboard, Trash2, X, Shield, ShieldAlert, Crown, Menu, Briefcase } from 'lucide-react';
+import { getUsers, removeUser, updateUserAdminFields, getProjects, updateProject, updateUserProfile } from '../utils/db';
 import { supabase } from '../supabaseClient';
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [usersList, setUsersList] = useState([]);
+  const [allProjects, setAllProjects] = useState([]);
   
   // Modals
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-const [isEditPermsModalOpen, setIsEditPermsModalOpen] = useState(false);
+  const [isEditPermsModalOpen, setIsEditPermsModalOpen] = useState(false);
   const [userToEdit, setUserToEdit] = useState(null);
+  const [userProjects, setUserProjects] = useState([]);
   
   // Admin Password Modal State
   const [isAdminPasswordModalOpen, setIsAdminPasswordModalOpen] = useState(false);
@@ -21,13 +22,6 @@ const [isEditPermsModalOpen, setIsEditPermsModalOpen] = useState(false);
   const [confirmAdminPassword, setConfirmAdminPassword] = useState('');
   const [adminPasswordError, setAdminPasswordError] = useState('');
   
-  // New User Form State
-  const [newName, setNewName] = useState('');
-  const [newEmail, setNewEmail] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [newRole, setNewRole] = useState('Project Manager');
-  const [newPermissions, setNewPermissions] = useState({ ...DEFAULT_PERMISSIONS });
-
   const [currentUser, setCurrentUser] = useState(null);
 
   useEffect(() => {
@@ -40,9 +34,10 @@ const [isEditPermsModalOpen, setIsEditPermsModalOpen] = useState(false);
     
     const fetchData = async () => {
       setUsersList(await getUsers());
+      setAllProjects(await getProjects());
     };
     fetchData();
-  }, []);
+  }, [navigate]);
 
   const handleNav = (action) => {
     setIsMobileMenuOpen(false);
@@ -74,65 +69,61 @@ const [isEditPermsModalOpen, setIsEditPermsModalOpen] = useState(false);
     }
   };
 
-  // --- Add User Handlers ---
-  const toggleNewPermission = (key) => {
-    setNewPermissions(prev => ({ ...prev, [key]: !prev[key] }));
-  };
-
-  const validatePassword = (password) => {
-    if (password.length < 8) return "Password must be at least 8 characters long.";
-    if (!/[A-Z]/.test(password)) return "Password must contain at least one uppercase letter.";
-    if (!/[a-z]/.test(password)) return "Password must contain at least one lowercase letter.";
-    if (!/[0-9]/.test(password)) return "Password must contain at least one number.";
-    if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]+/.test(password)) return "Password must contain at least one special character.";
-    return null;
-  };
-
-  const handleAddUser = async (e) => {
-    e.preventDefault();
-    
-    const pwdError = validatePassword(newPassword);
-    if (pwdError) {
-      alert(pwdError);
-      return;
-    }
-    await addUser({
-      name: newName,
-      email: newEmail,
-      password: newPassword,
-      role: newRole,
-      permissions: newPermissions
-    });
-    setUsersList(await getUsers());
-    setIsAddModalOpen(false);
-    
-    // Reset
-    setNewName(''); setNewEmail(''); setNewPassword(''); setNewRole('Project Manager');
-    setNewPermissions({ ...DEFAULT_PERMISSIONS });
-  };
-
   // --- Edit Permissions Handlers ---
   const openEditPerms = (user) => {
     setUserToEdit(JSON.parse(JSON.stringify(user))); // Deep copy
+    const assigned = allProjects.filter(p => {
+      let users = [];
+      try { users = typeof p.assignedUsers === 'string' ? JSON.parse(p.assignedUsers) : (p.assignedUsers || []); } catch(e) {}
+      return users.includes(user.id);
+    }).map(p => p.id);
+    setUserProjects(assigned);
     setIsEditPermsModalOpen(true);
   };
 
   const toggleEditPermission = (key) => {
-    // If we are editing System Admin (id 1) and toggling root off, prevent it.
     if (userToEdit.id === '1' && key === 'root') return;
-
     setUserToEdit(prev => ({
       ...prev,
       permissions: { ...prev.permissions, [key]: !prev.permissions[key] }
     }));
   };
+  
+  const toggleProject = (projectId) => {
+    setUserProjects(prev => 
+      prev.includes(projectId) ? prev.filter(id => id !== projectId) : [...prev, projectId]
+    );
+  };
 
   const handleSavePermissions = async (e) => {
     e.preventDefault();
     try {
-      await updateUserPermissions(userToEdit.id, userToEdit.permissions);
-      await updateUserProfile(userToEdit.id, userToEdit.name, null);
+      await updateUserAdminFields(userToEdit.id, {
+         name: userToEdit.name,
+         role: userToEdit.role,
+         status: userToEdit.status,
+         permissions: userToEdit.permissions
+      });
+
+      // Update project assignments
+      for (const p of allProjects) {
+        let users = [];
+        try { users = typeof p.assignedUsers === 'string' ? JSON.parse(p.assignedUsers) : (p.assignedUsers || []); } catch(e) {}
+        
+        const isCurrentlyAssigned = users.includes(userToEdit.id);
+        const shouldBeAssigned = userProjects.includes(p.id) || userToEdit.permissions.root;
+        
+        if (shouldBeAssigned && !isCurrentlyAssigned) {
+          users.push(userToEdit.id);
+          await updateProject(p.id, { assignedUsers: JSON.stringify(users) });
+        } else if (!shouldBeAssigned && isCurrentlyAssigned) {
+          users = users.filter(id => id !== userToEdit.id);
+          await updateProject(p.id, { assignedUsers: JSON.stringify(users) });
+        }
+      }
+
       setUsersList(await getUsers());
+      setAllProjects(await getProjects());
       setIsEditPermsModalOpen(false);
       setUserToEdit(null);
     } catch(err) {
@@ -152,12 +143,7 @@ const [isEditPermsModalOpen, setIsEditPermsModalOpen] = useState(false);
       setAdminPasswordError("New passwords do not match.");
       return;
     }
-    const pwdError = validatePassword(newAdminPassword);
-    if (pwdError) {
-      setAdminPasswordError(pwdError);
-      return;
-    }
-
+    
     try {
       await updateUserProfile(userToEdit.id, userToEdit.name, newAdminPassword);
       setUsersList(await getUsers());
@@ -219,171 +205,111 @@ const [isEditPermsModalOpen, setIsEditPermsModalOpen] = useState(false);
         <header className="flex-between animate-fade-in mobile-stack" style={{ marginBottom: '3rem' }}>
           <div>
             <h1 className="heading-1">User Management</h1>
-            <p style={{ color: 'var(--text-secondary)' }}>Add, remove, and manage platform users and their permissions.</p>
-          </div>
-          <div style={{ display: 'flex', gap: '1rem' }}>
-            <button className="btn btn-primary" onClick={() => setIsAddModalOpen(true)}>
-              <UserPlus size={20}/> Add New User
-            </button>
+            <p style={{ color: 'var(--text-secondary)' }}>Review pending users, assign roles, and manage access.</p>
           </div>
         </header>
 
         <div className="glass-card animate-fade-in" style={{ padding: '1.5rem', overflowX: 'auto', animationDelay: '0.1s' }}>
           <div className="table-wrapper">
-<table className="data-table">
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Role</th>
-                <th>Access Level</th>
-                <th>Status</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {usersList.map((user) => (
-                <tr key={user.id}>
-                  <td>
-                    <div style={{ fontWeight: 500 }}>{user.name}</div>
-                    <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>{user.email}</div>
-                  </td>
-                  <td><span style={{ padding: '0.25rem 0.75rem', background: 'var(--bg-tertiary)', borderRadius: 'var(--radius-full)', fontSize: '0.875rem' }}>{user.role}</span></td>
-                  <td>
-                    {user.permissions?.root ? (
-                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', color: 'var(--warning)', fontSize: '0.875rem', fontWeight: 500 }}>
-                        <Crown size={14} /> Root Admin
-                      </span>
-                    ) : (
-                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', color: 'var(--accent-secondary)', fontSize: '0.875rem' }}>
-                        <Shield size={14} /> Custom
-                      </span>
-                    )}
-                  </td>
-                  <td>
-                    <span style={{ 
-                      display: 'inline-flex', alignItems: 'center', gap: '0.375rem', fontSize: '0.875rem',
-                      color: user.status === 'Active' ? 'var(--success)' : 'var(--text-muted)'
-                    }}>
-                      <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'currentColor' }}></span>
-                      {user.status}
-                    </span>
-                  </td>
-                  <td>
-                    <div style={{ display: 'flex', gap: '0.5rem' }}>
-                      <button onClick={() => openEditPerms(user)} className="btn btn-secondary" style={{ padding: '0.5rem', background: 'var(--bg-primary)' }} title="Edit Permissions">
-                        <ShieldAlert size={16}/>
-                      </button>
-                      
-                      {(user.id !== '1' && user.email !== 'talhanaveed89@gmail.com') ? (
-                        <button onClick={() => handleRemoveUser(user.id)} className="btn btn-danger" style={{ padding: '0.5rem' }} title="Remove User">
-                          <Trash2 size={16}/>
-                        </button>
-                      ) : (
-                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 500, padding: '0.5rem' }}>Protected</span>
-                      )}
-                    </div>
-                  </td>
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Role</th>
+                  <th>Access Level</th>
+                  <th>Status</th>
+                  <th>Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-</div>
+              </thead>
+              <tbody>
+                {usersList.map((user) => (
+                  <tr key={user.id}>
+                    <td>
+                      <div style={{ fontWeight: 500 }}>{user.name}</div>
+                      <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>{user.email}</div>
+                    </td>
+                    <td><span style={{ padding: '0.25rem 0.75rem', background: 'var(--bg-tertiary)', borderRadius: 'var(--radius-full)', fontSize: '0.875rem' }}>{user.role}</span></td>
+                    <td>
+                      {user.permissions?.root ? (
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', color: 'var(--warning)', fontSize: '0.875rem', fontWeight: 500 }}>
+                          <Crown size={14} /> Root Admin
+                        </span>
+                      ) : (
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', color: 'var(--accent-secondary)', fontSize: '0.875rem' }}>
+                          <Shield size={14} /> Custom
+                        </span>
+                      )}
+                    </td>
+                    <td>
+                      <span style={{ 
+                        display: 'inline-flex', alignItems: 'center', gap: '0.375rem', fontSize: '0.875rem',
+                        color: user.status === 'Active' ? 'var(--success)' : 'var(--warning)'
+                      }}>
+                        <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'currentColor', boxShadow: user.status === 'Pending' ? '0 0 8px currentColor' : 'none' }}></span>
+                        {user.status || 'Pending'}
+                      </span>
+                    </td>
+                    <td>
+                      <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        <button onClick={() => openEditPerms(user)} className="btn btn-secondary" style={{ padding: '0.5rem', background: 'var(--bg-primary)' }} title="Review & Assign">
+                          <ShieldAlert size={16}/>
+                        </button>
+                        
+                        {(user.id !== '1' && user.email !== 'talhanaveed89@gmail.com') ? (
+                          <button onClick={() => handleRemoveUser(user.id)} className="btn btn-danger" style={{ padding: '0.5rem' }} title="Remove User">
+                            <Trash2 size={16}/>
+                          </button>
+                        ) : (
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 500, padding: '0.5rem' }}>Protected</span>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </main>
 
-      {/* ----------------- MODALS ----------------- */}
-
-      {/* Add New User Modal */}
-      {isAddModalOpen && (
+      {/* Edit Permissions / Approval Modal */}
+      {isEditPermsModalOpen && userToEdit && (
         <div style={{ 
           position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, 
           background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 
+          display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50, padding: '1rem'
         }}>
-          <div className="glass-card animate-fade-in" style={{ padding: '2.5rem', width: '100%', maxWidth: '800px', position: 'relative' }}>
-            <button onClick={() => setIsAddModalOpen(false)} style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}>
+          <div className="glass-card animate-fade-in" style={{ padding: '2.5rem', width: '100%', maxWidth: '800px', position: 'relative', maxHeight: '90vh', overflowY: 'auto' }}>
+            <button onClick={() => setIsEditPermsModalOpen(false)} style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}>
               <X size={24} />
             </button>
             
-            <form onSubmit={handleAddUser} className="mobile-stack" style={{ display: 'flex', width: '100%', gap: '2rem' }}>
-              {/* Left Column: Basic Details */}
-              <div style={{ flex: 1 }}>
-                <h2 className="heading-2" style={{ marginBottom: '0.5rem' }}>Add New User</h2>
-                <p style={{ color: 'var(--text-secondary)', marginBottom: '2rem' }}>Create account details.</p>
-                
+            <h2 className="heading-2" style={{ marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+               User Approval & Access
+            </h2>
+            <p style={{ color: 'var(--text-secondary)', marginBottom: '2rem' }}>Managing settings for <strong>{userToEdit.email}</strong></p>
+            
+            <form onSubmit={handleSavePermissions} style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap' }}>
+              
+              {/* Left Column: Basic Info & Status */}
+              <div style={{ flex: '1 1 300px', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
                 <div className="input-group">
-                  <label className="input-label">Full Name</label>
-                  <input type="text" className="input-field" required value={newName} onChange={e => setNewName(e.target.value)} />
+                  <label className="input-label">Account Status</label>
+                  <select className="input-field" value={userToEdit.status || 'Pending'} onChange={(e) => setUserToEdit({...userToEdit, status: e.target.value})} style={{ background: userToEdit.status === 'Active' ? 'rgba(34, 197, 94, 0.1)' : 'rgba(234, 179, 8, 0.1)', color: userToEdit.status === 'Active' ? 'var(--success)' : 'var(--warning)', fontWeight: 'bold' }}>
+                    <option value="Pending">Pending Approval</option>
+                    <option value="Active">Active</option>
+                  </select>
                 </div>
                 <div className="input-group">
-                  <label className="input-label">Email Address</label>
-                  <input type="email" className="input-field" required value={newEmail} onChange={e => setNewEmail(e.target.value)} />
-                </div>
-                <div className="input-group">
-                  <label className="input-label">Initial Password</label>
-                  <input type="password" className="input-field" required value={newPassword} onChange={e => setNewPassword(e.target.value)} />
-                </div>
-                <div className="input-group">
-                  <label className="input-label">Role Title</label>
-                  <select className="input-field" value={newRole} onChange={e => setNewRole(e.target.value)}>
+                  <label className="input-label">Job Role</label>
+                  <select className="input-field" value={userToEdit.role} onChange={e => setUserToEdit({...userToEdit, role: e.target.value})}>
+                    <option value="User">User (No Access)</option>
                     <option value="Project Manager">Project Manager</option>
                     <option value="Site Engineer">Site Engineer</option>
                     <option value="Contractor">Contractor</option>
                     <option value="Admin">Admin</option>
                   </select>
                 </div>
-              </div>
-
-              {/* Right Column: Permissions */}
-              <div className="modal-right-col" style={{ flex: 1 }}>
-                <h3 className="heading-3" style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <Shield size={20} className="text-gradient" /> Assign Permissions
-                </h3>
-                
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                  {Object.entries(PERMISSION_LABELS).map(([key, label]) => (
-                    <label key={key} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer' }}>
-                      <input 
-                        type="checkbox" 
-                        checked={newPermissions[key]}
-                        onChange={() => toggleNewPermission(key)}
-                        style={{ width: '18px', height: '18px', accentColor: 'var(--accent-primary)' }}
-                      />
-                      <span style={{ color: newPermissions[key] ? 'var(--text-primary)' : 'var(--text-secondary)' }}>
-                        {label}
-                      </span>
-                    </label>
-                  ))}
-                </div>
-
-                <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '3rem' }}>
-                  <UserPlus size={20}/> Create User Account
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* Edit Permissions Modal */}
-      {isEditPermsModalOpen && userToEdit && (
-        <div style={{ 
-          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, 
-          background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 
-        }}>
-          <div className="glass-card animate-fade-in" style={{ padding: '2.5rem', width: '100%', maxWidth: '450px', position: 'relative' }}>
-            <button onClick={() => setIsEditPermsModalOpen(false)} style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}>
-              <X size={24} />
-            </button>
-            
-            <h2 className="heading-2" style={{ marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-               Edit User Profile
-            </h2>
-            <p style={{ color: 'var(--text-secondary)', marginBottom: '2rem' }}>Managing settings for <strong>{userToEdit.email}</strong></p>
-            
-            <form onSubmit={handleSavePermissions}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
                 <div className="input-group">
                   <label className="input-label">Full Name</label>
                   <input type="text" className="input-field" value={userToEdit.name} onChange={(e) => setUserToEdit({...userToEdit, name: e.target.value})} required />
@@ -392,32 +318,74 @@ const [isEditPermsModalOpen, setIsEditPermsModalOpen] = useState(false);
                   <label className="input-label">Security</label>
                   <button type="button" className="btn btn-secondary" onClick={() => setIsAdminPasswordModalOpen(true)}>Force Password Reset</button>
                 </div>
-                <hr style={{ borderColor: 'rgba(255,255,255,0.1)', margin: '0.5rem 0' }} />
-                
-                {Object.entries(PERMISSION_LABELS).map(([key, label]) => (
-                  <label key={key} style={{ 
-                    display: 'flex', alignItems: 'center', justifyContent: 'space-between', 
-                    padding: '1rem', background: 'rgba(0,0,0,0.2)', borderRadius: 'var(--radius-sm)',
-                    border: '1px solid rgba(255,255,255,0.05)', cursor: userToEdit.id === '1' && key === 'root' ? 'not-allowed' : 'pointer',
-                    opacity: userToEdit.id === '1' && key === 'root' ? 0.5 : 1
-                  }}>
-                    <span style={{ fontWeight: 500, color: userToEdit.permissions[key] ? 'var(--text-primary)' : 'var(--text-secondary)' }}>
-                      {label}
-                    </span>
-                    <input 
-                      type="checkbox" 
-                      checked={userToEdit.permissions[key]}
-                      onChange={() => toggleEditPermission(key)}
-                      disabled={userToEdit.id === '1' && key === 'root'}
-                      style={{ width: '20px', height: '20px', accentColor: 'var(--accent-primary)', cursor: 'pointer' }}
-                    />
-                  </label>
-                ))}
               </div>
 
-              <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '2rem' }}>
-                Save Permissions
-              </button>
+              {/* Right Column: Permissions & Projects */}
+              <div style={{ flex: '1 1 350px', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                <div>
+                  <h3 className="heading-3" style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '1.1rem' }}>
+                    <Shield size={18} className="text-gradient" /> System Permissions
+                  </h3>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                    {Object.entries(PERMISSION_LABELS).map(([key, label]) => (
+                      <label key={key} style={{ 
+                        display: 'flex', alignItems: 'center', justifyContent: 'space-between', 
+                        padding: '0.75rem 1rem', background: 'rgba(0,0,0,0.2)', borderRadius: 'var(--radius-sm)',
+                        border: '1px solid rgba(255,255,255,0.05)', cursor: userToEdit.id === '1' && key === 'root' ? 'not-allowed' : 'pointer',
+                        opacity: userToEdit.id === '1' && key === 'root' ? 0.5 : 1
+                      }}>
+                        <span style={{ fontWeight: 500, color: userToEdit.permissions[key] ? 'var(--text-primary)' : 'var(--text-secondary)', fontSize: '0.875rem' }}>
+                          {label}
+                        </span>
+                        <input 
+                          type="checkbox" 
+                          checked={userToEdit.permissions[key]}
+                          onChange={() => toggleEditPermission(key)}
+                          disabled={userToEdit.id === '1' && key === 'root'}
+                          style={{ width: '18px', height: '18px', accentColor: 'var(--accent-primary)', cursor: 'pointer' }}
+                        />
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                {!userToEdit.permissions.root && (
+                  <div>
+                    <h3 className="heading-3" style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '1.1rem' }}>
+                      <Briefcase size={18} className="text-gradient" /> Project Assignments
+                    </h3>
+                    {allProjects.length === 0 ? (
+                      <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>No active projects found.</p>
+                    ) : (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxHeight: '200px', overflowY: 'auto', paddingRight: '0.5rem' }}>
+                        {allProjects.map(p => (
+                           <label key={p.id} style={{ 
+                            display: 'flex', alignItems: 'center', justifyContent: 'space-between', 
+                            padding: '0.75rem 1rem', background: 'rgba(0,0,0,0.2)', borderRadius: 'var(--radius-sm)',
+                            border: userProjects.includes(p.id) ? '1px solid var(--accent-primary)' : '1px solid rgba(255,255,255,0.05)', cursor: 'pointer'
+                          }}>
+                            <span style={{ fontWeight: 500, color: userProjects.includes(p.id) ? 'var(--text-primary)' : 'var(--text-secondary)', fontSize: '0.875rem' }}>
+                              {p.name}
+                            </span>
+                            <input 
+                              type="checkbox" 
+                              checked={userProjects.includes(p.id)}
+                              onChange={() => toggleProject(p.id)}
+                              style={{ width: '18px', height: '18px', accentColor: 'var(--accent-primary)', cursor: 'pointer' }}
+                            />
+                          </label>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              <div style={{ width: '100%', marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+                <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '1rem' }}>
+                  Save Configuration
+                </button>
+              </div>
             </form>
           </div>
         </div>

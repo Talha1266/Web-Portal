@@ -69,6 +69,16 @@ export const updateMaterialCategory = async (oldName, newName, projectId) => {
 };
 export const deleteMaterialCategory = async (name, projectId) => {  const { error } = await supabase.from('material_categories').delete().eq('name', name).eq('projectId', projectId); if (error) throw new Error(error.message); };
 
+export const getVendors = async (projectId) => { const { data } = await supabase.from('vendors').select('*').eq('projectId', projectId); return data || []; };
+export const addVendor = async (name, projectId) => {  const { error } = await supabase.from('vendors').insert({ name, projectId }); if (error) throw new Error(error.message); };
+export const updateVendor = async (id, newName, projectId) => {
+  const { data: oldVendor } = await supabase.from('vendors').select('name').eq('id', id).single();
+  if (oldVendor) await supabase.from('materials').update({ vendorName: newName }).eq('vendorName', oldVendor.name).eq('projectId', projectId);
+  const { error } = await supabase.from('vendors').update({ name: newName }).eq('id', id).eq('projectId', projectId);
+  if (error) throw new Error(error.message);
+};
+export const deleteVendor = async (id, projectId) => {  const { error } = await supabase.from('vendors').delete().eq('id', id).eq('projectId', projectId); if (error) throw new Error(error.message); };
+
 export const getSiteAdvances = async () => { const { data } = await supabase.from('site_advances').select('*'); return data || []; };
 export const addSiteAdvance = async (a) => {  const { error } = await supabase.from('site_advances').insert({ ...a, id: a.id || Date.now().toString(), createdAt: new Date().toISOString() }); if (error) throw new Error(error.message); };
 export const updateSiteAdvance = async (id, updates) => {  const { error } = await supabase.from('site_advances').update(updates).eq('id', id); if (error) throw new Error(error.message); };

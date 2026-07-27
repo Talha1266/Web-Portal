@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LayoutDashboard, HardHat, FileText, MessageSquare, LogOut, Plus, Edit2, Trash2, PieChart, Shield, X, MapPin, Building, Calendar, Users, Folder, FolderPlus, UploadCloud, ChevronRight, ArrowLeft, CheckSquare, Settings, ClipboardList, DollarSign, CheckCircle, Briefcase, Package, CreditCard, Truck, AlertTriangle, Menu, Unlock, Printer } from 'lucide-react';
-import { getUsers, getProjects, addProject, updateProject, deleteProject, getDocuments, addDocument, deleteDocument, getWorkers, addWorker, updateWorker, deleteWorker, getAttendance, saveAttendance, markAttendancePaid, markAllAttendancePaid, deleteAttendanceRecords, getSubcontractors, addSubcontractor, updateSubcontractor, deleteSubcontractor, getSubPayments, addSubPayment, deleteSubPayment, updateSubPayment, getChangeRequests, addChangeRequest, updateChangeRequestStatus, getMaterials, addMaterial, updateMaterial, deleteMaterial, getMaterialCategories, addMaterialCategory, updateMaterialCategory, deleteMaterialCategory, getSiteAdvances, addSiteAdvance, updateSiteAdvance, deleteSiteAdvance, getSiteExpenses, addSiteExpense, updateSiteExpense, deleteSiteExpense, addAdvanceOnlyRecord, revertAttendancePaid, getAssets, addAsset, updateAsset, deleteAsset, saveFileContentToDB, getFileContentFromDB, deleteFileContentFromDB, getTasks, addTask, updateTask, deleteTask, getMessages, addMessage, updateUserProfile } from '../utils/db';
+import { getUsers, getProjects, addProject, updateProject, deleteProject, getDocuments, addDocument, deleteDocument, getWorkers, addWorker, updateWorker, deleteWorker, getAttendance, saveAttendance, markAttendancePaid, markAllAttendancePaid, deleteAttendanceRecords, getSubcontractors, addSubcontractor, updateSubcontractor, deleteSubcontractor, getSubPayments, addSubPayment, deleteSubPayment, updateSubPayment, getChangeRequests, addChangeRequest, updateChangeRequestStatus, getMaterials, addMaterial, updateMaterial, deleteMaterial, getMaterialCategories, addMaterialCategory, updateMaterialCategory, deleteMaterialCategory, getVendors, addVendor, updateVendor, deleteVendor, getSiteAdvances, addSiteAdvance, updateSiteAdvance, deleteSiteAdvance, getSiteExpenses, addSiteExpense, updateSiteExpense, deleteSiteExpense, addAdvanceOnlyRecord, revertAttendancePaid, getAssets, addAsset, updateAsset, deleteAsset, saveFileContentToDB, getFileContentFromDB, deleteFileContentFromDB, getTasks, addTask, updateTask, deleteTask, getMessages, addMessage, updateUserProfile } from '../utils/db';
 import { supabase } from '../supabaseClient';
 import { PieChart as RechartsPieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 
@@ -26,6 +26,7 @@ const UserDashboard = () => {
   const [allChangeRequests, setAllChangeRequests] = useState([]);
   const [allMaterials, setAllMaterials] = useState([]);
   const [materialCategories, setMaterialCategories] = useState([]);
+  const [allVendors, setAllVendors] = useState([]);
   const [allSiteAdvances, setAllSiteAdvances] = useState([]);
   const [allSiteExpenses, setAllSiteExpenses] = useState([]);
   const [allAssets, setAllAssets] = useState([]);
@@ -83,6 +84,7 @@ const UserDashboard = () => {
   const [isMaterialModalOpen, setIsMaterialModalOpen] = useState(false);
   const [mCategory, setMCategory] = useState('');
   const [mName, setMName] = useState('');
+  const [mVendor, setMVendor] = useState('');
   const [mPrice, setMPrice] = useState('');
   const [mQty, setMQty] = useState('');
   const [mKaraya, setMKaraya] = useState('');
@@ -92,6 +94,10 @@ const UserDashboard = () => {
   const [newCatName, setNewCatName] = useState('');
   const [editingCategoryId, setEditingCategoryId] = useState(null);
   const [editingCategoryName, setEditingCategoryName] = useState('');
+  
+  const [isVendorModalOpen, setIsVendorModalOpen] = useState(false);
+  const [editingVendorId, setEditingVendorId] = useState(null);
+  const [editingVendorName, setEditingVendorName] = useState('');
   
   // Modals & State - Site Expenses
   const [isAdvanceModalOpen, setIsAdvanceModalOpen] = useState(false);
@@ -202,11 +208,11 @@ const UserDashboard = () => {
     
     const [
       users, docs, workers, attendance, subs, 
-      rawSubPayments, crs, mats, matCats, advances, 
+      rawSubPayments, crs, mats, matCats, vendors, advances, 
       expenses, assets, tasks, messages, allProj
     ] = await Promise.all([
       getUsers(), getDocuments(), getWorkers(), getAttendance(), getSubcontractors(),
-      getSubPayments(), getChangeRequests(), getMaterials(), getMaterialCategories(activeProjectId), getSiteAdvances(),
+      getSubPayments(), getChangeRequests(), getMaterials(), getMaterialCategories(activeProjectId), getVendors(activeProjectId), getSiteAdvances(),
       getSiteExpenses(), getAssets(), getTasks(), getMessages(), getProjects()
     ]);
 
@@ -223,6 +229,7 @@ const UserDashboard = () => {
     setAllChangeRequests(crs);
     setAllMaterials(mats);
     setMaterialCategories(matCats);
+    setAllVendors(vendors);
     setAllSiteAdvances(advances);
     setAllSiteExpenses(expenses);
     setAllAssets(assets);
@@ -810,6 +817,45 @@ const [profileName, setProfileName] = useState('');
     });
   };
 
+  const handleCreateVendor = async (e) => {
+    e.preventDefault();
+    if (editingVendorName.trim() === '') return;
+    try {
+      await addVendor(editingVendorName.trim(), activeProjectId);
+      setEditingVendorName('');
+      await loadData();
+    } catch(err) {
+      alert("Error: " + err.message);
+    }
+  };
+
+  const handleDeleteVendor = async (vendorId, vendorName) => {
+    triggerSecurityChallenge(`Delete vendor '${vendorName}'?`, 'DELETE', async () => {
+      try {
+        await deleteVendor(vendorId, activeProjectId);
+        await loadData();
+      } catch(err) {
+        alert('Error: ' + err.message);
+      }
+    });
+  };
+
+  const handleUpdateVendor = async (vendorId, oldName) => {
+    if (!editingVendorName.trim() || editingVendorName.trim() === oldName) {
+      setEditingVendorId(null);
+      return;
+    }
+    triggerSecurityChallenge(`Rename vendor from '${oldName}' to '${editingVendorName.trim()}'?`, 'MODIFY', async () => {
+      try {
+        await updateVendor(vendorId, editingVendorName.trim(), activeProjectId);
+        setEditingVendorId(null);
+        await loadData();
+      } catch(err) {
+        alert('Error: ' + err.message);
+      }
+    });
+  };
+
   const openEditAssetModal = (asset) => {
     setEditingAssetId(asset.id);
     setAssetName(asset.name);
@@ -949,10 +995,18 @@ const [profileName, setProfileName] = useState('');
   const handleCreateMaterial = async (e) => {
     e.preventDefault();
     try {
+      let finalVendor = mVendor.trim();
+      if (finalVendor) {
+        const vendorExists = allVendors.some(v => v.name.toLowerCase() === finalVendor.toLowerCase());
+        if (!vendorExists) {
+          await addVendor(finalVendor, activeProjectId);
+        }
+      }
       await addMaterial({
         projectId: activeProjectId,
         category: mCategory,
         itemName: mName,
+        vendorName: finalVendor || null,
         unitPrice: Number(mPrice),
         quantity: Number(mQty),
         karaya: Number(mKaraya) || 0,
@@ -962,7 +1016,7 @@ const [profileName, setProfileName] = useState('');
         isArrived: false,
         isPaid: false
       });
-      setMCategory(''); setMName(''); setMPrice(''); setMQty(''); setMKaraya(''); setMOrderDate(new Date().toISOString().split('T')[0]); setMReceipt(null);
+      setMCategory(''); setMName(''); setMVendor(''); setMPrice(''); setMQty(''); setMKaraya(''); setMOrderDate(new Date().toISOString().split('T')[0]); setMReceipt(null);
       setIsMaterialModalOpen(false);
       await loadData();
       alert("Material added successfully!");
@@ -2224,6 +2278,7 @@ const [profileName, setProfileName] = useState('');
                   <div className="flex-between" style={{ marginBottom: '2rem', flexWrap: 'wrap', gap: '1.5rem' }}>
                     <h3 className="heading-3" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Package size={20} className="text-gradient"/> Material Procurement</h3>
                     <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+                      <button className="btn btn-secondary" onClick={() => setIsVendorModalOpen(true)}><Settings size={16}/> Manage Vendors</button>
                       <button className="btn btn-secondary" onClick={() => setIsCategoryModalOpen(true)}><Settings size={16}/> Manage Categories</button>
                       <button className="btn btn-primary" onClick={() => setIsMaterialModalOpen(true)}>+ Log Material Order</button>
                     </div>
@@ -2270,6 +2325,7 @@ const [profileName, setProfileName] = useState('');
                             <th style={{ padding: '1rem 0.5rem', fontWeight: 500 }}>Order Date</th>
                             <th style={{ padding: '1rem 0.5rem', fontWeight: 500 }}>Item Description</th>
                             <th style={{ padding: '1rem 0.5rem', fontWeight: 500 }}>Category</th>
+                            <th style={{ padding: '1rem 0.5rem', fontWeight: 500 }}>Vendor</th>
                             <th style={{ padding: '1rem 0.5rem', fontWeight: 500, textAlign: 'right' }}>Karaya (Freight)</th>
                             <th style={{ padding: '1rem 0.5rem', fontWeight: 500, textAlign: 'right' }}>Total Cost</th>
                             <th style={{ padding: '1rem 0.5rem', fontWeight: 500, textAlign: 'center' }}>Receipt</th>
@@ -2294,6 +2350,7 @@ const [profileName, setProfileName] = useState('');
                                   </span>
                                 </td>
                                 <td style={{ padding: '1rem 0.5rem', color: 'var(--text-secondary)' }}>{m.category}</td>
+                                <td style={{ padding: '1rem 0.5rem', color: 'var(--text-secondary)' }}>{m.vendorName || '-'}</td>
                                 <td style={{ padding: '1rem 0.5rem', textAlign: 'right', color: 'var(--text-secondary)' }}>Rs {m.karaya || 0}</td>
                                 <td style={{ padding: '1rem 0.5rem', textAlign: 'right', fontWeight: 500, color: 'var(--text-primary)' }}>Rs {m.totalCost.toFixed(2)}</td>
                                 <td style={{ padding: '1rem 0.5rem', textAlign: 'center' }}>
@@ -2955,6 +3012,56 @@ const [profileName, setProfileName] = useState('');
         </div>
       )}
 
+      {/* Vendor Modal */}
+      {isVendorModalOpen && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(9, 9, 11, 0.5)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}>
+          <div className="glass-card animate-fade-in" style={{ padding: '2.5rem', width: '100%', maxWidth: '500px', maxHeight: '90vh', overflowY: 'auto', position: 'relative' }}>
+            <button onClick={() => { setIsVendorModalOpen(false); setEditingVendorId(null); }} style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}><X size={24} /></button>
+            <h2 className="heading-2" style={{ marginBottom: '1.5rem' }}>Manage Vendors</h2>
+            
+            <div style={{ marginBottom: '2rem', maxHeight: '300px', overflowY: 'auto', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-sm)' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <tbody>
+                  {allVendors.map(v => (
+                    <tr key={v.id} style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+                      <td style={{ padding: '0.75rem 1rem' }}>
+                        {editingVendorId === v.id ? (
+                          <input type="text" className="input-field" autoFocus value={editingVendorName} onChange={e => setEditingVendorName(e.target.value)} style={{ padding: '0.4rem 0.75rem', fontSize: '0.875rem' }} />
+                        ) : (
+                          <span style={{ fontWeight: 500, color: 'var(--text-primary)' }}>{v.name}</span>
+                        )}
+                      </td>
+                      <td style={{ padding: '0.75rem 1rem', textAlign: 'right', whiteSpace: 'nowrap' }}>
+                        {editingVendorId === v.id ? (
+                          <button className="btn btn-primary" onClick={() => handleUpdateVendor(v.id, v.name)} style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem' }}>Save</button>
+                        ) : (
+                          <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                            <button className="btn btn-secondary" onClick={() => { setEditingVendorId(v.id); setEditingVendorName(v.name); }} style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem' }} title="Modify">
+                              <Edit2 size={14} />
+                            </button>
+                            <button className="btn btn-danger" onClick={() => handleDeleteVendor(v.id, v.name)} style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem' }} title="Delete">
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                  {allVendors.length === 0 && (
+                    <tr><td colSpan="2" style={{ padding: '1rem', textAlign: 'center', color: 'var(--text-muted)' }}>No vendors yet.</td></tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            <form onSubmit={handleCreateVendor} style={{ display: 'flex', gap: '0.5rem' }}>
+              <input type="text" className="input-field" required value={editingVendorName} onChange={e => setEditingVendorName(e.target.value)} placeholder="Add new vendor..." style={{ flex: 1 }} />
+              <button type="submit" className="btn btn-primary"><Plus size={18}/> Add</button>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* Category Modal */}
       {isCategoryModalOpen && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(9, 9, 11, 0.5)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}>
@@ -3018,6 +3125,13 @@ const [profileName, setProfileName] = useState('');
                   <option value="" disabled>Select a category...</option>
                   {materialCategories.map(cat => <option key={cat.id} value={cat.name}>{cat.name}</option>)}
                 </select>
+              </div>
+              <div className="input-group">
+                <label className="input-label">Vendor (Optional)</label>
+                <input type="text" list="vendors-list" className="input-field" value={mVendor} onChange={e => setMVendor(e.target.value)} placeholder="Select or type new vendor..." />
+                <datalist id="vendors-list">
+                  {allVendors.map(v => <option key={v.id} value={v.name} />)}
+                </datalist>
               </div>
               <div className="input-group">
                 <label className="input-label">Item Description</label>
@@ -3397,6 +3511,7 @@ const [profileName, setProfileName] = useState('');
                       <th>Date</th>
                       <th>Item</th>
                       <th>Category</th>
+                      <th>Vendor</th>
                       <th>Quantity</th>
                       <th>Total Cost</th>
                     </tr>
@@ -3407,12 +3522,13 @@ const [profileName, setProfileName] = useState('');
                         <td>{m.orderDate}</td>
                         <td>{m.name}</td>
                         <td>{m.category}</td>
+                        <td>{m.vendorName || '-'}</td>
                         <td>{m.quantity} {m.unit}</td>
                         <td>Rs {Number(m.totalCost).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
                       </tr>
                     ))}
                     <tr>
-                      <td colSpan="4" style={{ textAlign: 'right', fontWeight: 'bold' }}>Sub-Total Materials:</td>
+                      <td colSpan="5" style={{ textAlign: 'right', fontWeight: 'bold' }}>Sub-Total Materials:</td>
                       <td style={{ fontWeight: 'bold' }}>Rs {matTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
                     </tr>
                   </tbody>

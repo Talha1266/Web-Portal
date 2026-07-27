@@ -864,6 +864,7 @@ const [profileName, setProfileName] = useState('');
     const material = allMaterials.find(m => m.id === id);
 
     let payload = { [field]: !currentValue };
+    let remainingMaterial = null;
 
     if (field === 'isArrived' && !currentValue) {
       const receivedQtyStr = prompt('How many units were actually received?', material.quantity);
@@ -875,9 +876,24 @@ const [profileName, setProfileName] = useState('');
         return;
       }
 
-      payload.orderedQuantity = material.orderedQuantity || material.quantity;
+      const originalQuantity = Number(material.orderedQuantity || material.quantity);
+      payload.orderedQuantity = originalQuantity;
       payload.quantity = receivedQty;
       payload.totalCost = (receivedQty * Number(material.unitPrice)) + Number(material.karaya);
+
+      // If received less than ordered, create a new pending entry for the remainder
+      if (receivedQty < originalQuantity) {
+        const remainingQty = originalQuantity - receivedQty;
+        remainingMaterial = {
+          ...material,
+          id: undefined, // Let addMaterial assign a new ID
+          quantity: remainingQty,
+          orderedQuantity: remainingQty,
+          totalCost: (remainingQty * Number(material.unitPrice)) + Number(material.karaya),
+          isArrived: false,
+          isPaid: false
+        };
+      }
     } else if (field === 'isArrived' && currentValue) {
       // Reverting back to unarrived, restore original quantity
       payload.quantity = material.orderedQuantity || material.quantity;
@@ -886,6 +902,9 @@ const [profileName, setProfileName] = useState('');
 
     if (canModify) {
       await updateMaterial(id, payload);
+      if (remainingMaterial) {
+        await addMaterial(remainingMaterial);
+      }
       await loadData();
     } else {
       await addChangeRequest({
@@ -894,8 +913,10 @@ const [profileName, setProfileName] = useState('');
         requestedBy: currentUser.id,
         payload
       });
+      // Note: Admin change requests don't natively support multiple simultaneous operations in our current structure.
+      // We will only request the edit for the arrived portion to keep it simple.
       await loadData();
-      alert('Modification request sent to Admin.');
+      alert('Modification request sent to Admin. (Note: Remaining quantity splitting must be done manually by Admin if requested late)');
     }
   };
 

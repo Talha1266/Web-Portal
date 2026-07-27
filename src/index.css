@@ -432,9 +432,13 @@ body {
     display: none !important;
   }
   
-  body {
+  body, #root {
     background: white !important;
     color: black !important;
+    display: block !important;
+    height: auto !important;
+    min-height: auto !important;
+    overflow: visible !important;
   }
 
   .print-only {
@@ -442,13 +446,11 @@ body {
   }
 
   .print-view {
-    position: absolute;
-    top: 0;
-    left: 0;
+    position: static !important;
     width: 100%;
     background: white;
-    z-index: 9999;
-    padding: 20px;
+    padding: 0;
+    display: block !important;
   }
 
   .print-table {

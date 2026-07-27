@@ -3231,17 +3231,21 @@ const [profileName, setProfileName] = useState('');
         const repAttendance = allAttendance.filter(a => a.projectId === activeProjectId && isWithinDate(a.date));
         const workerTotals = {};
         repAttendance.forEach(a => {
-          if (!workerTotals[a.workerId]) workerTotals[a.workerId] = 0;
+          if (!workerTotals[a.workerId]) workerTotals[a.workerId] = { gross: 0, advance: 0, net: 0 };
           const w = allWorkers.find(wk => wk.id === a.workerId);
           if (w) {
             const hrRate = (w.dailyWage || 0) / 8;
-            workerTotals[a.workerId] += ((Number(a.regularHours) + Number(a.overtimeHours)) * hrRate) - Number(a.advance || 0);
+            const gross = ((Number(a.regularHours) + Number(a.overtimeHours)) * hrRate);
+            const adv = Number(a.advance || 0);
+            workerTotals[a.workerId].gross += gross;
+            workerTotals[a.workerId].advance += adv;
+            workerTotals[a.workerId].net += (gross - adv);
           }
         });
 
         const matTotal = repMaterials.reduce((acc, m) => acc + Number(m.totalCost || 0), 0);
         const subTotal = repSubs.reduce((acc, p) => acc + Number(p.amount || 0), 0);
-        const labTotal = Object.values(workerTotals).reduce((acc, val) => acc + val, 0);
+        const labTotal = Object.values(workerTotals).reduce((acc, val) => acc + val.net, 0);
 
         return (
           <div className="print-view">
@@ -3329,23 +3333,27 @@ const [profileName, setProfileName] = useState('');
                     <tr>
                       <th>Worker Name</th>
                       <th>Trade</th>
-                      <th>Net Wages Owed</th>
+                      <th>Gross Pay</th>
+                      <th>Advance</th>
+                      <th>Net Pay</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {Object.entries(workerTotals).map(([wId, total]) => {
-                      if (total === 0) return null;
+                    {Object.entries(workerTotals).map(([wId, totals]) => {
+                      if (totals.net === 0 && totals.gross === 0) return null;
                       const worker = allWorkers.find(w => w.id === wId);
                       return (
                         <tr key={wId}>
                           <td>{worker ? worker.name : 'Unknown'}</td>
                           <td>{worker ? worker.trade : ''}</td>
-                          <td>Rs {total.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                          <td>Rs {totals.gross.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                          <td>Rs {totals.advance.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                          <td>Rs {totals.net.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
                         </tr>
                       );
                     })}
                     <tr>
-                      <td colSpan="2" style={{ textAlign: 'right', fontWeight: 'bold' }}>Sub-Total Labour:</td>
+                      <td colSpan="4" style={{ textAlign: 'right', fontWeight: 'bold' }}>Sub-Total Labour:</td>
                       <td style={{ fontWeight: 'bold' }}>Rs {labTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
                     </tr>
                   </tbody>

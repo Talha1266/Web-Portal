@@ -98,6 +98,7 @@ const UserDashboard = () => {
   const [isVendorModalOpen, setIsVendorModalOpen] = useState(false);
   const [editingVendorId, setEditingVendorId] = useState(null);
   const [editingVendorName, setEditingVendorName] = useState('');
+  const [activeVendorCategory, setActiveVendorCategory] = useState(null);
   
   // Modals & State - Site Expenses
   const [isAdvanceModalOpen, setIsAdvanceModalOpen] = useState(false);
@@ -819,9 +820,9 @@ const [profileName, setProfileName] = useState('');
 
   const handleCreateVendor = async (e) => {
     e.preventDefault();
-    if (editingVendorName.trim() === '') return;
+    if (editingVendorName.trim() === '' || !activeVendorCategory) return;
     try {
-      await addVendor(editingVendorName.trim(), activeProjectId);
+      await addVendor(editingVendorName.trim(), activeProjectId, activeVendorCategory);
       setEditingVendorName('');
       await loadData();
     } catch(err) {
@@ -997,9 +998,9 @@ const [profileName, setProfileName] = useState('');
     try {
       let finalVendor = mVendor.trim();
       if (finalVendor) {
-        const vendorExists = allVendors.some(v => v.name.toLowerCase() === finalVendor.toLowerCase());
+        const vendorExists = allVendors.some(v => v.name.toLowerCase() === finalVendor.toLowerCase() && v.categoryName === mCategory);
         if (!vendorExists) {
-          await addVendor(finalVendor, activeProjectId);
+          await addVendor(finalVendor, activeProjectId, mCategory);
         }
       }
       await addMaterial({
@@ -2278,7 +2279,6 @@ const [profileName, setProfileName] = useState('');
                   <div className="flex-between" style={{ marginBottom: '2rem', flexWrap: 'wrap', gap: '1.5rem' }}>
                     <h3 className="heading-3" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Package size={20} className="text-gradient"/> Material Procurement</h3>
                     <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-                      <button className="btn btn-secondary" onClick={() => setIsVendorModalOpen(true)}><Settings size={16}/> Manage Vendors</button>
                       <button className="btn btn-secondary" onClick={() => setIsCategoryModalOpen(true)}><Settings size={16}/> Manage Categories</button>
                       <button className="btn btn-primary" onClick={() => setIsMaterialModalOpen(true)}>+ Log Material Order</button>
                     </div>
@@ -3014,15 +3014,15 @@ const [profileName, setProfileName] = useState('');
 
       {/* Vendor Modal */}
       {isVendorModalOpen && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(9, 9, 11, 0.5)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(9, 9, 11, 0.5)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 60 }}>
           <div className="glass-card animate-fade-in" style={{ padding: '2.5rem', width: '100%', maxWidth: '500px', maxHeight: '90vh', overflowY: 'auto', position: 'relative' }}>
             <button onClick={() => { setIsVendorModalOpen(false); setEditingVendorId(null); }} style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}><X size={24} /></button>
-            <h2 className="heading-2" style={{ marginBottom: '1.5rem' }}>Manage Vendors</h2>
+            <h2 className="heading-2" style={{ marginBottom: '1.5rem' }}>Vendors for {activeVendorCategory}</h2>
             
             <div style={{ marginBottom: '2rem', maxHeight: '300px', overflowY: 'auto', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-sm)' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <tbody>
-                  {allVendors.map(v => (
+                  {allVendors.filter(v => v.categoryName === activeVendorCategory).map(v => (
                     <tr key={v.id} style={{ borderBottom: '1px solid var(--border-subtle)' }}>
                       <td style={{ padding: '0.75rem 1rem' }}>
                         {editingVendorId === v.id ? (
@@ -3047,7 +3047,7 @@ const [profileName, setProfileName] = useState('');
                       </td>
                     </tr>
                   ))}
-                  {allVendors.length === 0 && (
+                  {allVendors.filter(v => v.categoryName === activeVendorCategory).length === 0 && (
                     <tr><td colSpan="2" style={{ padding: '1rem', textAlign: 'center', color: 'var(--text-muted)' }}>No vendors yet.</td></tr>
                   )}
                 </tbody>
@@ -3086,6 +3086,9 @@ const [profileName, setProfileName] = useState('');
                           <button className="btn btn-primary" onClick={() => handleUpdateCategory(cat.name)} style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem' }}>Save</button>
                         ) : (
                           <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                            <button className="btn btn-secondary" onClick={() => { setActiveVendorCategory(cat.name); setIsVendorModalOpen(true); }} style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem' }} title="Vendors">
+                              <Users size={14} /> Vendors
+                            </button>
                             <button className="btn btn-secondary" onClick={() => { setEditingCategoryId(cat.id); setEditingCategoryName(cat.name); }} style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem' }} title="Modify">
                               <Edit2 size={14} />
                             </button>
@@ -3128,9 +3131,9 @@ const [profileName, setProfileName] = useState('');
               </div>
               <div className="input-group">
                 <label className="input-label">Vendor (Optional)</label>
-                <input type="text" list="vendors-list" className="input-field" value={mVendor} onChange={e => setMVendor(e.target.value)} placeholder="Select or type new vendor..." />
+                <input type="text" list="vendors-list" className="input-field" value={mVendor} onChange={e => setMVendor(e.target.value)} placeholder={mCategory ? "Select or type new vendor..." : "Select a category first..."} disabled={!mCategory} />
                 <datalist id="vendors-list">
-                  {allVendors.map(v => <option key={v.id} value={v.name} />)}
+                  {allVendors.filter(v => v.categoryName === mCategory).map(v => <option key={v.id} value={v.name} />)}
                 </datalist>
               </div>
               <div className="input-group">

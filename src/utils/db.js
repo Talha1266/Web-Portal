@@ -70,10 +70,10 @@ export const updateMaterialCategory = async (oldName, newName, projectId) => {
 export const deleteMaterialCategory = async (name, projectId) => {  const { error } = await supabase.from('material_categories').delete().eq('name', name).eq('projectId', projectId); if (error) throw new Error(error.message); };
 
 export const getVendors = async (projectId) => { const { data } = await supabase.from('vendors').select('*').eq('projectId', projectId); return data || []; };
-export const addVendor = async (name, projectId) => {  const { error } = await supabase.from('vendors').insert({ name, projectId }); if (error) throw new Error(error.message); };
+export const addVendor = async (name, projectId, categoryName) => {  const { error } = await supabase.from('vendors').insert({ name, projectId, categoryName }); if (error) throw new Error(error.message); };
 export const updateVendor = async (id, newName, projectId) => {
-  const { data: oldVendor } = await supabase.from('vendors').select('name').eq('id', id).single();
-  if (oldVendor) await supabase.from('materials').update({ vendorName: newName }).eq('vendorName', oldVendor.name).eq('projectId', projectId);
+  const { data: oldVendor } = await supabase.from('vendors').select('name, categoryName').eq('id', id).single();
+  if (oldVendor) await supabase.from('materials').update({ vendorName: newName }).eq('vendorName', oldVendor.name).eq('category', oldVendor.categoryName).eq('projectId', projectId);
   const { error } = await supabase.from('vendors').update({ name: newName }).eq('id', id).eq('projectId', projectId);
   if (error) throw new Error(error.message);
 };

@@ -901,11 +901,15 @@ const [profileName, setProfileName] = useState('');
     }
 
     if (canModify) {
-      await updateMaterial(id, payload);
-      if (remainingMaterial) {
-        await addMaterial(remainingMaterial);
+      try {
+        await updateMaterial(id, payload);
+        if (remainingMaterial) {
+          await addMaterial(remainingMaterial);
+        }
+        await loadData();
+      } catch (err) {
+        alert(`Database Error: ${err.message}\nDid you forget to run the Supabase SQL migration script?`);
       }
-      await loadData();
     } else {
       await addChangeRequest({
         type: 'EDIT_MATERIAL',

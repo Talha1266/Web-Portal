@@ -2809,6 +2809,66 @@ const [profileName, setProfileName] = useState('');
             </div>
           </div>
         )}
+        {/* Edit Material Order Modal */}
+        {isEditMaterialModalOpen && (
+          <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(9, 9, 11, 0.5)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}>
+            <div className="glass-card animate-fade-in" style={{ padding: '2.5rem', width: '100%', maxWidth: '450px', maxHeight: '90vh', overflowY: 'auto', position: 'relative' }}>
+              <button onClick={() => { setIsEditMaterialModalOpen(false); setEditMaterialObj(null); }} style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}><X size={24} /></button>
+              <h2 className="heading-2" style={{ marginBottom: '1.5rem' }}>Modify Material Order</h2>
+              <form onSubmit={handleEditMaterialSubmit}>
+                <div className="input-group">
+                  <label className="input-label">Order Date</label>
+                  <input type="date" className="input-field" required value={emOrderDate} onChange={e => setEmOrderDate(e.target.value)} style={{ colorScheme: 'dark' }} />
+                </div>
+                <div className="input-group">
+                  <label className="input-label">Category</label>
+                  <select className="input-field" required value={emCategory} onChange={e => setEmCategory(e.target.value)} style={{ padding: '0.6rem', background: 'var(--glass-darker)' }}>
+                    <option value="" disabled>Select a category...</option>
+                    {materialCategories.filter(cat => cat.projectId === activeProjectId).map(cat => <option key={cat.id} value={cat.name}>{cat.name}</option>)}
+                  </select>
+                </div>
+                <div className="input-group">
+                  <label className="input-label">Vendor (Optional)</label>
+                  <input type="text" list="edit-vendors-list" className="input-field" value={emVendor} onChange={e => setEmVendor(e.target.value)} placeholder={emCategory ? "Select or type new vendor..." : "Select a category first..."} disabled={!emCategory} />
+                  <datalist id="edit-vendors-list">
+                    {allVendors.filter(v => v.projectId === activeProjectId && v.categoryName === emCategory).map(v => <option key={v.id} value={v.name} />)}
+                  </datalist>
+                </div>
+                <div className="input-group">
+                  <label className="input-label">Item Description</label>
+                  <input type="text" className="input-field" required value={emName} onChange={e => setEmName(e.target.value)} placeholder="e.g. Portland Cement 50kg" />
+                </div>
+                <div style={{ display: 'flex', gap: '1rem' }}>
+                  <div className="input-group" style={{ flex: 1 }}>
+                    <label className="input-label">Quantity</label>
+                    <input type="number" step="0.01" className="input-field" required value={emQty} onChange={e => setEmQty(e.target.value)} />
+                  </div>
+                  <div className="input-group" style={{ flex: 1 }}>
+                    <label className="input-label">Unit Price (Rs)</label>
+                    <input type="number" step="0.01" className="input-field" required value={emPrice} onChange={e => setEmPrice(e.target.value)} />
+                  </div>
+                </div>
+                <div className="input-group">
+                  <label className="input-label">Karaya / Freight (Rs) (Optional)</label>
+                  <input type="number" step="0.01" className="input-field" value={emKaraya} onChange={e => setEmKaraya(e.target.value)} />
+                </div>
+                
+                <div style={{ marginTop: '2rem' }}>
+                  <p style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
+                    <span>Total Material Cost:</span>
+                    <span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>Rs {(Number(emPrice) * Number(emQty)).toFixed(2)}</span>
+                  </p>
+                  <p style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
+                    <span>Total Cost (incl. Karaya):</span>
+                    <span style={{ color: 'var(--accent-primary)', fontWeight: 'bold', fontSize: '1.125rem' }}>Rs {((Number(emPrice) * Number(emQty)) + (Number(emKaraya) || 0)).toFixed(2)}</span>
+                  </p>
+                  <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '0.75rem', fontSize: '1rem' }}>Save Changes</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
       {/* Change Password Modal */}
       {isPasswordModalOpen && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(15, 23, 42, 0.4)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 60 }}>

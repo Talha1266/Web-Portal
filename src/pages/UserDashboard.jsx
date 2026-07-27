@@ -152,6 +152,25 @@ const UserDashboard = () => {
     includeSubcontractors: true,
   });
 
+  // Modals & State - Security Challenge
+  const [securityChallenge, setSecurityChallenge] = useState({
+    isOpen: false,
+    title: '',
+    expectedWord: '',
+    onConfirm: null,
+    inputText: ''
+  });
+
+  const triggerSecurityChallenge = (title, expectedWord, onConfirm) => {
+    setSecurityChallenge({
+      isOpen: true,
+      title,
+      expectedWord,
+      onConfirm,
+      inputText: ''
+    });
+  };
+
   const [assetName, setAssetName] = useState('');
   const [assetType, setAssetType] = useState('');
   const [assetQty, setAssetQty] = useState(1);
@@ -396,28 +415,30 @@ const [profileName, setProfileName] = useState('');
   const toggleAssignUser = (id) => setPAssigned(prev => prev.includes(id) ? prev.filter(uid => uid !== id) : [...prev, id]);
   const handleDeleteProject = async (e, id) => { 
     e.stopPropagation(); 
-    if (window.confirm("Are you sure you want to delete this project? This action cannot be undone and will delete all associated data.")) {
+    triggerSecurityChallenge("Are you sure you want to delete this project? This action cannot be undone and will orphan all associated data.", "DELETE", async () => {
       await deleteProject(id); 
       await loadData(); 
-    }
+    });
   };
 
   const handleUpdateProjectDetails = async (e) => {
     e.preventDefault();
-    try {
-      await updateProject(activeProjectId, {
-        name: editProjectForm.name,
-        description: editProjectForm.description,
-        location: editProjectForm.location,
-        client: editProjectForm.client,
-        status: editProjectForm.status,
-        assignedUsers: [...new Set([currentUser?.id, ...(editProjectForm.assignedUsers || [])])]
-      });
-      await loadData();
-      alert("Project details updated successfully!");
-    } catch (err) {
-      alert("Error updating project: " + err.message);
-    }
+    triggerSecurityChallenge("Update Project Details?", "CONFIRM", async () => {
+      try {
+        await updateProject(activeProjectId, {
+          name: editProjectForm.name,
+          description: editProjectForm.description,
+          location: editProjectForm.location,
+          client: editProjectForm.client,
+          status: editProjectForm.status,
+          progress: editProjectForm.progress
+        });
+        await loadData();
+        setEditProjectForm(null);
+      } catch (err) {
+        alert(err.message);
+      }
+    });
   };
 
   // --- Documents Logic ---
@@ -480,10 +501,10 @@ const [profileName, setProfileName] = useState('');
 
   const handleDeleteWorker = async (e, id) => {
     e.stopPropagation();
-    if (window.confirm("Are you sure you want to delete this labourer?")) {
+    triggerSecurityChallenge("Are you sure you want to delete this labourer?", "DELETE", async () => {
       await deleteWorker(id);
       await loadData();
-    }
+    });
   };
 
   const handleOpenEditWorker = async (worker) => {
@@ -689,10 +710,10 @@ const [profileName, setProfileName] = useState('');
     const canModify = canModifyEntry(payment.createdAt);
 
     if (canModify) {
-      if (window.confirm("Delete this payment record?")) {
+      triggerSecurityChallenge("Delete this payment record?", "DELETE", async () => {
         await deleteSubPayment(payment.id);
         await loadData();
-      }
+      });
     } else {
       if (window.confirm("This payment is older than 24 hours. Request Root Admin approval to delete it?")) {
         await addChangeRequest({
@@ -942,10 +963,10 @@ const [profileName, setProfileName] = useState('');
     const canModify = canModifyEntry(material.createdAt);
 
     if (canModify) {
-      if (window.confirm("Delete this material record?")) {
+      triggerSecurityChallenge("Delete this material record?", "DELETE", async () => {
         await deleteMaterial(material.id);
         await loadData();
-      }
+      });
     } else {
       if (window.confirm("This record is older than 24 hours. Request Admin approval to delete?")) {
         await addChangeRequest({
@@ -1065,10 +1086,10 @@ const [profileName, setProfileName] = useState('');
     const canModify = canModifyEntry(exp.createdAt);
 
     if (canModify) {
-      if (window.confirm("Delete this expense report?")) {
+      triggerSecurityChallenge("Delete this expense report?", "DELETE", async () => {
         await deleteSiteExpense(exp.id);
         await loadData();
-      }
+      });
     } else {
       if (window.confirm("This record is older than 24 hours. Request Admin approval to delete?")) {
         await addChangeRequest({
@@ -3372,6 +3393,47 @@ const [profileName, setProfileName] = useState('');
           </div>
         );
       })()}
+
+      {/* Security Challenge Modal */}
+      {securityChallenge.isOpen && (
+        <div className="modal-overlay" style={{ zIndex: 99999 }}>
+          <div className="glass-panel animate-fade-in" style={{ padding: '2.5rem', width: '100%', maxWidth: '400px', border: '1px solid var(--danger)' }}>
+            <div className="flex-between" style={{ marginBottom: '1.5rem' }}>
+              <h2 className="heading-3" style={{ color: 'var(--danger)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <AlertTriangle size={24} /> Security Challenge
+              </h2>
+              <button className="btn btn-secondary" style={{ padding: '0.5rem' }} onClick={() => setSecurityChallenge({...securityChallenge, isOpen: false})}><X size={20} /></button>
+            </div>
+            <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem', fontSize: '0.875rem' }}>
+              {securityChallenge.title}
+            </p>
+            <div className="form-group">
+              <label className="form-label" style={{ fontWeight: 'bold' }}>Type "{securityChallenge.expectedWord}" to confirm:</label>
+              <input 
+                type="text" 
+                className="input-field" 
+                placeholder={securityChallenge.expectedWord} 
+                value={securityChallenge.inputText} 
+                onChange={(e) => setSecurityChallenge({...securityChallenge, inputText: e.target.value})}
+                autoFocus
+              />
+            </div>
+            <button 
+              className="btn btn-danger" 
+              style={{ width: '100%', padding: '1rem', opacity: securityChallenge.inputText === securityChallenge.expectedWord ? 1 : 0.5, cursor: securityChallenge.inputText === securityChallenge.expectedWord ? 'pointer' : 'not-allowed' }}
+              disabled={securityChallenge.inputText !== securityChallenge.expectedWord}
+              onClick={async () => {
+                if (securityChallenge.inputText === securityChallenge.expectedWord) {
+                  setSecurityChallenge({...securityChallenge, isOpen: false});
+                  if (securityChallenge.onConfirm) await securityChallenge.onConfirm();
+                }
+              }}
+            >
+              Confirm Action
+            </button>
+          </div>
+        </div>
+      )}
 
     </div>
   );

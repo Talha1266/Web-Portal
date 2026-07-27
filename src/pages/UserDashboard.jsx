@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LayoutDashboard, HardHat, FileText, MessageSquare, LogOut, Plus, Edit2, Trash2, PieChart, Shield, X, MapPin, Building, Calendar, Users, Folder, FolderPlus, UploadCloud, ChevronRight, ArrowLeft, CheckSquare, Settings, ClipboardList, DollarSign, CheckCircle, Briefcase, Package, CreditCard, Truck, AlertTriangle, Menu, Unlock } from 'lucide-react';
+import { LayoutDashboard, HardHat, FileText, MessageSquare, LogOut, Plus, Edit2, Trash2, PieChart, Shield, X, MapPin, Building, Calendar, Users, Folder, FolderPlus, UploadCloud, ChevronRight, ArrowLeft, CheckSquare, Settings, ClipboardList, DollarSign, CheckCircle, Briefcase, Package, CreditCard, Truck, AlertTriangle, Menu, Unlock, Printer } from 'lucide-react';
 import { getUsers, getProjects, addProject, updateProject, deleteProject, getDocuments, addDocument, deleteDocument, getWorkers, addWorker, deleteWorker, getAttendance, saveAttendance, markAttendancePaid, markAllAttendancePaid, deleteAttendanceRecords, getSubcontractors, addSubcontractor, updateSubcontractor, deleteSubcontractor, getSubPayments, addSubPayment, deleteSubPayment, updateSubPayment, getChangeRequests, addChangeRequest, updateChangeRequestStatus, getMaterials, addMaterial, updateMaterial, deleteMaterial, getMaterialCategories, addMaterialCategory, getSiteAdvances, addSiteAdvance, updateSiteAdvance, deleteSiteAdvance, getSiteExpenses, addSiteExpense, updateSiteExpense, deleteSiteExpense, addAdvanceOnlyRecord, revertAttendancePaid, getAssets, addAsset, updateAsset, deleteAsset, saveFileContentToDB, getFileContentFromDB, deleteFileContentFromDB, getTasks, addTask, updateTask, deleteTask, getMessages, addMessage, updateUserProfile } from '../utils/db';
 import { supabase } from '../supabaseClient';
 import { PieChart as RechartsPieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
@@ -140,6 +140,18 @@ const UserDashboard = () => {
 
   // Modals & State - Assets
   const [isAssetModalOpen, setIsAssetModalOpen] = useState(false);
+  
+  // Modals & State - Reports
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [isReportPreviewActive, setIsReportPreviewActive] = useState(false);
+  const [reportConfig, setReportConfig] = useState({
+    startDate: '',
+    endDate: '',
+    includeMaterials: true,
+    includeLabour: true,
+    includeSubcontractors: true,
+  });
+
   const [assetName, setAssetName] = useState('');
   const [assetType, setAssetType] = useState('');
   const [assetQty, setAssetQty] = useState(1);
@@ -1138,6 +1150,9 @@ const [profileName, setProfileName] = useState('');
             {(perms.root || perms.assets) && <button className={projectTab === 'assets' ? "btn btn-primary" : "btn btn-secondary"} onClick={() => handleNav(() => setProjectTab('assets'))} style={{ justifyContent: 'flex-start' }}><Truck size={20}/> Assets</button>}
             {(perms.root || perms.documents) && <button className={projectTab === 'documents' ? "btn btn-primary" : "btn btn-secondary"} onClick={() => handleNav(() => setProjectTab('documents'))} style={{ justifyContent: 'flex-start' }}><FileText size={20}/> Documents</button>}
             {(perms.root || perms.tasks) && <button className={projectTab === 'tasks' ? "btn btn-primary" : "btn btn-secondary"} onClick={() => handleNav(() => setProjectTab('tasks'))} style={{ justifyContent: 'flex-start' }}><CheckSquare size={20}/> Tasks</button>}
+            
+            {perms.root && <button className="btn btn-secondary" onClick={() => handleNav(() => setIsReportModalOpen(true))} style={{ justifyContent: 'flex-start' }}><Printer size={20}/> Printable Reports</button>}
+
             {perms.root && <button className={projectTab === 'settings' ? "btn btn-primary" : "btn btn-secondary"} onClick={() => handleNav(() => setProjectTab('settings'))} style={{ justifyContent: 'flex-start' }}><Settings size={20}/> Settings</button>}
           </nav>
         )}
@@ -3155,6 +3170,200 @@ const [profileName, setProfileName] = useState('');
           </div>
         </div>
       )}
+
+      {/* Report Configuration Modal */}
+      {isReportModalOpen && (
+        <div className="modal-overlay">
+          <div className="glass-panel animate-fade-in" style={{ padding: '2.5rem', width: '100%', maxWidth: '500px' }}>
+            <div className="flex-between" style={{ marginBottom: '2rem' }}>
+              <h2 className="heading-3">Generate Report</h2>
+              <button className="btn btn-secondary" style={{ padding: '0.5rem' }} onClick={() => setIsReportModalOpen(false)}><X size={20} /></button>
+            </div>
+            
+            <div className="form-group">
+              <label className="form-label">Start Date (Optional)</label>
+              <input type="date" className="input-field" value={reportConfig.startDate} onChange={e => setReportConfig({...reportConfig, startDate: e.target.value})} />
+            </div>
+            <div className="form-group">
+              <label className="form-label">End Date (Optional)</label>
+              <input type="date" className="input-field" value={reportConfig.endDate} onChange={e => setReportConfig({...reportConfig, endDate: e.target.value})} />
+            </div>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '2rem' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                <input type="checkbox" checked={reportConfig.includeMaterials} onChange={e => setReportConfig({...reportConfig, includeMaterials: e.target.checked})} style={{ width: '18px', height: '18px' }} />
+                Include Materials Data
+              </label>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                <input type="checkbox" checked={reportConfig.includeSubcontractors} onChange={e => setReportConfig({...reportConfig, includeSubcontractors: e.target.checked})} style={{ width: '18px', height: '18px' }} />
+                Include Subcontractors Data
+              </label>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                <input type="checkbox" checked={reportConfig.includeLabour} onChange={e => setReportConfig({...reportConfig, includeLabour: e.target.checked})} style={{ width: '18px', height: '18px' }} />
+                Include Labour & Payroll Data
+              </label>
+            </div>
+
+            <div style={{ display: 'flex', gap: '1rem' }}>
+              <button className="btn btn-primary" style={{ flex: 1 }} onClick={() => { setIsReportModalOpen(false); setIsReportPreviewActive(true); }}>Preview Report</button>
+              <button className="btn btn-secondary" style={{ flex: 1 }} onClick={() => setIsReportModalOpen(false)}>Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Full-Screen Report Preview */}
+      {isReportPreviewActive && (() => {
+        const activeProj = projects.find(p => p.id === activeProjectId) || { name: 'All Projects' };
+        
+        // Filter Functions
+        const isWithinDate = (dString) => {
+          if (!dString) return true;
+          const d = new Date(dString);
+          if (reportConfig.startDate && d < new Date(reportConfig.startDate)) return false;
+          if (reportConfig.endDate && d > new Date(reportConfig.endDate)) return false;
+          return true;
+        };
+
+        const repMaterials = allMaterials.filter(m => m.projectId === activeProjectId && isWithinDate(m.orderDate));
+        const repSubs = allSubPayments.filter(p => p.projectId === activeProjectId && isWithinDate(p.date));
+        
+        const repAttendance = allAttendance.filter(a => a.projectId === activeProjectId && isWithinDate(a.date));
+        const workerTotals = {};
+        repAttendance.forEach(a => {
+          if (!workerTotals[a.workerId]) workerTotals[a.workerId] = 0;
+          const w = allWorkers.find(wk => wk.id === a.workerId);
+          if (w) {
+            const hrRate = (w.dailyWage || 0) / 8;
+            workerTotals[a.workerId] += ((Number(a.regularHours) + Number(a.overtimeHours)) * hrRate) - Number(a.advance || 0);
+          }
+        });
+
+        const matTotal = repMaterials.reduce((acc, m) => acc + Number(m.totalCost || 0), 0);
+        const subTotal = repSubs.reduce((acc, p) => acc + Number(p.amount || 0), 0);
+        const labTotal = Object.values(workerTotals).reduce((acc, val) => acc + val, 0);
+
+        return (
+          <div className="print-view">
+            <div className="no-print" style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginBottom: '20px', padding: '20px', background: 'var(--bg-tertiary)', borderRadius: 'var(--radius-md)' }}>
+              <button className="btn btn-secondary" onClick={() => setIsReportPreviewActive(false)}>Close Preview</button>
+              <button className="btn btn-primary" onClick={() => window.print()}><Printer size={18}/> Print Hardcopy</button>
+            </div>
+
+            <div className="print-header">
+              <h1>{activeProj.name}</h1>
+              <h2>Financial & Operations Report</h2>
+              <h3>{reportConfig.startDate || 'Beginning'} to {reportConfig.endDate || 'Present'}</h3>
+            </div>
+
+            {reportConfig.includeMaterials && (
+              <div style={{ marginBottom: '40px' }}>
+                <h3 style={{ borderBottom: '2px solid black', paddingBottom: '5px', marginBottom: '10px' }}>Material Orders</h3>
+                <table className="print-table">
+                  <thead>
+                    <tr>
+                      <th>Date</th>
+                      <th>Item</th>
+                      <th>Category</th>
+                      <th>Quantity</th>
+                      <th>Total Cost</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {repMaterials.map(m => (
+                      <tr key={m.id}>
+                        <td>{m.orderDate}</td>
+                        <td>{m.name}</td>
+                        <td>{m.category}</td>
+                        <td>{m.quantity} {m.unit}</td>
+                        <td>Rs {Number(m.totalCost).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                      </tr>
+                    ))}
+                    <tr>
+                      <td colSpan="4" style={{ textAlign: 'right', fontWeight: 'bold' }}>Sub-Total Materials:</td>
+                      <td style={{ fontWeight: 'bold' }}>Rs {matTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            {reportConfig.includeSubcontractors && (
+              <div style={{ marginBottom: '40px' }}>
+                <h3 style={{ borderBottom: '2px solid black', paddingBottom: '5px', marginBottom: '10px' }}>Subcontractor Payments</h3>
+                <table className="print-table">
+                  <thead>
+                    <tr>
+                      <th>Date</th>
+                      <th>Subcontractor</th>
+                      <th>Description</th>
+                      <th>Amount Paid</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {repSubs.map(p => {
+                      const sub = allSubcontractors.find(s => s.id === p.subId);
+                      return (
+                        <tr key={p.id}>
+                          <td>{p.date}</td>
+                          <td>{sub ? sub.name : 'Unknown'}</td>
+                          <td>{p.description}</td>
+                          <td>Rs {Number(p.amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                        </tr>
+                      )
+                    })}
+                    <tr>
+                      <td colSpan="3" style={{ textAlign: 'right', fontWeight: 'bold' }}>Sub-Total Subcontractors:</td>
+                      <td style={{ fontWeight: 'bold' }}>Rs {subTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            {reportConfig.includeLabour && (
+              <div style={{ marginBottom: '40px' }}>
+                <h3 style={{ borderBottom: '2px solid black', paddingBottom: '5px', marginBottom: '10px' }}>Labour & Payroll (Net Wages Earned in Period)</h3>
+                <table className="print-table">
+                  <thead>
+                    <tr>
+                      <th>Worker Name</th>
+                      <th>Trade</th>
+                      <th>Net Wages Owed</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {Object.entries(workerTotals).map(([wId, total]) => {
+                      if (total === 0) return null;
+                      const worker = allWorkers.find(w => w.id === wId);
+                      return (
+                        <tr key={wId}>
+                          <td>{worker ? worker.name : 'Unknown'}</td>
+                          <td>{worker ? worker.trade : ''}</td>
+                          <td>Rs {total.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                        </tr>
+                      );
+                    })}
+                    <tr>
+                      <td colSpan="2" style={{ textAlign: 'right', fontWeight: 'bold' }}>Sub-Total Labour:</td>
+                      <td style={{ fontWeight: 'bold' }}>Rs {labTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            <div style={{ marginTop: '50px', textAlign: 'right', fontSize: '18px' }}>
+              <strong>Grand Total For Period: </strong> 
+              <span style={{ borderBottom: '2px double black' }}>Rs {(matTotal + subTotal + labTotal).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+            </div>
+            
+            <div className="print-only" style={{ marginTop: '100px', display: 'none' }}>
+              <p>Generated by App: {new Date().toLocaleString()}</p>
+            </div>
+          </div>
+        );
+      })()}
 
     </div>
   );

@@ -3280,9 +3280,9 @@ const [profileName, setProfileName] = useState('');
             </div>
 
             {reportConfig.includeMaterials && (
-              <div style={{ paddingBottom: '40px', breakInside: 'auto', pageBreakInside: 'auto' }}>
-                <h3 style={{ borderBottom: '2px solid black', paddingBottom: '5px', marginBottom: '10px' }}>Material Orders</h3>
-                <table className="print-table">
+              <>
+                <h3 style={{ borderBottom: '2px solid black', paddingBottom: '5px', marginBottom: '10px', marginTop: '20px' }}>Material Orders</h3>
+                <table className="print-table" style={{ marginBottom: '40px' }}>
                   <thead>
                     <tr>
                       <th>Date</th>
@@ -3308,13 +3308,13 @@ const [profileName, setProfileName] = useState('');
                     </tr>
                   </tbody>
                 </table>
-              </div>
+              </>
             )}
 
             {reportConfig.includeSubcontractors && (
-              <div style={{ paddingBottom: '40px', breakInside: 'auto', pageBreakInside: 'auto' }}>
-                <h3 style={{ borderBottom: '2px solid black', paddingBottom: '5px', marginBottom: '10px' }}>Subcontractor Payments</h3>
-                <table className="print-table">
+              <React.Fragment>
+                <h3 style={{ borderBottom: '2px solid black', paddingBottom: '5px', marginBottom: '10px', marginTop: '20px' }}>Subcontractor Payments</h3>
+                <table className="print-table" style={{ marginBottom: '40px' }}>
                   <thead>
                     <tr>
                       <th>Date</th>
@@ -3341,13 +3341,13 @@ const [profileName, setProfileName] = useState('');
                     </tr>
                   </tbody>
                 </table>
-              </div>
+              </React.Fragment>
             )}
 
             {reportConfig.includeLabour && (
-              <div style={{ paddingBottom: '40px', breakInside: 'auto', pageBreakInside: 'auto' }}>
-                <h3 style={{ borderBottom: '2px solid black', paddingBottom: '5px', marginBottom: '10px' }}>Labour & Payroll (Gross Wages Earned in Period)</h3>
-                <table className="print-table">
+              <>
+                <h3 style={{ borderBottom: '2px solid black', paddingBottom: '5px', marginBottom: '10px', marginTop: '20px' }}>Labour & Payroll (Gross Wages Earned in Period)</h3>
+                <table className="print-table" style={{ marginBottom: '40px' }}>
                   <thead>
                     <tr>
                       <th>Worker Name</th>
@@ -3377,13 +3377,13 @@ const [profileName, setProfileName] = useState('');
                     </tr>
                   </tbody>
                 </table>
-              </div>
+              </>
             )}
 
             {reportConfig.includeExpenses && (
-              <div style={{ paddingBottom: '40px', breakInside: 'auto', pageBreakInside: 'auto' }}>
-                <h3 style={{ borderBottom: '2px solid black', paddingBottom: '5px', marginBottom: '10px' }}>Site Expenses</h3>
-                <table className="print-table">
+              <>
+                <h3 style={{ borderBottom: '2px solid black', paddingBottom: '5px', marginBottom: '10px', marginTop: '20px' }}>Site Expenses</h3>
+                <table className="print-table" style={{ marginBottom: '40px' }}>
                   <thead>
                     <tr>
                       <th>Date</th>
@@ -3407,7 +3407,7 @@ const [profileName, setProfileName] = useState('');
                     </tr>
                   </tbody>
                 </table>
-              </div>
+              </>
             )}
 
             <div style={{ marginTop: '50px', textAlign: 'right', fontSize: '18px' }}>

@@ -1938,22 +1938,12 @@ const [profileName, setProfileName] = useState('');
                                      <button className="btn btn-secondary" onClick={() => handleOpenWorkerAdvanceModal(wId)} style={{ padding: '0.4rem 0.75rem', fontSize: '0.75rem', background: 'transparent', border: '1px solid var(--accent-primary)', color: 'var(--accent-primary)' }} title="Issue Cash Advance">
                                        <CreditCard size={14} /> Advance
                                      </button>
-                                     {perms.root && (
-                                       <button className="btn btn-danger" onClick={() => handleDeletePayrollRecord(wId)} style={{ padding: '0.4rem', fontSize: '0.75rem' }} title="Delete Records">
-                                         <Trash2 size={14} />
-                                       </button>
-                                     )}
                                    </td>
                                  ) : (
                                    <td style={{ padding: '1rem 0.5rem', textAlign: 'center', display: 'flex', gap: '0.5rem', justifyContent: 'center', alignItems: 'center' }}>
                                      <button className="btn btn-danger" onClick={() => handleRevertPaid(wId, sortedDates)} style={{ padding: '0.4rem 0.75rem', fontSize: '0.75rem', background: 'transparent', border: '1px solid var(--danger)', color: 'var(--danger)' }} title="Revert to Unpaid">
                                        <Edit2 size={14} /> Revert
                                      </button>
-                                     {perms.root && (
-                                       <button className="btn btn-danger" onClick={() => handleDeletePayrollRecord(wId)} style={{ padding: '0.4rem', fontSize: '0.75rem' }} title="Delete Records">
-                                         <Trash2 size={14} />
-                                       </button>
-                                     )}
                                    </td>
                                  )}
                                </tr>

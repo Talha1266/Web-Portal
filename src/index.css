@@ -35,9 +35,9 @@
   --radius-lg: 20px;
   --radius-full: 9999px;
 
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.08);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.05);
+  --shadow-sm: 0 4px 14px 0 rgba(0, 0, 0, 0.03);
+  --shadow-md: 0 8px 24px -4px rgba(0, 0, 0, 0.04);
+  --shadow-lg: 0 20px 40px -8px rgba(0, 0, 0, 0.05);
   --shadow-glow: 0 0 20px var(--accent-glow);
   
   --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -51,7 +51,8 @@
 
 body {
   font-family: var(--font-main);
-  background-color: var(--bg-primary);
+  background: radial-gradient(circle at top right, #ffffff, var(--bg-primary));
+  background-attachment: fixed;
   color: var(--text-primary);
   -webkit-font-smoothing: antialiased;
   min-height: 100vh;
@@ -80,8 +81,8 @@ body {
 }
 
 .glass-card:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-lg);
   border-color: var(--accent-glow);
 }
 
@@ -125,9 +126,13 @@ body {
   border: none;
   border-radius: var(--radius-md);
   cursor: pointer;
-  transition: var(--transition);
+  transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease, background 0.3s ease;
   text-decoration: none;
   outline: none;
+}
+
+.btn:active {
+  transform: scale(0.97);
 }
 
 .btn-primary {
@@ -208,11 +213,14 @@ body {
 }
 
 .data-table th {
-  font-weight: 500;
-  color: var(--text-secondary);
-  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  font-size: 0.75rem;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.1em;
+  padding: 1.5rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border-strong);
 }
 
 .data-table tr {

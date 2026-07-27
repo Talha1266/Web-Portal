@@ -226,6 +226,11 @@ const UserDashboard = () => {
     loadData();
   }, [navigate]);
 
+  // Auto-relock when navigating between major tabs or changing projects
+  useEffect(() => {
+    setAdminUnlockPast(false);
+  }, [activeTab, projectTab, activeProjectId]);
+
   useEffect(() => {
     if (activeProjectId) {
       const todayRecords = allAttendance.filter(a => a.projectId === activeProjectId && a.date === attendanceDate);
@@ -241,7 +246,6 @@ const UserDashboard = () => {
       });
       setAttendanceForm(form);
       setIsAttendanceDirty(false); // Clean slate on load
-      setAdminUnlockPast(false); // Relock on date change
 
       const currentProj = projects.find(p => p.id === activeProjectId);
       if (currentProj) {

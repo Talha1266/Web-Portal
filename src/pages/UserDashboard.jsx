@@ -120,6 +120,19 @@ const UserDashboard = () => {
   const [ewWage, setEwWage] = useState('');
   const [adminUnlockPast, setAdminUnlockPast] = useState(false);
 
+  // Time Lock Utility: Returns true if the entry is from today or if admin has unlocked the past
+  const canModifyEntry = (dateStr) => {
+    if (currentUser?.permissions?.root && adminUnlockPast) return true;
+    if (!dateStr) return true;
+    const entryDate = new Date(dateStr);
+    const today = new Date();
+    entryDate.setHours(0, 0, 0, 0);
+    today.setHours(0, 0, 0, 0);
+    return entryDate.getTime() >= today.getTime();
+  };
+
+  const todayStrGlobal = new Date().toISOString().split('T')[0];
+
   // Modals & State - Image Viewer
   const [isImageViewerOpen, setIsImageViewerOpen] = useState(false);
   const [viewImageUrl, setViewImageUrl] = useState(null);
@@ -511,10 +524,7 @@ const [profileName, setProfileName] = useState('');
         }
       });
 
-      const ONE_DAY = 24 * 60 * 60 * 1000;
-      const logDate = new Date(attendanceDate);
-      const isOld = (new Date() - logDate) > ONE_DAY;
-      const canModify = currentUser.permissions?.root || !isOld;
+      const canModify = canModifyEntry(attendanceDate);
 
       if (canModify) {
         await saveAttendance(activeProjectId, attendanceDate, recordsToSave);
@@ -580,9 +590,7 @@ const [profileName, setProfileName] = useState('');
 
   const handleRevertPaid = async (wId, sortedDates) => {
     const mostRecentDate = sortedDates[sortedDates.length - 1];
-    const ONE_DAY = 24 * 60 * 60 * 1000;
-    const isOld = (new Date() - new Date(mostRecentDate)) > ONE_DAY;
-    const canModify = currentUser.permissions?.root || !isOld;
+    const canModify = canModifyEntry(mostRecentDate);
 
     if (canModify) {
       if (window.confirm("Are you sure you want to revert these wages back to Unpaid?")) {
@@ -638,10 +646,8 @@ const [profileName, setProfileName] = useState('');
       await addSubPayment({ subId: activeSubId, projectId: activeProjectId, date: subPayDate, amount: Number(subPayAmount), description: subPayDesc });
       await loadData();
     } else {
-      const ONE_DAY = 24 * 60 * 60 * 1000;
       const payment = allSubPayments.find(p => p.id === activeSubPayId);
-      const isOld = payment ? (new Date() - new Date(payment.createdAt) > ONE_DAY) : false;
-      const canModify = currentUser.permissions?.root || !isOld;
+      const canModify = payment ? canModifyEntry(payment.createdAt) : true;
 
       const payload = { date: subPayDate, amount: Number(subPayAmount), description: subPayDesc };
       if (canModify) {
@@ -663,9 +669,7 @@ const [profileName, setProfileName] = useState('');
 
   const handleDeleteSubPay = async (e, payment) => {
     e.stopPropagation();
-    const ONE_DAY = 24 * 60 * 60 * 1000;
-    const isOld = new Date() - new Date(payment.createdAt) > ONE_DAY;
-    const canModify = currentUser.permissions?.root || !isOld;
+    const canModify = canModifyEntry(payment.createdAt);
 
     if (canModify) {
       if (window.confirm("Delete this payment record?")) {
@@ -852,9 +856,7 @@ const [profileName, setProfileName] = useState('');
   };
 
   const handleToggleMaterial = async (id, field, currentValue, createdAt) => {
-    const ONE_DAY = 24 * 60 * 60 * 1000;
-    const isOld = new Date() - new Date(createdAt) > ONE_DAY;
-    const canModify = currentUser.permissions?.root || !isOld;
+    const canModify = canModifyEntry(createdAt);
 
     if (canModify) {
       await updateMaterial(id, { [field]: !currentValue });
@@ -873,9 +875,7 @@ const [profileName, setProfileName] = useState('');
 
   const handleDeleteMaterial = async (e, material) => {
     e.stopPropagation();
-    const ONE_DAY = 24 * 60 * 60 * 1000;
-    const isOld = new Date() - new Date(material.createdAt) > ONE_DAY;
-    const canModify = currentUser.permissions?.root || !isOld;
+    const canModify = canModifyEntry(material.createdAt);
 
     if (canModify) {
       if (window.confirm("Delete this material record?")) {
@@ -934,9 +934,7 @@ const [profileName, setProfileName] = useState('');
 
   const handleDeleteAdvance = async (e, adv) => {
     e.stopPropagation();
-    const ONE_DAY = 24 * 60 * 60 * 1000;
-    const isOld = new Date() - new Date(adv.createdAt) > ONE_DAY;
-    const canModify = currentUser.permissions?.root || !isOld;
+    const canModify = canModifyEntry(adv.createdAt);
 
     if (canModify) {
       if (window.confirm("Delete this advance record?")) {
@@ -1000,9 +998,7 @@ const [profileName, setProfileName] = useState('');
 
   const handleDeleteExpense = async (e, exp) => {
     e.stopPropagation();
-    const ONE_DAY = 24 * 60 * 60 * 1000;
-    const isOld = new Date() - new Date(exp.createdAt) > ONE_DAY;
-    const canModify = currentUser.permissions?.root || !isOld;
+    const canModify = canModifyEntry(exp.createdAt);
 
     if (canModify) {
       if (window.confirm("Delete this expense report?")) {
@@ -1456,7 +1452,19 @@ const [profileName, setProfileName] = useState('');
               <div>
                 <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><HardHat size={14}/> Active Project</p>
                 <h1 className="heading-1">{activeProj.name}</h1>
-                <span style={{ display: 'inline-block', marginTop: '0.5rem', fontSize: '0.75rem', padding: '0.2rem 0.6rem', background: 'var(--accent-glow)', color: 'var(--accent-primary)', borderRadius: 'var(--radius-full)' }}>{activeProj.status}</span>
+                <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem', alignItems: 'center' }}>
+                  <span style={{ fontSize: '0.75rem', padding: '0.2rem 0.6rem', background: 'var(--accent-glow)', color: 'var(--accent-primary)', borderRadius: 'var(--radius-full)' }}>{activeProj.status}</span>
+                  {currentUser?.permissions?.root && (
+                    <button 
+                      onClick={() => setAdminUnlockPast(!adminUnlockPast)} 
+                      style={{ background: adminUnlockPast ? 'var(--warning-glow)' : 'transparent', border: `1px solid ${adminUnlockPast ? 'var(--warning)' : 'rgba(255,255,255,0.2)'}`, color: adminUnlockPast ? 'var(--warning)' : 'var(--text-muted)', fontSize: '0.75rem', padding: '0.2rem 0.6rem', borderRadius: 'var(--radius-full)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem', transition: 'all 0.2s' }}
+                      title="Allows editing of historical financial records and past dates"
+                    >
+                      {adminUnlockPast ? <Unlock size={12}/> : <Shield size={12}/>}
+                      {adminUnlockPast ? 'Past Unlocked' : 'Unlock Past'}
+                    </button>
+                  )}
+                </div>
               </div>
             </header>
 
@@ -1618,10 +1626,7 @@ const [profileName, setProfileName] = useState('');
             })()}
 
             {projectTab === 'attendance' && (() => {
-              const ONE_DAY = 24 * 60 * 60 * 1000;
-              const logDate = new Date(attendanceDate);
-              const isOld = (new Date() - logDate) > ONE_DAY;
-              const canModify = !isOld || (perms.root && adminUnlockPast);
+              const canModify = canModifyEntry(attendanceDate);
 
               return (
               <div className="glass-card animate-fade-in" style={{ padding: '2.5rem', minHeight: '500px' }}>
@@ -2016,9 +2021,7 @@ const [profileName, setProfileName] = useState('');
                           </thead>
                           <tbody>
                             {subPayments.map(p => {
-                              const ONE_DAY = 24 * 60 * 60 * 1000;
-                              const isOld = new Date() - new Date(p.createdAt) > ONE_DAY;
-                              const canModify = perms.root || !isOld;
+                              const canModify = canModifyEntry(p.createdAt);
                               
                               return (
                                 <tr key={p.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
@@ -2116,9 +2119,7 @@ const [profileName, setProfileName] = useState('');
                         </thead>
                         <tbody>
                           {projMaterials.sort((a,b) => new Date(b.orderDate) - new Date(a.orderDate)).map(m => {
-                            const ONE_DAY = 24 * 60 * 60 * 1000;
-                            const isOld = new Date() - new Date(m.createdAt) > ONE_DAY;
-                            const canModify = perms.root || !isOld;
+                            const canModify = canModifyEntry(m.createdAt);
                             
                             return (
                               <tr key={m.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', background: m.isArrived ? 'rgba(0,0,0,0.1)' : 'transparent' }}>
@@ -2214,8 +2215,7 @@ const [profileName, setProfileName] = useState('');
                           </thead>
                           <tbody>
                             {projAdvances.sort((a,b) => new Date(b.date) - new Date(a.date)).map(adv => {
-                              const ONE_DAY = 24 * 60 * 60 * 1000;
-                              const canModify = perms.root || (new Date() - new Date(adv.createdAt) <= ONE_DAY);
+                              const canModify = canModifyEntry(adv.createdAt);
                               return (
                                 <tr key={adv.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.02)' }}>
                                   <td style={{ padding: '1rem', color: 'var(--text-secondary)' }}>{adv.date}</td>
@@ -2256,8 +2256,7 @@ const [profileName, setProfileName] = useState('');
                           </thead>
                           <tbody>
                             {projExpenses.sort((a,b) => new Date(b.date) - new Date(a.date)).map(exp => {
-                              const ONE_DAY = 24 * 60 * 60 * 1000;
-                              const canModify = perms.root || (new Date() - new Date(exp.createdAt) <= ONE_DAY);
+                              const canModify = canModifyEntry(exp.createdAt);
                               return (
                                 <tr key={exp.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.02)' }}>
                                   <td style={{ padding: '1rem', color: 'var(--text-secondary)' }}>{exp.date}</td>
@@ -2772,7 +2771,7 @@ const [profileName, setProfileName] = useState('');
             <form onSubmit={handleCreateSubPay}>
               <div className="input-group">
                 <label className="input-label">Payment Date</label>
-                <input type="date" className="input-field" required value={subPayDate} onChange={e => setSubPayDate(e.target.value)} style={{ colorScheme: 'dark' }} />
+                <input type="date" className="input-field" required value={subPayDate} onChange={e => setSubPayDate(e.target.value)} style={{ colorScheme: 'dark' }} min={!adminUnlockPast ? todayStrGlobal : undefined} />
               </div>
               <div className="input-group">
                 <label className="input-label">Amount Paid (Rs)</label>
@@ -2842,7 +2841,7 @@ const [profileName, setProfileName] = useState('');
               </div>
               <div className="input-group">
                 <label className="input-label">Order Date</label>
-                <input type="date" className="input-field" required value={mOrderDate} onChange={e => setMOrderDate(e.target.value)} style={{ colorScheme: 'dark' }} />
+                <input type="date" className="input-field" required value={mOrderDate} onChange={e => setMOrderDate(e.target.value)} style={{ colorScheme: 'dark' }} min={!adminUnlockPast ? todayStrGlobal : undefined} />
               </div>
               <div className="input-group">
                 <label className="input-label">Bill / Receipt Picture (Optional)</label>
@@ -2869,7 +2868,7 @@ const [profileName, setProfileName] = useState('');
             <form onSubmit={handleCreateAdvance}>
               <div className="input-group">
                 <label className="input-label">Date</label>
-                <input type="date" className="input-field" required value={advDate} onChange={e => setAdvDate(e.target.value)} style={{ colorScheme: 'dark' }} />
+                <input type="date" className="input-field" required value={advDate} onChange={e => setAdvDate(e.target.value)} style={{ colorScheme: 'dark' }} min={!adminUnlockPast ? todayStrGlobal : undefined} />
               </div>
               <div className="input-group">
                 <label className="input-label">Amount Given (Rs)</label>
@@ -2894,7 +2893,7 @@ const [profileName, setProfileName] = useState('');
             <form onSubmit={handleCreateExpense}>
               <div className="input-group">
                 <label className="input-label">Date of Report</label>
-                <input type="date" className="input-field" required value={expDate} onChange={e => setExpDate(e.target.value)} style={{ colorScheme: 'dark' }} />
+                <input type="date" className="input-field" required value={expDate} onChange={e => setExpDate(e.target.value)} style={{ colorScheme: 'dark' }} min={!adminUnlockPast ? todayStrGlobal : undefined} />
               </div>
               <div className="input-group">
                 <label className="input-label">Total Amount Spent (Rs)</label>

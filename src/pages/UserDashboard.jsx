@@ -1766,9 +1766,6 @@ const [profileName, setProfileName] = useState('');
                           return (
                             <tr key={w.id} style={{ borderBottom: '1px solid var(--border-subtle)', background: form.isPresent ? 'rgba(99, 102, 241, 0.05)' : 'transparent' }}>
                               <td style={{ padding: '1rem 0.5rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                <button onClick={(e) => handleDeleteWorker(e, w.id)} style={{ background: 'none', border: 'none', color: 'var(--danger)', cursor: 'pointer', display: 'flex', alignItems: 'center', opacity: 0.7 }} onMouseEnter={e => e.currentTarget.style.opacity = 1} onMouseLeave={e => e.currentTarget.style.opacity = 0.7} title="Delete Labourer">
-                                  <Trash2 size={14} />
-                                </button>
                                 <button onClick={(e) => { e.stopPropagation(); handleOpenEditWorker(w); }} style={{ background: 'none', border: 'none', color: 'var(--accent-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', opacity: 0.7 }} onMouseEnter={e => e.currentTarget.style.opacity = 1} onMouseLeave={e => e.currentTarget.style.opacity = 0.7} title="Edit Labourer">
                                   <Edit2 size={14} />
                                 </button>

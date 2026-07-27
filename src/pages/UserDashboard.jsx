@@ -140,6 +140,7 @@ const UserDashboard = () => {
 
   // Modals & State - Assets
   const [isAssetModalOpen, setIsAssetModalOpen] = useState(false);
+  const [editingAssetId, setEditingAssetId] = useState(null);
   
   // Modals & State - Reports
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
@@ -771,8 +772,41 @@ const [profileName, setProfileName] = useState('');
     await loadData();
   };
 
+  const openEditAssetModal = (asset) => {
+    setEditingAssetId(asset.id);
+    setAssetName(asset.name);
+    setAssetType(asset.type);
+    setAssetQty(asset.quantity);
+    setAssetDate(asset.dateMobilized);
+    setAssetNotes(asset.notes);
+    setIsAssetModalOpen(true);
+  };
+
   const handleAddAsset = async (e) => {
     e.preventDefault();
+
+    if (editingAssetId) {
+      triggerSecurityChallenge('Modify this asset record?', 'MODIFY', async () => {
+        try {
+          await updateAsset(editingAssetId, {
+            name: assetName,
+            type: assetType,
+            quantity: Number(assetQty) || 1,
+            dateMobilized: assetDate,
+            notes: assetNotes,
+          });
+          setEditingAssetId(null);
+          setAssetName(''); setAssetType(''); setAssetQty(1); setAssetNotes(''); setAssetDate(new Date().toISOString().split('T')[0]);
+          setIsAssetModalOpen(false);
+          await loadData();
+          alert("Asset modified successfully!");
+        } catch (err) {
+          alert("Database Error: " + err.message);
+        }
+      });
+      return;
+    }
+
     try {
       await addAsset({
         projectId: activeProjectId,
@@ -794,11 +828,13 @@ const [profileName, setProfileName] = useState('');
   };
 
   const handleReturnAsset = async (id) => {
-    await updateAsset(id, {
-      status: 'Returned',
-      dateReturned: new Date().toISOString().split('T')[0]
+    triggerSecurityChallenge('Mark this asset as returned?', 'RETURN', async () => {
+      await updateAsset(id, {
+        status: 'Returned',
+        dateReturned: new Date().toISOString().split('T')[0]
+      });
+      await loadData();
     });
-    await loadData();
   };
 
   const handleDeleteAsset = async (id) => {
@@ -2481,6 +2517,9 @@ const [profileName, setProfileName] = useState('');
                             </td>
                             <td style={{ padding: '1rem 0.5rem', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>{asset.notes}</td>
                             <td style={{ padding: '1rem 0.5rem', textAlign: 'center', display: 'flex', justifyContent: 'center', gap: '0.5rem' }}>
+                              <button className="btn btn-secondary" onClick={() => openEditAssetModal(asset)} style={{ padding: '0.4rem 0.75rem', fontSize: '0.75rem', background: 'transparent', border: '1px solid var(--text-secondary)' }} title="Modify Asset">
+                                <Edit2 size={14} />
+                              </button>
                               {asset.status === 'Mobilized' && (
                                 <button className="btn btn-primary" onClick={() => handleReturnAsset(asset.id)} style={{ padding: '0.4rem 0.75rem', fontSize: '0.75rem' }} title="Mark Returned">
                                   Return
@@ -3067,9 +3106,9 @@ const [profileName, setProfileName] = useState('');
       {/* Add Asset Modal */}
       {isAssetModalOpen && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(15, 23, 42, 0.4)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}>
-          <div className="glass-card animate-fade-in" style={{ padding: '2.5rem', width: '100%', maxWidth: '400px', maxHeight: '90vh', overflowY: 'auto', position: 'relative' }}>
-            <button onClick={() => setIsAssetModalOpen(false)} style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}><X size={24} /></button>
-            <h2 className="heading-2" style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Truck size={24} className="text-gradient"/> Mobilize Asset</h2>
+          <div className="glass-card animate-fade-in" style={{ padding: '2.5rem', width: '100%', maxWidth: '500px', position: 'relative' }}>
+            <button onClick={() => { setIsAssetModalOpen(false); setEditingAssetId(null); setAssetName(''); setAssetType(''); setAssetNotes(''); }} style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}><X size={24} /></button>
+            <h2 className="heading-2" style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Truck size={24} className="text-gradient"/> {editingAssetId ? 'Modify Asset' : 'Mobilize Asset'}</h2>
             <form onSubmit={handleAddAsset}>
               <div className="input-group">
                 <label className="input-label">Asset Name</label>
@@ -3091,7 +3130,7 @@ const [profileName, setProfileName] = useState('');
                 <label className="input-label">Notes (Optional)</label>
                 <textarea className="input-field" value={assetNotes} onChange={e => setAssetNotes(e.target.value)} style={{ minHeight: '80px' }}></textarea>
               </div>
-              <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '1rem' }}>Add Asset</button>
+              <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '1rem' }}>{editingAssetId ? 'Save Changes' : 'Add Asset'}</button>
             </form>
           </div>
         </div>

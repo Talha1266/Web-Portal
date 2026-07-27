@@ -443,7 +443,7 @@ body {
 @media print {
   @page { margin: 1cm; }
 
-  html, body, #root, #root > div, .print-view {
+  html, body, #root, #root > div, .app-layout, .main-content, .print-view {
     display: block !important;
     height: auto !important;
     min-height: auto !important;

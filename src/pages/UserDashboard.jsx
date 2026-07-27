@@ -1838,14 +1838,15 @@ const [profileName, setProfileName] = useState('');
                     <div style={{ display: 'flex', background: 'var(--glass-hover)', padding: '0.25rem', borderRadius: 'var(--radius-md)' }}>
                       <button className={`btn ${payrollViewMode === 'outstanding' ? 'btn-primary' : ''}`} onClick={() => handleNav(() => setPayrollViewMode('outstanding'))} style={{ padding: '0.4rem 1rem', background: payrollViewMode === 'outstanding' ? 'var(--accent-primary)' : 'transparent', color: payrollViewMode === 'outstanding' ? '#fff' : 'var(--text-secondary)' }}>Outstanding</button>
                       <button className={`btn ${payrollViewMode === 'history' ? 'btn-primary' : ''}`} onClick={() => handleNav(() => setPayrollViewMode('history'))} style={{ padding: '0.4rem 1rem', background: payrollViewMode === 'history' ? 'var(--accent-primary)' : 'transparent', color: payrollViewMode === 'history' ? '#fff' : 'var(--text-secondary)' }}>Paid History</button>
-                    </div>
-                  </div>
-
                   <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
-                     <label style={{ color: 'var(--text-secondary)' }}>From:</label>
-                     <input type="date" className="input-field" value={payrollStart} onChange={e => handleNav(() => setPayrollStart(e.target.value))} style={{ padding: '0.5rem', colorScheme: 'dark', flex: 1, minWidth: '130px' }} />
-                     <label style={{ color: 'var(--text-secondary)' }}>To:</label>
-                     <input type="date" className="input-field" value={payrollEnd} onChange={e => handleNav(() => setPayrollEnd(e.target.value))} style={{ padding: '0.5rem', colorScheme: 'dark', flex: 1, minWidth: '130px' }} />
+                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flex: 1, minWidth: '200px' }}>
+                      <label style={{ color: 'var(--text-secondary)' }}>From:</label>
+                      <input type="date" className="input-field" value={payrollStart} onChange={e => handleNav(() => setPayrollStart(e.target.value))} style={{ padding: '0.5rem', colorScheme: 'dark' }} />
+                    </div>
+                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flex: 1, minWidth: '200px' }}>
+                      <label style={{ color: 'var(--text-secondary)' }}>To:</label>
+                      <input type="date" className="input-field" value={payrollEnd} onChange={e => handleNav(() => setPayrollEnd(e.target.value))} style={{ padding: '0.5rem', colorScheme: 'dark' }} />
+                    </div>
                   </div>
                 </div>
 

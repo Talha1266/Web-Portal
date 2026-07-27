@@ -90,6 +90,16 @@ const UserDashboard = () => {
   const [mKaraya, setMKaraya] = useState('');
   const [mOrderDate, setMOrderDate] = useState(new Date().toISOString().split('T')[0]);
   const [mReceipt, setMReceipt] = useState(null); // Base64 image
+
+  const [isEditMaterialModalOpen, setIsEditMaterialModalOpen] = useState(false);
+  const [editMaterialObj, setEditMaterialObj] = useState(null);
+  const [emCategory, setEmCategory] = useState('');
+  const [emName, setEmName] = useState('');
+  const [emVendor, setEmVendor] = useState('');
+  const [emPrice, setEmPrice] = useState('');
+  const [emQty, setEmQty] = useState('');
+  const [emKaraya, setEmKaraya] = useState('');
+  const [emOrderDate, setEmOrderDate] = useState('');
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [newCatName, setNewCatName] = useState('');
   const [editingCategoryId, setEditingCategoryId] = useState(null);
@@ -991,6 +1001,49 @@ const [profileName, setProfileName] = useState('');
     });
     setMessageText('');
     await loadData();
+  };
+
+  const handleEditMaterialSubmit = async (e) => {
+    e.preventDefault();
+    triggerSecurityChallenge(`Modify material '${emName}'?`, 'MODIFY', async () => {
+      try {
+        let finalVendor = emVendor.trim();
+        if (finalVendor) {
+          const vendorExists = allVendors.some(v => v.projectId === activeProjectId && v.name.toLowerCase() === finalVendor.toLowerCase() && v.categoryName === emCategory);
+          if (!vendorExists) {
+            await addVendor(finalVendor, activeProjectId, emCategory);
+          }
+        }
+        await updateMaterial(editMaterialObj.id, {
+          category: emCategory,
+          itemName: emName,
+          vendorName: finalVendor || null,
+          unitPrice: Number(emPrice),
+          quantity: Number(emQty),
+          karaya: Number(emKaraya) || 0,
+          totalCost: (Number(emPrice) * Number(emQty)) + (Number(emKaraya) || 0),
+          orderDate: emOrderDate
+        });
+        setIsEditMaterialModalOpen(false);
+        setEditMaterialObj(null);
+        await loadData();
+        alert("Material updated successfully!");
+      } catch (err) {
+        alert("Error updating material: " + err.message);
+      }
+    });
+  };
+
+  const openEditMaterialModal = (m) => {
+    setEditMaterialObj(m);
+    setEmCategory(m.category);
+    setEmName(m.itemName);
+    setEmVendor(m.vendorName || '');
+    setEmPrice(m.unitPrice);
+    setEmQty(m.quantity);
+    setEmKaraya(m.karaya || '');
+    setEmOrderDate(m.orderDate);
+    setIsEditMaterialModalOpen(true);
   };
 
   const handleCreateMaterial = async (e) => {
@@ -2370,9 +2423,14 @@ const [profileName, setProfileName] = useState('');
                                   <input type="checkbox" checked={m.isPaid} onChange={() => handleToggleMaterial(m.id, 'isPaid', m.isPaid, m.createdAt)} style={{ width: '18px', height: '18px', accentColor: 'var(--success)', cursor: 'pointer' }}/>
                                 </td>
                                 <td style={{ padding: '1rem 0.5rem', textAlign: 'center' }}>
-                                  <button style={{ background: 'none', border: 'none', color: canModify ? 'var(--danger)' : 'var(--warning)', cursor: 'pointer', opacity: 0.7 }} onMouseEnter={e => e.currentTarget.style.opacity = 1} onMouseLeave={e => e.currentTarget.style.opacity = 0.7} onClick={(e) => handleDeleteMaterial(e, m)} title={canModify ? "Delete Order" : "Request Delete"}>
-                                    <Trash2 size={16} />
-                                  </button>
+                                  <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>
+                                    <button style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', opacity: 0.7 }} onMouseEnter={e => e.currentTarget.style.opacity = 1} onMouseLeave={e => e.currentTarget.style.opacity = 0.7} onClick={(e) => { e.stopPropagation(); openEditMaterialModal(m); }} title="Modify Order">
+                                      <Edit2 size={16} />
+                                    </button>
+                                    <button style={{ background: 'none', border: 'none', color: canModify ? 'var(--danger)' : 'var(--warning)', cursor: 'pointer', opacity: 0.7 }} onMouseEnter={e => e.currentTarget.style.opacity = 1} onMouseLeave={e => e.currentTarget.style.opacity = 0.7} onClick={(e) => handleDeleteMaterial(e, m)} title={canModify ? "Delete Order" : "Request Delete"}>
+                                      <Trash2 size={16} />
+                                    </button>
+                                  </div>
                                 </td>
                               </tr>
                             );
@@ -3233,6 +3291,66 @@ const [profileName, setProfileName] = useState('');
                 </div>
               </div>
               <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '1rem' }}><Package size={20}/> Submit Order</button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Material Order Modal */}
+      {isEditMaterialModalOpen && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(9, 9, 11, 0.5)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}>
+          <div className="glass-card animate-fade-in" style={{ padding: '2.5rem', width: '100%', maxWidth: '450px', maxHeight: '90vh', overflowY: 'auto', position: 'relative' }}>
+            <button onClick={() => { setIsEditMaterialModalOpen(false); setEditMaterialObj(null); }} style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}><X size={24} /></button>
+            <h2 className="heading-2" style={{ marginBottom: '1.5rem' }}>Modify Material Order</h2>
+            <form onSubmit={handleEditMaterialSubmit}>
+              <div className="input-group">
+                <label className="input-label">Order Date</label>
+                <input type="date" className="input-field" required value={emOrderDate} onChange={e => setEmOrderDate(e.target.value)} style={{ colorScheme: 'dark' }} />
+              </div>
+              <div className="input-group">
+                <label className="input-label">Category</label>
+                <select className="input-field" required value={emCategory} onChange={e => setEmCategory(e.target.value)} style={{ padding: '0.6rem', background: 'var(--glass-darker)' }}>
+                  <option value="" disabled>Select a category...</option>
+                  {materialCategories.filter(cat => cat.projectId === activeProjectId).map(cat => <option key={cat.id} value={cat.name}>{cat.name}</option>)}
+                </select>
+              </div>
+              <div className="input-group">
+                <label className="input-label">Vendor (Optional)</label>
+                <input type="text" list="edit-vendors-list" className="input-field" value={emVendor} onChange={e => setEmVendor(e.target.value)} placeholder={emCategory ? "Select or type new vendor..." : "Select a category first..."} disabled={!emCategory} />
+                <datalist id="edit-vendors-list">
+                  {allVendors.filter(v => v.projectId === activeProjectId && v.categoryName === emCategory).map(v => <option key={v.id} value={v.name} />)}
+                </datalist>
+              </div>
+              <div className="input-group">
+                <label className="input-label">Item Description</label>
+                <input type="text" className="input-field" required value={emName} onChange={e => setEmName(e.target.value)} placeholder="e.g. Portland Cement 50kg" />
+              </div>
+              <div style={{ display: 'flex', gap: '1rem' }}>
+                <div className="input-group" style={{ flex: 1 }}>
+                  <label className="input-label">Quantity</label>
+                  <input type="number" step="0.01" className="input-field" required value={emQty} onChange={e => setEmQty(e.target.value)} />
+                </div>
+                <div className="input-group" style={{ flex: 1 }}>
+                  <label className="input-label">Unit Price (Rs)</label>
+                  <input type="number" step="0.01" className="input-field" required value={emPrice} onChange={e => setEmPrice(e.target.value)} />
+                </div>
+              </div>
+              <div className="input-group">
+                <label className="input-label">Karaya / Freight (Rs) (Optional)</label>
+                <input type="number" step="0.01" className="input-field" value={emKaraya} onChange={e => setEmKaraya(e.target.value)} />
+              </div>
+              
+              <div style={{ marginTop: '2rem' }}>
+                <p style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
+                  <span>Total Material Cost:</span>
+                  <span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>Rs {(Number(emPrice) * Number(emQty)).toFixed(2)}</span>
+                </p>
+                <p style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
+                  <span>Total Cost (incl. Karaya):</span>
+                  <span style={{ color: 'var(--accent-primary)', fontWeight: 'bold', fontSize: '1.125rem' }}>Rs {((Number(emPrice) * Number(emQty)) + (Number(emKaraya) || 0)).toFixed(2)}</span>
+                </p>
+                <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '0.75rem', fontSize: '1rem' }}>Save Changes</button>
+              </div>
             </form>
           </div>
         </div>

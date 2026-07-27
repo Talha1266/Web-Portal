@@ -3280,7 +3280,7 @@ const [profileName, setProfileName] = useState('');
             </div>
 
             {reportConfig.includeMaterials && (
-              <div style={{ marginBottom: '40px' }}>
+              <div style={{ paddingBottom: '40px', breakInside: 'auto', pageBreakInside: 'auto' }}>
                 <h3 style={{ borderBottom: '2px solid black', paddingBottom: '5px', marginBottom: '10px' }}>Material Orders</h3>
                 <table className="print-table">
                   <thead>
@@ -3312,7 +3312,7 @@ const [profileName, setProfileName] = useState('');
             )}
 
             {reportConfig.includeSubcontractors && (
-              <div style={{ marginBottom: '40px' }}>
+              <div style={{ paddingBottom: '40px', breakInside: 'auto', pageBreakInside: 'auto' }}>
                 <h3 style={{ borderBottom: '2px solid black', paddingBottom: '5px', marginBottom: '10px' }}>Subcontractor Payments</h3>
                 <table className="print-table">
                   <thead>
@@ -3345,7 +3345,7 @@ const [profileName, setProfileName] = useState('');
             )}
 
             {reportConfig.includeLabour && (
-              <div style={{ marginBottom: '40px' }}>
+              <div style={{ paddingBottom: '40px', breakInside: 'auto', pageBreakInside: 'auto' }}>
                 <h3 style={{ borderBottom: '2px solid black', paddingBottom: '5px', marginBottom: '10px' }}>Labour & Payroll (Gross Wages Earned in Period)</h3>
                 <table className="print-table">
                   <thead>
@@ -3381,7 +3381,7 @@ const [profileName, setProfileName] = useState('');
             )}
 
             {reportConfig.includeExpenses && (
-              <div style={{ marginBottom: '40px' }}>
+              <div style={{ paddingBottom: '40px', breakInside: 'auto', pageBreakInside: 'auto' }}>
                 <h3 style={{ borderBottom: '2px solid black', paddingBottom: '5px', marginBottom: '10px' }}>Site Expenses</h3>
                 <table className="print-table">
                   <thead>

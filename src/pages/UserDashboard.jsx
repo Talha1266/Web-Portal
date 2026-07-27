@@ -213,7 +213,7 @@ const UserDashboard = () => {
       expenses, assets, tasks, messages, allProj
     ] = await Promise.all([
       getUsers(), getDocuments(), getWorkers(), getAttendance(), getSubcontractors(),
-      getSubPayments(), getChangeRequests(), getMaterials(), getMaterialCategories(activeProjectId), getVendors(activeProjectId), getSiteAdvances(),
+      getSubPayments(), getChangeRequests(), getMaterials(), getMaterialCategories(), getVendors(), getSiteAdvances(),
       getSiteExpenses(), getAssets(), getTasks(), getMessages(), getProjects()
     ]);
 
@@ -998,7 +998,7 @@ const [profileName, setProfileName] = useState('');
     try {
       let finalVendor = mVendor.trim();
       if (finalVendor) {
-        const vendorExists = allVendors.some(v => v.name.toLowerCase() === finalVendor.toLowerCase() && v.categoryName === mCategory);
+        const vendorExists = allVendors.some(v => v.projectId === activeProjectId && v.name.toLowerCase() === finalVendor.toLowerCase() && v.categoryName === mCategory);
         if (!vendorExists) {
           await addVendor(finalVendor, activeProjectId, mCategory);
         }
@@ -2267,6 +2267,7 @@ const [profileName, setProfileName] = useState('');
             )}
 
             {projectTab === 'materials' && (() => {
+              const projCategories = materialCategories.filter(c => c.projectId === activeProjectId);
               const projMaterials = allMaterials.filter(m => m.projectId === activeProjectId && (activeMaterialCategory === 'All' || m.category === activeMaterialCategory));
               
               const totalOrdered = projMaterials.reduce((acc, m) => acc + (m.totalCost || 0), 0);
@@ -2286,7 +2287,7 @@ const [profileName, setProfileName] = useState('');
 
                   <div style={{ display: 'flex', gap: '0.5rem', overflowX: 'auto', paddingBottom: '1rem', marginBottom: '1.5rem', borderBottom: '1px solid var(--border-strong)' }}>
                     <button className={`btn ${activeMaterialCategory === 'All' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setActiveMaterialCategory('All')} style={{ padding: '0.4rem 1rem', borderRadius: 'var(--radius-full)' }}>All Items</button>
-                    {materialCategories.map(cat => (
+                    {projCategories.map(cat => (
                       <button key={cat.id} className={`btn ${activeMaterialCategory === cat.name ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setActiveMaterialCategory(cat.name)} style={{ padding: '0.4rem 1rem', borderRadius: 'var(--radius-full)', whiteSpace: 'nowrap' }}>{cat.name}</button>
                     ))}
                   </div>
@@ -3022,7 +3023,7 @@ const [profileName, setProfileName] = useState('');
             <div style={{ marginBottom: '2rem', maxHeight: '300px', overflowY: 'auto', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-sm)' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <tbody>
-                  {allVendors.filter(v => v.categoryName === activeVendorCategory).map(v => (
+                  {allVendors.filter(v => v.projectId === activeProjectId && v.categoryName === activeVendorCategory).map(v => (
                     <tr key={v.id} style={{ borderBottom: '1px solid var(--border-subtle)' }}>
                       <td style={{ padding: '0.75rem 1rem' }}>
                         {editingVendorId === v.id ? (
@@ -3047,7 +3048,7 @@ const [profileName, setProfileName] = useState('');
                       </td>
                     </tr>
                   ))}
-                  {allVendors.filter(v => v.categoryName === activeVendorCategory).length === 0 && (
+                  {allVendors.filter(v => v.projectId === activeProjectId && v.categoryName === activeVendorCategory).length === 0 && (
                     <tr><td colSpan="2" style={{ padding: '1rem', textAlign: 'center', color: 'var(--text-muted)' }}>No vendors yet.</td></tr>
                   )}
                 </tbody>
@@ -3072,7 +3073,7 @@ const [profileName, setProfileName] = useState('');
             <div style={{ marginBottom: '2rem', maxHeight: '300px', overflowY: 'auto', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-sm)' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <tbody>
-                  {materialCategories.map(cat => (
+                  {materialCategories.filter(cat => cat.projectId === activeProjectId).map(cat => (
                     <tr key={cat.id} style={{ borderBottom: '1px solid var(--border-subtle)' }}>
                       <td style={{ padding: '0.75rem 1rem' }}>
                         {editingCategoryId === cat.id ? (
@@ -3100,7 +3101,7 @@ const [profileName, setProfileName] = useState('');
                       </td>
                     </tr>
                   ))}
-                  {materialCategories.length === 0 && (
+                  {materialCategories.filter(cat => cat.projectId === activeProjectId).length === 0 && (
                     <tr><td colSpan="2" style={{ padding: '1rem', textAlign: 'center', color: 'var(--text-muted)' }}>No categories yet.</td></tr>
                   )}
                 </tbody>
@@ -3126,14 +3127,14 @@ const [profileName, setProfileName] = useState('');
                 <label className="input-label">Category</label>
                 <select className="input-field" required value={mCategory} onChange={e => setMCategory(e.target.value)} style={{ padding: '0.6rem', background: 'var(--glass-darker)' }}>
                   <option value="" disabled>Select a category...</option>
-                  {materialCategories.map(cat => <option key={cat.id} value={cat.name}>{cat.name}</option>)}
+                  {materialCategories.filter(cat => cat.projectId === activeProjectId).map(cat => <option key={cat.id} value={cat.name}>{cat.name}</option>)}
                 </select>
               </div>
               <div className="input-group">
                 <label className="input-label">Vendor (Optional)</label>
                 <input type="text" list="vendors-list" className="input-field" value={mVendor} onChange={e => setMVendor(e.target.value)} placeholder={mCategory ? "Select or type new vendor..." : "Select a category first..."} disabled={!mCategory} />
                 <datalist id="vendors-list">
-                  {allVendors.filter(v => v.categoryName === mCategory).map(v => <option key={v.id} value={v.name} />)}
+                  {allVendors.filter(v => v.projectId === activeProjectId && v.categoryName === mCategory).map(v => <option key={v.id} value={v.name} />)}
                 </datalist>
               </div>
               <div className="input-group">

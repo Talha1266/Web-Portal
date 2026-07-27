@@ -58,7 +58,7 @@ export const addMaterial = async (m) => {  const { error } = await supabase.from
 export const updateMaterial = async (id, updates) => {  const { error } = await supabase.from('materials').update(updates).eq('id', id); if (error) throw new Error(error.message); };
 export const deleteMaterial = async (id) => {  const { error } = await supabase.from('materials').delete().eq('id', id); if (error) throw new Error(error.message); };
 
-export const getMaterialCategories = async (projectId) => { const { data } = await supabase.from('material_categories').select('*').eq('projectId', projectId); return data || []; };
+export const getMaterialCategories = async () => { const { data } = await supabase.from('material_categories').select('*'); return data || []; };
 export const addMaterialCategory = async (name, projectId) => {  const { error } = await supabase.from('material_categories').insert({ id: Date.now().toString(), name, projectId }); if (error) throw new Error(error.message); };
 export const updateMaterialCategory = async (oldName, newName, projectId) => {
   // Update all materials referencing this category in this project
@@ -69,7 +69,7 @@ export const updateMaterialCategory = async (oldName, newName, projectId) => {
 };
 export const deleteMaterialCategory = async (name, projectId) => {  const { error } = await supabase.from('material_categories').delete().eq('name', name).eq('projectId', projectId); if (error) throw new Error(error.message); };
 
-export const getVendors = async (projectId) => { const { data } = await supabase.from('vendors').select('*').eq('projectId', projectId); return data || []; };
+export const getVendors = async () => { const { data } = await supabase.from('vendors').select('*'); return data || []; };
 export const addVendor = async (name, projectId, categoryName) => {  const { error } = await supabase.from('vendors').insert({ name, projectId, categoryName }); if (error) throw new Error(error.message); };
 export const updateVendor = async (id, newName, projectId) => {
   const { data: oldVendor } = await supabase.from('vendors').select('name, categoryName').eq('id', id).single();

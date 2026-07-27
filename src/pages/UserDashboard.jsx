@@ -1295,7 +1295,7 @@ const [profileName, setProfileName] = useState('');
                           const projName = msg.channelId !== 'global' ? projects.find(p => p.id === msg.channelId)?.name : 'Global Chat';
                           const timeStr = new Date(msg.createdAt).toLocaleString();
                           return (
-                            <li key={msg.id} style={{ padding: '1rem', background: 'var(--glass-hover)', borderRadius: 'var(--radius-sm)', marginBottom: '0.5rem', borderLeft: '4px solid var(--accent-secondary)' }}>
+                            <li key={msg.id} style={{ padding: '1rem', background: 'var(--bg-tertiary)', borderRadius: 'var(--radius-sm)', marginBottom: '0.5rem', borderLeft: '4px solid var(--accent-secondary)' }}>
                               <strong style={{ color: 'var(--text-primary)' }}>{sender}</strong> <span style={{ fontSize: '0.75rem', opacity: 0.6 }}>in {projName} • {timeStr}</span>
                               <p style={{ marginTop: '0.25rem', fontSize: '0.875rem' }}>{msg.text}</p>
                             </li>
@@ -1351,7 +1351,7 @@ const [profileName, setProfileName] = useState('');
                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><MapPin size={14} color="var(--accent-primary)"/> {project.location}</div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Building size={14} color="var(--accent-primary)"/> {project.client}</div>
                         </div>
-                        <div style={{ marginBottom: '1rem', padding: '1rem', background: 'var(--glass-hover)', borderRadius: 'var(--radius-sm)' }}>
+                        <div style={{ marginBottom: '1rem', padding: '1rem', background: 'var(--bg-tertiary)', borderRadius: 'var(--radius-sm)' }}>
                            <p style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-muted)' }}>Total Expended Cost</p>
                            <p style={{ fontSize: '1.25rem', fontWeight: 'bold', color: 'var(--text-primary)' }}>Rs {calculateTotalProjectCost(project.id).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
                         </div>
@@ -1360,7 +1360,7 @@ const [profileName, setProfileName] = useState('');
                             <span style={{ fontWeight: 500 }}>Progress</span>
                             <span style={{ color: 'var(--text-secondary)' }}>{project.progress}%</span>
                           </div>
-                          <div style={{ width: '100%', background: 'var(--glass-darker)', height: '8px', borderRadius: '4px', overflow: 'hidden' }}>
+                          <div style={{ width: '100%', background: 'var(--border-subtle)', height: '8px', borderRadius: '4px', overflow: 'hidden' }}>
                             <div style={{ width: `${project.progress}%`, height: '100%', background: 'var(--accent-gradient)' }}></div>
                           </div>
                         </div>
@@ -2511,7 +2511,7 @@ const [profileName, setProfileName] = useState('');
                             <td style={{ padding: '1rem 0.5rem', textAlign: 'center', fontWeight: 500 }}>{asset.quantity || 1}</td>
                             <td style={{ padding: '1rem 0.5rem', color: 'var(--text-secondary)' }}>{asset.dateMobilized}</td>
                             <td style={{ padding: '1rem 0.5rem' }}>
-                              <span style={{ fontSize: '0.75rem', padding: '0.2rem 0.5rem', borderRadius: '4px', background: asset.status === 'Mobilized' ? 'rgba(99, 102, 241, 0.2)' : 'var(--border-strong)', color: asset.status === 'Mobilized' ? 'var(--accent-primary)' : 'var(--text-muted)' }}>
+                              <span style={{ fontSize: '0.75rem', padding: '0.2rem 0.5rem', borderRadius: '4px', background: asset.status === 'Mobilized' ? 'var(--accent-light)' : 'var(--bg-tertiary)', color: asset.status === 'Mobilized' ? 'var(--accent-primary)' : 'var(--text-muted)' }}>
                                 {asset.status} {asset.status === 'Returned' && `(${asset.dateReturned})`}
                               </span>
                             </td>

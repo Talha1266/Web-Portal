@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LayoutDashboard, HardHat, FileText, MessageSquare, LogOut, Plus, Edit2, Trash2, PieChart, Shield, X, MapPin, Building, Calendar, Users, Folder, FolderPlus, UploadCloud, ChevronRight, ArrowLeft, CheckSquare, Settings, ClipboardList, DollarSign, CheckCircle, Briefcase, Package, CreditCard, Truck, AlertTriangle, Menu, Unlock, Printer } from 'lucide-react';
-import { getUsers, getProjects, addProject, updateProject, deleteProject, getDocuments, addDocument, deleteDocument, getWorkers, addWorker, deleteWorker, getAttendance, saveAttendance, markAttendancePaid, markAllAttendancePaid, deleteAttendanceRecords, getSubcontractors, addSubcontractor, updateSubcontractor, deleteSubcontractor, getSubPayments, addSubPayment, deleteSubPayment, updateSubPayment, getChangeRequests, addChangeRequest, updateChangeRequestStatus, getMaterials, addMaterial, updateMaterial, deleteMaterial, getMaterialCategories, addMaterialCategory, getSiteAdvances, addSiteAdvance, updateSiteAdvance, deleteSiteAdvance, getSiteExpenses, addSiteExpense, updateSiteExpense, deleteSiteExpense, addAdvanceOnlyRecord, revertAttendancePaid, getAssets, addAsset, updateAsset, deleteAsset, saveFileContentToDB, getFileContentFromDB, deleteFileContentFromDB, getTasks, addTask, updateTask, deleteTask, getMessages, addMessage, updateUserProfile } from '../utils/db';
+import { getUsers, getProjects, addProject, updateProject, deleteProject, getDocuments, addDocument, deleteDocument, getWorkers, addWorker, deleteWorker, getAttendance, saveAttendance, markAttendancePaid, markAllAttendancePaid, deleteAttendanceRecords, getSubcontractors, addSubcontractor, updateSubcontractor, deleteSubcontractor, getSubPayments, addSubPayment, deleteSubPayment, updateSubPayment, getChangeRequests, addChangeRequest, updateChangeRequestStatus, getMaterials, addMaterial, updateMaterial, deleteMaterial, getMaterialCategories, addMaterialCategory, updateMaterialCategory, deleteMaterialCategory, getSiteAdvances, addSiteAdvance, updateSiteAdvance, deleteSiteAdvance, getSiteExpenses, addSiteExpense, updateSiteExpense, deleteSiteExpense, addAdvanceOnlyRecord, revertAttendancePaid, getAssets, addAsset, updateAsset, deleteAsset, saveFileContentToDB, getFileContentFromDB, deleteFileContentFromDB, getTasks, addTask, updateTask, deleteTask, getMessages, addMessage, updateUserProfile } from '../utils/db';
 import { supabase } from '../supabaseClient';
 import { PieChart as RechartsPieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 
@@ -90,6 +90,8 @@ const UserDashboard = () => {
   const [mReceipt, setMReceipt] = useState(null); // Base64 image
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [newCatName, setNewCatName] = useState('');
+  const [editingCategoryId, setEditingCategoryId] = useState(null);
+  const [editingCategoryName, setEditingCategoryName] = useState('');
   
   // Modals & State - Site Expenses
   const [isAdvanceModalOpen, setIsAdvanceModalOpen] = useState(false);
@@ -766,10 +768,42 @@ const [profileName, setProfileName] = useState('');
   const handleCreateCategory = async (e) => {
     e.preventDefault();
     if (newCatName.trim() === '') return;
-    await addMaterialCategory(newCatName.trim());
-    setNewCatName('');
-    setIsCategoryModalOpen(false);
-    await loadData();
+    try {
+      await addMaterialCategory(newCatName.trim());
+      setNewCatName('');
+      await loadData();
+    } catch(err) {
+      alert("Error: " + err.message);
+    }
+  };
+
+  const handleDeleteCategory = async (catName) => {
+    triggerSecurityChallenge(`Delete category '${catName}'?`, 'DELETE', async () => {
+      try {
+        await deleteMaterialCategory(catName);
+        if (activeMaterialCategory === catName) setActiveMaterialCategory('All');
+        await loadData();
+      } catch(err) {
+        alert('Error: ' + err.message);
+      }
+    });
+  };
+
+  const handleUpdateCategory = async (oldName) => {
+    if (!editingCategoryName.trim() || editingCategoryName.trim() === oldName) {
+      setEditingCategoryId(null);
+      return;
+    }
+    triggerSecurityChallenge(`Rename category from '${oldName}' to '${editingCategoryName.trim()}'?`, 'MODIFY', async () => {
+      try {
+        await updateMaterialCategory(oldName, editingCategoryName.trim());
+        if (activeMaterialCategory === oldName) setActiveMaterialCategory(editingCategoryName.trim());
+        setEditingCategoryId(null);
+        await loadData();
+      } catch(err) {
+        alert('Error: ' + err.message);
+      }
+    });
   };
 
   const openEditAssetModal = (asset) => {
@@ -2186,7 +2220,7 @@ const [profileName, setProfileName] = useState('');
                   <div className="flex-between" style={{ marginBottom: '2rem', flexWrap: 'wrap', gap: '1.5rem' }}>
                     <h3 className="heading-3" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Package size={20} className="text-gradient"/> Material Procurement</h3>
                     <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-                      <button className="btn btn-secondary" onClick={() => setIsCategoryModalOpen(true)}>+ New Category</button>
+                      <button className="btn btn-secondary" onClick={() => setIsCategoryModalOpen(true)}><Settings size={16}/> Manage Categories</button>
                       <button className="btn btn-primary" onClick={() => setIsMaterialModalOpen(true)}>+ Log Material Order</button>
                     </div>
                   </div>
@@ -2919,16 +2953,49 @@ const [profileName, setProfileName] = useState('');
 
       {/* Category Modal */}
       {isCategoryModalOpen && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(15, 23, 42, 0.4)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}>
-          <div className="glass-card animate-fade-in" style={{ padding: '2.5rem', width: '100%', maxWidth: '400px', maxHeight: '90vh', overflowY: 'auto', position: 'relative' }}>
-            <button onClick={() => setIsCategoryModalOpen(false)} style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}><X size={24} /></button>
-            <h2 className="heading-2" style={{ marginBottom: '1.5rem' }}>New Material Category</h2>
-            <form onSubmit={handleCreateCategory}>
-              <div className="input-group">
-                <label className="input-label">Category Name</label>
-                <input type="text" className="input-field" required autoFocus value={newCatName} onChange={e => setNewCatName(e.target.value)} placeholder="e.g. Scaffolding" />
-              </div>
-              <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '1rem' }}><Plus size={20}/> Add Category</button>
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(9, 9, 11, 0.5)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}>
+          <div className="glass-card animate-fade-in" style={{ padding: '2.5rem', width: '100%', maxWidth: '500px', maxHeight: '90vh', overflowY: 'auto', position: 'relative' }}>
+            <button onClick={() => { setIsCategoryModalOpen(false); setEditingCategoryId(null); }} style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}><X size={24} /></button>
+            <h2 className="heading-2" style={{ marginBottom: '1.5rem' }}>Manage Categories</h2>
+            
+            <div style={{ marginBottom: '2rem', maxHeight: '300px', overflowY: 'auto', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-sm)' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <tbody>
+                  {materialCategories.map(cat => (
+                    <tr key={cat.id} style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+                      <td style={{ padding: '0.75rem 1rem' }}>
+                        {editingCategoryId === cat.id ? (
+                          <input type="text" className="input-field" autoFocus value={editingCategoryName} onChange={e => setEditingCategoryName(e.target.value)} style={{ padding: '0.4rem 0.75rem', fontSize: '0.875rem' }} />
+                        ) : (
+                          <span style={{ fontWeight: 500, color: 'var(--text-primary)' }}>{cat.name}</span>
+                        )}
+                      </td>
+                      <td style={{ padding: '0.75rem 1rem', textAlign: 'right', whiteSpace: 'nowrap' }}>
+                        {editingCategoryId === cat.id ? (
+                          <button className="btn btn-primary" onClick={() => handleUpdateCategory(cat.name)} style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem' }}>Save</button>
+                        ) : (
+                          <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                            <button className="btn btn-secondary" onClick={() => { setEditingCategoryId(cat.id); setEditingCategoryName(cat.name); }} style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem' }} title="Modify">
+                              <Edit2 size={14} />
+                            </button>
+                            <button className="btn btn-danger" onClick={() => handleDeleteCategory(cat.name)} style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem' }} title="Delete">
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                  {materialCategories.length === 0 && (
+                    <tr><td colSpan="2" style={{ padding: '1rem', textAlign: 'center', color: 'var(--text-muted)' }}>No categories yet.</td></tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            <form onSubmit={handleCreateCategory} style={{ display: 'flex', gap: '0.5rem' }}>
+              <input type="text" className="input-field" required value={newCatName} onChange={e => setNewCatName(e.target.value)} placeholder="Add new category..." style={{ flex: 1 }} />
+              <button type="submit" className="btn btn-primary"><Plus size={18}/> Add</button>
             </form>
           </div>
         </div>

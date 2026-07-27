@@ -60,6 +60,13 @@ export const deleteMaterial = async (id) => {  const { error } = await supabase.
 
 export const getMaterialCategories = async () => { const { data } = await supabase.from('material_categories').select('*'); return data || []; };
 export const addMaterialCategory = async (name) => {  const { error } = await supabase.from('material_categories').insert({ name, id: name }); if (error) throw new Error(error.message); };
+export const updateMaterialCategory = async (oldName, newName) => {
+  // Update all materials referencing this category
+  await supabase.from('materials').update({ category: newName }).eq('category', oldName);
+  // Update the category itself
+  const { error } = await supabase.from('material_categories').update({ id: newName, name: newName }).eq('id', oldName);
+  if (error) throw new Error(error.message);
+};
 export const deleteMaterialCategory = async (name) => {  const { error } = await supabase.from('material_categories').delete().eq('name', name); if (error) throw new Error(error.message); };
 
 export const getSiteAdvances = async () => { const { data } = await supabase.from('site_advances').select('*'); return data || []; };

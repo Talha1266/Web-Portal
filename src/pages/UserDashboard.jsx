@@ -861,16 +861,38 @@ const [profileName, setProfileName] = useState('');
 
   const handleToggleMaterial = async (id, field, currentValue, createdAt) => {
     const canModify = canModifyEntry(createdAt);
+    const material = allMaterials.find(m => m.id === id);
+
+    let payload = { [field]: !currentValue };
+
+    if (field === 'isArrived' && !currentValue) {
+      const receivedQtyStr = prompt('How many units were actually received?', material.quantity);
+      if (receivedQtyStr === null) return; // User cancelled
+
+      const receivedQty = Number(receivedQtyStr);
+      if (isNaN(receivedQty) || receivedQty < 0) {
+        alert('Invalid quantity entered.');
+        return;
+      }
+
+      payload.orderedQuantity = material.orderedQuantity || material.quantity;
+      payload.quantity = receivedQty;
+      payload.totalCost = (receivedQty * Number(material.unitPrice)) + Number(material.karaya);
+    } else if (field === 'isArrived' && currentValue) {
+      // Reverting back to unarrived, restore original quantity
+      payload.quantity = material.orderedQuantity || material.quantity;
+      payload.totalCost = (payload.quantity * Number(material.unitPrice)) + Number(material.karaya);
+    }
 
     if (canModify) {
-      await updateMaterial(id, { [field]: !currentValue });
+      await updateMaterial(id, payload);
       await loadData();
     } else {
       await addChangeRequest({
         type: 'EDIT_MATERIAL',
         targetId: id,
         requestedBy: currentUser.id,
-        payload: { [field]: !currentValue }
+        payload
       });
       await loadData();
       alert('Modification request sent to Admin.');
@@ -2130,7 +2152,11 @@ const [profileName, setProfileName] = useState('');
                                 <td style={{ padding: '1rem 0.5rem', color: 'var(--text-secondary)' }}>{m.orderDate}</td>
                                 <td style={{ padding: '1rem 0.5rem', fontWeight: 500 }}>
                                   {m.itemName} <br/>
-                                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{m.quantity} units @ Rs {m.unitPrice}</span>
+                                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                                    {m.isArrived && m.orderedQuantity && Number(m.quantity) !== Number(m.orderedQuantity)
+                                      ? `${m.quantity} received (of ${m.orderedQuantity} ordered)`
+                                      : `${m.quantity} units`} @ Rs {m.unitPrice}
+                                  </span>
                                 </td>
                                 <td style={{ padding: '1rem 0.5rem', color: 'var(--text-secondary)' }}>{m.category}</td>
                                 <td style={{ padding: '1rem 0.5rem', textAlign: 'right', color: 'var(--text-secondary)' }}>Rs {m.karaya || 0}</td>

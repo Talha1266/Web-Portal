@@ -108,7 +108,7 @@ const UserDashboard = () => {
   const [isSettleModalOpen, setIsSettleModalOpen] = useState(false);
   const [settleWorkerId, setSettleWorkerId] = useState(null);
   const [settleAdvance, setSettleAdvance] = useState('');
-  const [settleAdvancesFlag, setSettleAdvancesFlag] = useState(true);
+  const [settleNetOwed, setSettleNetOwed] = useState(0);
   
   const [isWorkerAdvanceModalOpen, setIsWorkerAdvanceModalOpen] = useState(false);
   const [workerAdvanceWorkerId, setWorkerAdvanceWorkerId] = useState(null);
@@ -585,25 +585,29 @@ const [profileName, setProfileName] = useState('');
     }
   };
 
-  const handleOpenSettleModal = async (wId) => {
+  const handleOpenSettleModal = async (wId, owed) => {
     setSettleWorkerId(wId);
-    setSettleAdvance('');
-    setSettleAdvancesFlag(true);
+    setSettleNetOwed(owed);
+    setSettleAdvance(owed.toString());
     setIsSettleModalOpen(true);
   };
 
   const handleConfirmSettle = async (e) => {
     e.preventDefault();
-    triggerSecurityChallenge(`Are you sure you want to mark these wages as paid?${!settleAdvancesFlag ? ' (Note: Advances will remain outstanding)' : ''}`, "PAY", async () => {
-      await markAttendancePaid(activeProjectId, settleWorkerId, payrollStart, payrollEnd, settleAdvancesFlag);
+    triggerSecurityChallenge(`Are you sure you want to mark these wages as paid?`, "PAY", async () => {
+      const amountPaid = Number(settleAdvance);
+      const difference = amountPaid - settleNetOwed;
       
-      if (Number(settleAdvance) > 0) {
-         await addAdvanceOnlyRecord(activeProjectId, settleWorkerId, Number(settleAdvance), currentUser.id);
+      await markAttendancePaid(activeProjectId, settleWorkerId, payrollStart, payrollEnd, false);
+      
+      if (difference !== 0) {
+         await addAdvanceOnlyRecord(activeProjectId, settleWorkerId, difference, currentUser.id);
       }
       
       setIsSettleModalOpen(false);
       setSettleWorkerId(null);
       setSettleAdvance('');
+      setSettleNetOwed(0);
       await loadData();
     });
   };
@@ -1932,7 +1936,7 @@ const [profileName, setProfileName] = useState('');
                                  </td>
                                  {payrollViewMode === 'outstanding' ? (
                                    <td style={{ padding: '1rem 0.5rem', textAlign: 'center', display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>
-                                     <button className={`btn ${owed > 0 ? 'btn-primary' : 'btn-secondary'}`} onClick={() => handleOpenSettleModal(wId)} style={{ padding: '0.4rem 0.75rem', fontSize: '0.75rem' }} title={owed > 0 ? "Mark as Paid" : "Clear Account"}>
+                                     <button className={`btn ${owed > 0 ? 'btn-primary' : 'btn-secondary'}`} onClick={() => handleOpenSettleModal(wId, owed)} style={{ padding: '0.4rem 0.75rem', fontSize: '0.75rem' }} title={owed > 0 ? "Mark as Paid" : "Clear Account"}>
                                        <CheckCircle size={14} /> {owed > 0 ? 'Settle' : 'Clear'}
                                      </button>
                                      <button className="btn btn-secondary" onClick={() => handleOpenWorkerAdvanceModal(wId)} style={{ padding: '0.4rem 0.75rem', fontSize: '0.75rem', background: 'transparent', border: '1px solid var(--accent-primary)', color: 'var(--accent-primary)' }} title="Issue Cash Advance">
@@ -3018,16 +3022,14 @@ const [profileName, setProfileName] = useState('');
           <div className="glass-card animate-fade-in" style={{ padding: '2.5rem', width: '100%', maxWidth: '400px', maxHeight: '90vh', overflowY: 'auto', position: 'relative' }}>
             <button onClick={() => { setIsSettleModalOpen(false); setSettleWorkerId(null); }} style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}><X size={24} /></button>
             <h2 className="heading-2" style={{ marginBottom: '1.5rem' }}>Settle Payroll</h2>
-            <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem', fontSize: '0.875rem' }}>This will mark outstanding wages in this date range as paid. You can optionally issue a new cash advance to this worker for the upcoming week below.</p>
+            <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem', fontSize: '0.875rem' }}>
+              The system calculated that you owe <strong>Rs {settleNetOwed.toFixed(2)}</strong> for this period. 
+              Enter the actual amount you are paying. Any difference will automatically be adjusted as a carried-forward balance or an advance.
+            </p>
             <form onSubmit={handleConfirmSettle}>
-              <div className="input-group" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem' }}>
-                <input type="checkbox" id="settleAdvancesFlag" checked={settleAdvancesFlag} onChange={e => setSettleAdvancesFlag(e.target.checked)} style={{ width: '18px', height: '18px', accentColor: 'var(--accent-primary)', cursor: 'pointer' }} />
-                <label htmlFor="settleAdvancesFlag" style={{ cursor: 'pointer', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>Settle previously issued advances too</label>
-              </div>
               <div className="input-group">
-                <label className="input-label">Additional Advance (Rs) - Optional</label>
-                <input type="number" className="input-field" min="0" step="1" value={settleAdvance} onChange={e => setSettleAdvance(e.target.value)} placeholder="0" />
-                <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>This amount will be deducted from their future earnings.</p>
+                <label className="input-label">Amount Paid (Rs)</label>
+                <input type="number" className="input-field" step="0.01" value={settleAdvance} onChange={e => setSettleAdvance(e.target.value)} required placeholder="Enter amount paid" />
               </div>
               <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '1rem', background: 'var(--success)', borderColor: 'var(--success)' }}><CheckCircle size={20}/> Confirm Settlement</button>
             </form>

@@ -2886,11 +2886,11 @@ const [profileName, setProfileName] = useState('');
               </div>
               <div className="input-group">
                 <label className="input-label">Trade / Role</label>
-                <input type="text" className="input-field" required value={ewTrade} onChange={e => setEwTrade(e.target.value)} />
+                <input type="text" className="input-field" value={ewTrade} onChange={e => setEwTrade(e.target.value)} />
               </div>
               <div className="input-group">
                 <label className="input-label">Daily Wage (Rs) - 8 Hours</label>
-                <input type="number" className="input-field" required min="1" step="1" value={ewWage} onChange={e => setEwWage(e.target.value)} />
+                <input type="number" className="input-field" step="1" value={ewWage} onChange={e => setEwWage(e.target.value)} />
                 <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.5rem' }}>Note: Changing the daily wage only affects future attendance. Past attendance will use the historical wage at the time of logging.</p>
               </div>
               <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '1rem' }}><Edit2 size={20}/> Save Changes</button>

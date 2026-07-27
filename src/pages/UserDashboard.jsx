@@ -1841,11 +1841,11 @@ const [profileName, setProfileName] = useState('');
                     </div>
                   </div>
 
-                  <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                  <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
                      <label style={{ color: 'var(--text-secondary)' }}>From:</label>
-                     <input type="date" className="input-field" value={payrollStart} onChange={e => handleNav(() => setPayrollStart(e.target.value))} style={{ padding: '0.5rem', colorScheme: 'dark' }} />
+                     <input type="date" className="input-field" value={payrollStart} onChange={e => handleNav(() => setPayrollStart(e.target.value))} style={{ padding: '0.5rem', colorScheme: 'dark', flex: 1, minWidth: '130px' }} />
                      <label style={{ color: 'var(--text-secondary)' }}>To:</label>
-                     <input type="date" className="input-field" value={payrollEnd} onChange={e => handleNav(() => setPayrollEnd(e.target.value))} style={{ padding: '0.5rem', colorScheme: 'dark' }} />
+                     <input type="date" className="input-field" value={payrollEnd} onChange={e => handleNav(() => setPayrollEnd(e.target.value))} style={{ padding: '0.5rem', colorScheme: 'dark', flex: 1, minWidth: '130px' }} />
                   </div>
                 </div>
 
@@ -2168,9 +2168,9 @@ const [profileName, setProfileName] = useState('');
                     ))}
                   </div>
 
-                  <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
-                    <button className={`btn ${materialViewMode === 'active' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setMaterialViewMode('active')} style={{ flex: 1 }}>Active Orders</button>
-                    <button className={`btn ${materialViewMode === 'history' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setMaterialViewMode('history')} style={{ flex: 1 }}>Payment History</button>
+                  <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
+                    <button className={`btn ${materialViewMode === 'active' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setMaterialViewMode('active')} style={{ flex: 1, minWidth: '150px' }}>Active Orders</button>
+                    <button className={`btn ${materialViewMode === 'history' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setMaterialViewMode('history')} style={{ flex: 1, minWidth: '150px' }}>Payment History</button>
                   </div>
 
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))', gap: '1.5rem', marginBottom: '2.5rem' }}>
@@ -3141,7 +3141,7 @@ const [profileName, setProfileName] = useState('');
                 </div>
                 <div className="input-group" style={{ flex: 1, marginBottom: 0 }}>
                   <label className="input-label">Due Date</label>
-                  <input type="date" className="input-field" value={taskDueDate} onChange={e => setTaskDueDate(e.target.value)} style={{ colorScheme: 'dark' }} />
+                  <input type="date" className="input-field" value={taskDueDate} onChange={e => setTaskDueDate(e.target.value)} style={{ colorScheme: 'dark', flex: 1, minWidth: '130px' }} />
                 </div>
               </div>
               <button type="submit" className="btn btn-primary" style={{ width: '100%' }}>Create Task</button>

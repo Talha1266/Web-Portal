@@ -150,6 +150,7 @@ const UserDashboard = () => {
     includeMaterials: true,
     includeLabour: true,
     includeSubcontractors: true,
+    includeExpenses: true,
   });
 
   // Modals & State - Security Challenge
@@ -3214,6 +3215,10 @@ const [profileName, setProfileName] = useState('');
                 <input type="checkbox" checked={reportConfig.includeLabour} onChange={e => setReportConfig({...reportConfig, includeLabour: e.target.checked})} style={{ width: '18px', height: '18px' }} />
                 Include Labour & Payroll Data
               </label>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                <input type="checkbox" checked={reportConfig.includeExpenses} onChange={e => setReportConfig({...reportConfig, includeExpenses: e.target.checked})} style={{ width: '18px', height: '18px' }} />
+                Include Site Expenses Data
+              </label>
             </div>
 
             <div style={{ display: 'flex', gap: '1rem' }}>
@@ -3239,6 +3244,7 @@ const [profileName, setProfileName] = useState('');
 
         const repMaterials = allMaterials.filter(m => m.projectId === activeProjectId && isWithinDate(m.orderDate));
         const repSubs = allSubPayments.filter(p => p.projectId === activeProjectId && isWithinDate(p.date));
+        const repExpenses = allSiteExpenses.filter(e => e.projectId === activeProjectId && isWithinDate(e.date));
         
         const repAttendance = allAttendance.filter(a => a.projectId === activeProjectId && isWithinDate(a.date));
         const workerTotals = {};
@@ -3257,6 +3263,7 @@ const [profileName, setProfileName] = useState('');
 
         const matTotal = repMaterials.reduce((acc, m) => acc + Number(m.totalCost || 0), 0);
         const subTotal = repSubs.reduce((acc, p) => acc + Number(p.amount || 0), 0);
+        const expTotal = repExpenses.reduce((acc, e) => acc + Number(e.amount || 0), 0);
         const labTotal = Object.values(workerTotals).reduce((acc, val) => acc + val.gross, 0);
 
         return (
@@ -3371,12 +3378,54 @@ const [profileName, setProfileName] = useState('');
                   </tbody>
                 </table>
               </div>
+            {reportConfig.includeExpenses && (
+              <div style={{ marginBottom: '40px' }}>
+                <h3 style={{ borderBottom: '2px solid black', paddingBottom: '5px', marginBottom: '10px' }}>Site Expenses</h3>
+                <table className="print-table">
+                  <thead>
+                    <tr>
+                      <th>Date</th>
+                      <th>Description</th>
+                      <th>Paid By</th>
+                      <th>Amount</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {repExpenses.map(e => (
+                      <tr key={e.id}>
+                        <td>{e.date}</td>
+                        <td>{e.description}</td>
+                        <td>{e.paidBy}</td>
+                        <td>Rs {Number(e.amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                      </tr>
+                    ))}
+                    <tr>
+                      <td colSpan="3" style={{ textAlign: 'right', fontWeight: 'bold' }}>Sub-Total Expenses:</td>
+                      <td style={{ fontWeight: 'bold' }}>Rs {expTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
             )}
 
             <div style={{ marginTop: '50px', textAlign: 'right', fontSize: '18px' }}>
               <strong>Grand Total For Period: </strong> 
-              <span style={{ borderBottom: '2px double black' }}>Rs {(matTotal + subTotal + labTotal).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+              <span style={{ borderBottom: '2px double black' }}>Rs {(matTotal + subTotal + labTotal + expTotal).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
             </div>
+
+            {reportConfig.includeExpenses && repExpenses.some(e => e.receiptImage) && (
+              <div style={{ marginTop: '60px', pageBreakBefore: 'always' }}>
+                <h3 style={{ borderBottom: '2px solid black', paddingBottom: '5px', marginBottom: '20px' }}>Expense Receipts & Attachments</h3>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '20px' }}>
+                  {repExpenses.filter(e => e.receiptImage).map(e => (
+                    <div key={`receipt-${e.id}`} style={{ border: '1px solid #ccc', padding: '10px', pageBreakInside: 'avoid' }}>
+                      <p style={{ margin: '0 0 10px 0', fontWeight: 'bold', fontSize: '12px' }}>{e.date} - {e.description} (Rs {Number(e.amount).toLocaleString()})</p>
+                      <img src={e.receiptImage} alt={e.description} style={{ width: '100%', height: 'auto', maxHeight: '300px', objectFit: 'contain' }} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
             
             <div className="print-only" style={{ marginTop: '100px', display: 'none' }}>
               <p>Generated by App: {new Date().toLocaleString()}</p>

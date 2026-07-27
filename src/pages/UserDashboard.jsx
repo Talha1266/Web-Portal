@@ -79,6 +79,7 @@ const UserDashboard = () => {
 
   // Modals & State - Materials
   const [activeMaterialCategory, setActiveMaterialCategory] = useState('All');
+  const [materialViewMode, setMaterialViewMode] = useState('active'); // 'active' or 'history'
   const [isMaterialModalOpen, setIsMaterialModalOpen] = useState(false);
   const [mCategory, setMCategory] = useState('');
   const [mName, setMName] = useState('');
@@ -2131,6 +2132,11 @@ const [profileName, setProfileName] = useState('');
                     ))}
                   </div>
 
+                  <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
+                    <button className={`btn ${materialViewMode === 'active' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setMaterialViewMode('active')} style={{ flex: 1 }}>Active Orders</button>
+                    <button className={`btn ${materialViewMode === 'history' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setMaterialViewMode('history')} style={{ flex: 1 }}>Payment History</button>
+                  </div>
+
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))', gap: '1.5rem', marginBottom: '2.5rem' }}>
                      <div style={{ background: 'rgba(0,0,0,0.2)', padding: '1.5rem', borderRadius: 'var(--radius-md)' }}>
                        <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginBottom: '0.5rem' }}>Total Ordered</p>
@@ -2169,7 +2175,7 @@ const [profileName, setProfileName] = useState('');
                           </tr>
                         </thead>
                         <tbody>
-                          {projMaterials.sort((a,b) => new Date(b.orderDate) - new Date(a.orderDate)).map(m => {
+                          {projMaterials.filter(m => materialViewMode === 'active' ? !m.isPaid : m.isPaid).sort((a,b) => new Date(b.orderDate) - new Date(a.orderDate)).map(m => {
                             const canModify = canModifyEntry(m.createdAt);
                             
                             return (

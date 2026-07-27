@@ -1838,6 +1838,8 @@ const [profileName, setProfileName] = useState('');
                     <div style={{ display: 'flex', background: 'var(--glass-hover)', padding: '0.25rem', borderRadius: 'var(--radius-md)' }}>
                       <button className={`btn ${payrollViewMode === 'outstanding' ? 'btn-primary' : ''}`} onClick={() => handleNav(() => setPayrollViewMode('outstanding'))} style={{ padding: '0.4rem 1rem', background: payrollViewMode === 'outstanding' ? 'var(--accent-primary)' : 'transparent', color: payrollViewMode === 'outstanding' ? '#fff' : 'var(--text-secondary)' }}>Outstanding</button>
                       <button className={`btn ${payrollViewMode === 'history' ? 'btn-primary' : ''}`} onClick={() => handleNav(() => setPayrollViewMode('history'))} style={{ padding: '0.4rem 1rem', background: payrollViewMode === 'history' ? 'var(--accent-primary)' : 'transparent', color: payrollViewMode === 'history' ? '#fff' : 'var(--text-secondary)' }}>Paid History</button>
+                    </div>
+                  </div>
                   <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
                     <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flex: 1, minWidth: '200px' }}>
                       <label style={{ color: 'var(--text-secondary)' }}>From:</label>

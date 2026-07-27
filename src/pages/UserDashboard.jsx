@@ -671,11 +671,11 @@ const [profileName, setProfileName] = useState('');
 
   const handleDeleteSub = async (e, id) => {
     e.stopPropagation();
-    if (window.confirm("Delete this subcontractor and all their ledger history?")) {
+    triggerSecurityChallenge("Delete this subcontractor and all their ledger history?", "DELETE", async () => {
       await deleteSubcontractor(id);
       await loadData();
       if (activeSubId === id) setActiveSubId(null);
-    }
+    });
   };
 
   const handleCreateSubPay = async (e) => {
@@ -797,10 +797,10 @@ const [profileName, setProfileName] = useState('');
   };
 
   const handleDeleteAsset = async (id) => {
-    if (window.confirm('Delete this asset record?')) {
+    triggerSecurityChallenge('Delete this asset record?', 'DELETE', async () => {
       await deleteAsset(id);
       await loadData();
-    }
+    });
   };
 
   // --- Kanban Tasks Logic ---
@@ -822,10 +822,10 @@ const [profileName, setProfileName] = useState('');
 
   const handleDeleteTask = async (e, id) => {
     e.stopPropagation();
-    if (window.confirm('Delete this task?')) {
+    triggerSecurityChallenge('Delete this task?', 'DELETE', async () => {
       await deleteTask(id);
       await loadData();
-    }
+    });
   };
 
   const handleDragStart = async (e, id) => {
@@ -1022,10 +1022,10 @@ const [profileName, setProfileName] = useState('');
     const canModify = canModifyEntry(adv.createdAt);
 
     if (canModify) {
-      if (window.confirm("Delete this advance record?")) {
+      triggerSecurityChallenge("Delete this advance record?", "DELETE", async () => {
         await deleteSiteAdvance(adv.id);
         await loadData();
-      }
+      });
     } else {
       if (window.confirm("This record is older than 24 hours. Request Admin approval to delete?")) {
         await addChangeRequest({

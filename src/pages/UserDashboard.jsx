@@ -1123,7 +1123,7 @@ const [profileName, setProfileName] = useState('');
           </nav>
         ) : (
           <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', flex: 1 }}>
-            <button className="btn btn-secondary" onClick={() => handleNav(handleCloseProject)} style={{ marginBottom: '1.5rem', border: '1px solid rgba(255,255,255,0.1)' }}>
+            <button className="btn btn-secondary" onClick={() => handleNav(handleCloseProject)} style={{ marginBottom: '1.5rem', border: '1px solid var(--border-strong)' }}>
               <ArrowLeft size={18} /> Exit Project
             </button>
             
@@ -1219,7 +1219,7 @@ const [profileName, setProfileName] = useState('');
                           const projName = msg.channelId !== 'global' ? projects.find(p => p.id === msg.channelId)?.name : 'Global Chat';
                           const timeStr = new Date(msg.createdAt).toLocaleString();
                           return (
-                            <li key={msg.id} style={{ padding: '1rem', background: 'rgba(0,0,0,0.2)', borderRadius: 'var(--radius-sm)', marginBottom: '0.5rem', borderLeft: '4px solid var(--accent-secondary)' }}>
+                            <li key={msg.id} style={{ padding: '1rem', background: 'var(--glass-hover)', borderRadius: 'var(--radius-sm)', marginBottom: '0.5rem', borderLeft: '4px solid var(--accent-secondary)' }}>
                               <strong style={{ color: 'var(--text-primary)' }}>{sender}</strong> <span style={{ fontSize: '0.75rem', opacity: 0.6 }}>in {projName} • {timeStr}</span>
                               <p style={{ marginTop: '0.25rem', fontSize: '0.875rem' }}>{msg.text}</p>
                             </li>
@@ -1275,7 +1275,7 @@ const [profileName, setProfileName] = useState('');
                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><MapPin size={14} color="var(--accent-primary)"/> {project.location}</div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Building size={14} color="var(--accent-primary)"/> {project.client}</div>
                         </div>
-                        <div style={{ marginBottom: '1rem', padding: '1rem', background: 'rgba(0,0,0,0.2)', borderRadius: 'var(--radius-sm)' }}>
+                        <div style={{ marginBottom: '1rem', padding: '1rem', background: 'var(--glass-hover)', borderRadius: 'var(--radius-sm)' }}>
                            <p style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-muted)' }}>Total Expended Cost</p>
                            <p style={{ fontSize: '1.25rem', fontWeight: 'bold', color: 'var(--text-primary)' }}>Rs {calculateTotalProjectCost(project.id).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
                         </div>
@@ -1284,7 +1284,7 @@ const [profileName, setProfileName] = useState('');
                             <span style={{ fontWeight: 500 }}>Progress</span>
                             <span style={{ color: 'var(--text-secondary)' }}>{project.progress}%</span>
                           </div>
-                          <div style={{ width: '100%', background: 'rgba(0,0,0,0.3)', height: '8px', borderRadius: '4px', overflow: 'hidden' }}>
+                          <div style={{ width: '100%', background: 'var(--glass-darker)', height: '8px', borderRadius: '4px', overflow: 'hidden' }}>
                             <div style={{ width: `${project.progress}%`, height: '100%', background: 'var(--accent-gradient)' }}></div>
                           </div>
                         </div>
@@ -1367,7 +1367,7 @@ const [profileName, setProfileName] = useState('');
                         <span style={{ fontSize: '0.75rem', opacity: 0.7 }}>All team members</span>
                       </button>
 
-                      <div style={{ height: '1px', background: 'rgba(255,255,255,0.05)', margin: '1rem 0' }}></div>
+                      <div style={{ height: '1px', background: 'var(--border-subtle)', margin: '1rem 0' }}></div>
                       <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '0.5rem', paddingLeft: '1rem' }}>Projects</p>
 
                       {projects.map(p => (
@@ -1383,7 +1383,7 @@ const [profileName, setProfileName] = useState('');
                   </div>
 
                   <div className="glass-card" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-                    <div style={{ padding: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.05)', background: 'rgba(0,0,0,0.2)' }}>
+                    <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--border-subtle)', background: 'var(--glass-hover)' }}>
                       <h3 style={{ fontSize: '1.25rem', fontWeight: 600, color: 'var(--text-primary)' }}>
                         # {activeChannel === 'global' ? 'Global Chat' : projects.find(p => p.id === activeChannel)?.name || 'Unknown Channel'}
                       </h3>
@@ -1406,7 +1406,7 @@ const [profileName, setProfileName] = useState('');
                               {isMine && <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.25rem', paddingRight: '0.5rem' }}>{timeStr}</span>}
                               
                               <div style={{ 
-                                background: isMine ? 'var(--accent-primary)' : 'rgba(255,255,255,0.05)', 
+                                background: isMine ? 'var(--accent-primary)' : 'var(--border-subtle)', 
                                 padding: '0.75rem 1rem', 
                                 borderRadius: '1rem', 
                                 borderBottomRightRadius: isMine ? '0' : '1rem',
@@ -1414,7 +1414,7 @@ const [profileName, setProfileName] = useState('');
                                 color: isMine ? '#fff' : 'var(--text-primary)',
                                 maxWidth: '70%',
                                 lineHeight: 1.5,
-                                border: isMine ? 'none' : '1px solid rgba(255,255,255,0.1)'
+                                border: isMine ? 'none' : '1px solid var(--border-strong)'
                               }}>
                                 {msg.text}
                               </div>
@@ -1424,13 +1424,13 @@ const [profileName, setProfileName] = useState('');
                       )}
                     </div>
 
-                    <form onSubmit={handleSendMessage} style={{ padding: '1.5rem', borderTop: '1px solid rgba(255,255,255,0.05)', background: 'rgba(0,0,0,0.2)', display: 'flex', gap: '1rem' }}>
+                    <form onSubmit={handleSendMessage} style={{ padding: '1.5rem', borderTop: '1px solid var(--border-subtle)', background: 'var(--glass-hover)', display: 'flex', gap: '1rem' }}>
                       <input 
                         type="text" 
                         value={messageText}
                         onChange={(e) => setMessageText(e.target.value)}
                         placeholder={`Message #${activeChannel === 'global' ? 'Global Chat' : projects.find(p => p.id === activeChannel)?.name || 'Channel'}...`}
-                        style={{ flex: 1, padding: '1rem', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 'var(--radius-full)', color: 'var(--text-primary)', outline: 'none' }}
+                        style={{ flex: 1, padding: '1rem', background: 'var(--glass-darker)', border: '1px solid var(--border-strong)', borderRadius: 'var(--radius-full)', color: 'var(--text-primary)', outline: 'none' }}
                       />
                       <button type="submit" className="btn btn-primary" style={{ borderRadius: 'var(--radius-full)', padding: '0 1.5rem' }}>Send</button>
                     </form>
@@ -1472,7 +1472,7 @@ const [profileName, setProfileName] = useState('');
                         }
 
                         return (
-                          <div key={req.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.5rem', background: 'rgba(0,0,0,0.2)', borderRadius: 'var(--radius-md)', borderLeft: '4px solid var(--warning)' }}>
+                          <div key={req.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.5rem', background: 'var(--glass-hover)', borderRadius: 'var(--radius-md)', borderLeft: '4px solid var(--warning)' }}>
                             <div>
                               <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', marginBottom: '0.5rem' }}>
                                 <span style={{ fontSize: '0.75rem', padding: '0.2rem 0.5rem', background: 'var(--warning)', color: '#000', fontWeight: 'bold', borderRadius: '4px' }}>{req.type.replace(/_/g, ' ')}</span>
@@ -1500,7 +1500,7 @@ const [profileName, setProfileName] = useState('');
         {/* ========================================================= */}
         {activeProjectId !== null && activeProj && (
           <div className="animate-fade-in">
-            <header className="flex-between" style={{ marginBottom: '2.5rem', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '2.5rem' }}>
+            <header className="flex-between" style={{ marginBottom: '2.5rem', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '2.5rem' }}>
               <div>
                 <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><HardHat size={14}/> Active Project</p>
                 <h1 className="heading-1">{activeProj.name}</h1>
@@ -1509,7 +1509,7 @@ const [profileName, setProfileName] = useState('');
                   {(currentUser?.permissions?.root || currentUser?.permissions?.unlock_past) && (
                       <button 
                         onClick={() => setAdminUnlockPast(!adminUnlockPast)} 
-                      style={{ background: adminUnlockPast ? 'var(--warning-glow)' : 'transparent', border: `1px solid ${adminUnlockPast ? 'var(--warning)' : 'rgba(255,255,255,0.2)'}`, color: adminUnlockPast ? 'var(--warning)' : 'var(--text-muted)', fontSize: '0.75rem', padding: '0.2rem 0.6rem', borderRadius: 'var(--radius-full)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem', transition: 'all 0.2s' }}
+                      style={{ background: adminUnlockPast ? 'var(--warning-glow)' : 'transparent', border: `1px solid ${adminUnlockPast ? 'var(--warning)' : 'var(--glass-darker)'}`, color: adminUnlockPast ? 'var(--warning)' : 'var(--text-muted)', fontSize: '0.75rem', padding: '0.2rem 0.6rem', borderRadius: 'var(--radius-full)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem', transition: 'all 0.2s' }}
                       title="Allows editing of historical financial records and past dates"
                     >
                       {adminUnlockPast ? <Unlock size={12}/> : <Shield size={12}/>}
@@ -1599,7 +1599,7 @@ const [profileName, setProfileName] = useState('');
                             <Pie data={pieData} cx="50%" cy="50%" innerRadius={80} outerRadius={120} paddingAngle={5} dataKey="value" stroke="none">
                               {pieData.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} />)}
                             </Pie>
-                            <Tooltip formatter={(value) => `Rs ${value.toLocaleString()}`} contentStyle={{ background: 'rgba(0,0,0,0.8)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }} />
+                            <Tooltip formatter={(value) => `Rs ${value.toLocaleString()}`} contentStyle={{ background: 'rgba(15, 23, 42, 0.5)', border: '1px solid var(--border-strong)', borderRadius: '8px' }} />
                             <Legend verticalAlign="bottom" height={36} iconType="circle" />
                           </RechartsPieChart>
                         </ResponsiveContainer>
@@ -1613,7 +1613,7 @@ const [profileName, setProfileName] = useState('');
                   <div className="glass-card" style={{ padding: '2.5rem' }}>
                     <h3 className="heading-3" style={{ marginBottom: '1.5rem' }}>Project Details</h3>
                     <p style={{ color: 'var(--text-secondary)', lineHeight: 1.7, fontSize: '1.05rem' }}>{activeProj.description}</p>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 150px), 1fr))', gap: '2rem', marginTop: '2.5rem', paddingTop: '2.5rem', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 150px), 1fr))', gap: '2rem', marginTop: '2.5rem', paddingTop: '2.5rem', borderTop: '1px solid var(--border-subtle)' }}>
                       <div><p style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '0.5rem', letterSpacing: '1px' }}>Location</p><p style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 500 }}><MapPin size={16} color="var(--accent-primary)"/> {activeProj.location}</p></div>
                       <div><p style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '0.5rem', letterSpacing: '1px' }}>Client</p><p style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 500 }}><Building size={16} color="var(--accent-primary)"/> {activeProj.client}</p></div>
                       <div><p style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '0.5rem', letterSpacing: '1px' }}>Start Date</p><p style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 500 }}><Calendar size={16} color="var(--accent-primary)"/> {activeProj.startDate}</p></div>
@@ -1629,7 +1629,7 @@ const [profileName, setProfileName] = useState('');
                       <span>Completion</span>
                       <span>{taskProgress}%</span>
                     </div>
-                    <div style={{ height: '8px', background: 'rgba(0,0,0,0.4)', borderRadius: '4px', overflow: 'hidden', marginBottom: '1.5rem' }}>
+                    <div style={{ height: '8px', background: 'var(--glass-darker)', borderRadius: '4px', overflow: 'hidden', marginBottom: '1.5rem' }}>
                       <div style={{ width: `${taskProgress}%`, height: '100%', background: 'linear-gradient(90deg, var(--accent-primary), var(--success))', transition: 'width 1s ease-in-out' }}></div>
                     </div>
                     <div style={{ display: 'flex', gap: '2rem' }}>
@@ -1644,7 +1644,7 @@ const [profileName, setProfileName] = useState('');
                     </div>
 
                     {overdueTasks.length > 0 && (
-                      <div style={{ marginTop: '2rem', paddingTop: '1.5rem', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                      <div style={{ marginTop: '2rem', paddingTop: '1.5rem', borderTop: '1px solid var(--border-subtle)' }}>
                         <h4 style={{ fontSize: '0.875rem', color: 'var(--danger)', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><AlertTriangle size={14}/> Overdue</h4>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: '150px', overflowY: 'auto' }}>
                           {overdueTasks.map(t => (
@@ -1665,7 +1665,7 @@ const [profileName, setProfileName] = useState('');
                     <h3 className="heading-3" style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Users size={20} className="text-gradient" /> Team</h3>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                       {allUsers.filter(u => u.permissions?.root || activeProj.assignedUsers.includes(u.id) || activeProj.createdBy === u.id).map(user => (
-                        <div key={user.id} style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '0.75rem', background: 'rgba(0,0,0,0.2)', borderRadius: 'var(--radius-sm)' }}>
+                        <div key={user.id} style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '0.75rem', background: 'var(--glass-hover)', borderRadius: 'var(--radius-sm)' }}>
                           <div style={{ width: '35px', height: '35px', borderRadius: '50%', background: 'var(--accent-gradient)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '0.875rem' }}>{user.name.charAt(0)}</div>
                           <div><p style={{ fontWeight: 500, fontSize: '0.875rem' }}>{user.name}</p><p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{user.role} {user.permissions?.root && <span style={{ color: 'var(--warning)' }}>(Root)</span>}</p></div>
                         </div>
@@ -1699,7 +1699,7 @@ const [profileName, setProfileName] = useState('');
                 </div>
 
                 {allWorkers.filter(w => w.projectId === activeProjectId && !w.isDeleted).length === 0 ? (
-                   <div style={{ textAlign: 'center', padding: '5rem', color: 'var(--text-muted)', border: '2px dashed rgba(255,255,255,0.1)', borderRadius: 'var(--radius-md)', marginTop: '2rem' }}>
+                   <div style={{ textAlign: 'center', padding: '5rem', color: 'var(--text-muted)', border: '2px dashed var(--border-strong)', borderRadius: 'var(--radius-md)', marginTop: '2rem' }}>
                      <Users size={48} style={{ marginBottom: '1rem', opacity: 0.3 }} />
                      <p>No labourers registered on this project yet.</p>
                      <p style={{ fontSize: '0.875rem', marginTop: '0.5rem' }}>Click "Register Labourer" to start building your workforce database.</p>
@@ -1709,7 +1709,7 @@ const [profileName, setProfileName] = useState('');
                     <div className="table-wrapper">
 <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '800px' }}>
                       <thead>
-                        <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)', color: 'var(--text-muted)' }}>
+                        <tr style={{ borderBottom: '1px solid var(--border-strong)', color: 'var(--text-muted)' }}>
                           <th style={{ padding: '1rem 0.5rem', fontWeight: 500 }}>Name</th>
                           <th style={{ padding: '1rem 0.5rem', fontWeight: 500 }}>Trade</th>
                           <th style={{ padding: '1rem 0.5rem', fontWeight: 500, textAlign: 'center' }}>Present (Full Day)</th>
@@ -1729,7 +1729,7 @@ const [profileName, setProfileName] = useState('');
                           const earned = ((regHrs + otHrs) * hourlyRate) - adv;
                           
                           return (
-                            <tr key={w.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', background: form.isPresent ? 'rgba(99, 102, 241, 0.05)' : 'transparent' }}>
+                            <tr key={w.id} style={{ borderBottom: '1px solid var(--border-subtle)', background: form.isPresent ? 'rgba(99, 102, 241, 0.05)' : 'transparent' }}>
                               <td style={{ padding: '1rem 0.5rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                 <button onClick={(e) => handleDeleteWorker(e, w.id)} style={{ background: 'none', border: 'none', color: 'var(--danger)', cursor: 'pointer', display: 'flex', alignItems: 'center', opacity: 0.7 }} onMouseEnter={e => e.currentTarget.style.opacity = 1} onMouseLeave={e => e.currentTarget.style.opacity = 0.7} title="Delete Labourer">
                                   <Trash2 size={14} />
@@ -1756,7 +1756,7 @@ const [profileName, setProfileName] = useState('');
                                   value={form.regularHours}
                                   disabled={!canModify}
                                   onChange={e => handleAttendanceChange(w.id, 'regularHours', e.target.value)}
-                                  style={{ padding: '0.4rem', textAlign: 'center', width: '100%', borderColor: form.regularHours > 0 ? 'var(--accent-primary)' : 'rgba(255,255,255,0.1)', opacity: canModify ? 1 : 0.5 }}
+                                  style={{ padding: '0.4rem', textAlign: 'center', width: '100%', borderColor: form.regularHours > 0 ? 'var(--accent-primary)' : 'var(--border-strong)', opacity: canModify ? 1 : 0.5 }}
                                 />
                               </td>
                               <td style={{ padding: '1rem 0.5rem' }}>
@@ -1766,7 +1766,7 @@ const [profileName, setProfileName] = useState('');
                                   value={form.overtimeHours}
                                   disabled={!canModify}
                                   onChange={e => handleAttendanceChange(w.id, 'overtimeHours', e.target.value)}
-                                  style={{ padding: '0.4rem', textAlign: 'center', width: '100%', borderColor: form.overtimeHours > 0 ? 'var(--warning)' : 'rgba(255,255,255,0.1)', opacity: canModify ? 1 : 0.5 }}
+                                  style={{ padding: '0.4rem', textAlign: 'center', width: '100%', borderColor: form.overtimeHours > 0 ? 'var(--warning)' : 'var(--border-strong)', opacity: canModify ? 1 : 0.5 }}
                                 />
                               </td>
                               <td style={{ padding: '1rem 0.5rem' }}>
@@ -1776,7 +1776,7 @@ const [profileName, setProfileName] = useState('');
                                   value={form.advance}
                                   disabled={!canModify}
                                   onChange={e => handleAttendanceChange(w.id, 'advance', e.target.value)}
-                                  style={{ padding: '0.4rem', textAlign: 'center', width: '100%', borderColor: form.advance > 0 ? 'var(--danger)' : 'rgba(255,255,255,0.1)', opacity: canModify ? 1 : 0.5 }}
+                                  style={{ padding: '0.4rem', textAlign: 'center', width: '100%', borderColor: form.advance > 0 ? 'var(--danger)' : 'var(--border-strong)', opacity: canModify ? 1 : 0.5 }}
                                 />
                               </td>
                               <td style={{ padding: '1rem 0.5rem', textAlign: 'right', fontWeight: 500, color: earned >= 0 ? 'var(--accent-primary)' : 'var(--danger)' }}>
@@ -1799,7 +1799,7 @@ const [profileName, setProfileName] = useState('');
                   <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
                     <h3 className="heading-3" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><DollarSign size={20} className="text-gradient"/> Project Payroll</h3>
                     
-                    <div style={{ display: 'flex', background: 'rgba(0,0,0,0.2)', padding: '0.25rem', borderRadius: 'var(--radius-md)' }}>
+                    <div style={{ display: 'flex', background: 'var(--glass-hover)', padding: '0.25rem', borderRadius: 'var(--radius-md)' }}>
                       <button className={`btn ${payrollViewMode === 'outstanding' ? 'btn-primary' : ''}`} onClick={() => handleNav(() => setPayrollViewMode('outstanding'))} style={{ padding: '0.4rem 1rem', background: payrollViewMode === 'outstanding' ? 'var(--accent-primary)' : 'transparent', color: payrollViewMode === 'outstanding' ? '#fff' : 'var(--text-secondary)' }}>Outstanding</button>
                       <button className={`btn ${payrollViewMode === 'history' ? 'btn-primary' : ''}`} onClick={() => handleNav(() => setPayrollViewMode('history'))} style={{ padding: '0.4rem 1rem', background: payrollViewMode === 'history' ? 'var(--accent-primary)' : 'transparent', color: payrollViewMode === 'history' ? '#fff' : 'var(--text-secondary)' }}>Paid History</button>
                     </div>
@@ -1822,7 +1822,7 @@ const [profileName, setProfileName] = useState('');
                    );
                    if (relevantLogs.length === 0) {
                      return (
-                       <div style={{ textAlign: 'center', padding: '5rem', color: 'var(--text-muted)', border: '2px dashed rgba(255,255,255,0.1)', borderRadius: 'var(--radius-md)' }}>
+                       <div style={{ textAlign: 'center', padding: '5rem', color: 'var(--text-muted)', border: '2px dashed var(--border-strong)', borderRadius: 'var(--radius-md)' }}>
                          <DollarSign size={48} style={{ marginBottom: '1rem', opacity: 0.3 }} />
                          <p>No attendance records found for this timeframe.</p>
                        </div>
@@ -1852,7 +1852,7 @@ const [profileName, setProfileName] = useState('');
                        <div className="table-wrapper">
 <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '800px' }}>
                          <thead>
-                           <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)', color: 'var(--text-muted)' }}>
+                           <tr style={{ borderBottom: '1px solid var(--border-strong)', color: 'var(--text-muted)' }}>
                              <th style={{ padding: '1rem 0.5rem', fontWeight: 500 }}>Name</th>
                              <th style={{ padding: '1rem 0.5rem', fontWeight: 500 }}>Dates Covered</th>
                              <th style={{ padding: '1rem 0.5rem', fontWeight: 500 }}>Trade</th>
@@ -1877,7 +1877,7 @@ const [profileName, setProfileName] = useState('');
                              const dateStr = sortedDates.length > 2 ? `${sortedDates[0]} to ${sortedDates[sortedDates.length - 1]}` : sortedDates.join(', ');
                              
                              return (
-                               <tr key={wId} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', opacity: worker.isDeleted ? 0.6 : 1 }}>
+                               <tr key={wId} style={{ borderBottom: '1px solid var(--border-subtle)', opacity: worker.isDeleted ? 0.6 : 1 }}>
                                  <td style={{ padding: '1rem 0.5rem', fontWeight: 500 }}>
                                    {worker.name} {worker.isDeleted && <span style={{ fontSize: '0.75rem', color: 'var(--danger)', marginLeft: '0.5rem', fontWeight: 'normal' }}>(Removed)</span>}
                                  </td>
@@ -1926,7 +1926,7 @@ const [profileName, setProfileName] = useState('');
                            })}
                          </tbody>
                          <tfoot>
-                           <tr style={{ borderTop: '2px solid rgba(255,255,255,0.1)', background: 'rgba(0,0,0,0.2)' }}>
+                           <tr style={{ borderTop: '2px solid var(--border-strong)', background: 'var(--glass-hover)' }}>
                              <td colSpan="6" style={{ padding: '1.5rem 1rem', textAlign: 'right', color: 'var(--text-secondary)' }}>Grand Total ({payrollViewMode === 'outstanding' ? 'Owed' : 'Paid'}):</td>
                              <td style={{ padding: '1.5rem 0.5rem', textAlign: 'right', fontWeight: 'bold', fontSize: '1.25rem', color: 'var(--accent-primary)' }}>Rs {grandTotal.toFixed(2)}</td>
                              {payrollViewMode === 'outstanding' && (
@@ -1958,7 +1958,7 @@ const [profileName, setProfileName] = useState('');
                     </div>
 
                     {allSubcontractors.filter(s => s.projectId === activeProjectId).length === 0 ? (
-                      <div style={{ textAlign: 'center', padding: '5rem', color: 'var(--text-muted)', border: '2px dashed rgba(255,255,255,0.1)', borderRadius: 'var(--radius-md)' }}>
+                      <div style={{ textAlign: 'center', padding: '5rem', color: 'var(--text-muted)', border: '2px dashed var(--border-strong)', borderRadius: 'var(--radius-md)' }}>
                         <Briefcase size={48} style={{ marginBottom: '1rem', opacity: 0.3 }} />
                         <p>No subcontractors assigned to this project.</p>
                       </div>
@@ -1967,7 +1967,7 @@ const [profileName, setProfileName] = useState('');
                         <div className="table-wrapper">
 <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '800px' }}>
                           <thead>
-                            <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)', color: 'var(--text-muted)' }}>
+                            <tr style={{ borderBottom: '1px solid var(--border-strong)', color: 'var(--text-muted)' }}>
                               <th style={{ padding: '1rem 0.5rem', fontWeight: 500 }}>Company Name</th>
                               <th style={{ padding: '1rem 0.5rem', fontWeight: 500 }}>Trade / Role</th>
                               <th style={{ padding: '1rem 0.5rem', fontWeight: 500, textAlign: 'right' }}>Final Measured Value</th>
@@ -1988,7 +1988,7 @@ const [profileName, setProfileName] = useState('');
                               }
 
                               return (
-                                <tr key={sub.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', cursor: 'pointer', transition: 'var(--transition)' }} onClick={() => setActiveSubId(sub.id)} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.02)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                                <tr key={sub.id} style={{ borderBottom: '1px solid var(--border-subtle)', cursor: 'pointer', transition: 'var(--transition)' }} onClick={() => setActiveSubId(sub.id)} onMouseEnter={e => e.currentTarget.style.background = 'var(--glass-overlay)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
                                   <td style={{ padding: '1rem 0.5rem', fontWeight: 500 }}>{sub.name}</td>
                                   <td style={{ padding: '1rem 0.5rem', color: 'var(--text-secondary)' }}>{sub.trade}</td>
                                   <td style={{ padding: '1rem 0.5rem', textAlign: 'right', fontWeight: 500, color: sub.finalValue !== null ? 'var(--text-primary)' : 'var(--text-muted)' }}>{sub.finalValue !== null ? `Rs ${sub.finalValue.toFixed(2)}` : 'Pending'}</td>
@@ -2020,7 +2020,7 @@ const [profileName, setProfileName] = useState('');
                     <div className="animate-fade-in">
                       <button className="btn btn-secondary" onClick={() => setActiveSubId(null)} style={{ marginBottom: '1.5rem', background: 'transparent', border: 'none', color: 'var(--text-secondary)' }}><ArrowLeft size={18}/> Back to Subcontractors</button>
                       
-                      <div className="flex-between" style={{ marginBottom: '2.5rem', paddingBottom: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.1)', flexWrap: 'wrap', gap: '1.5rem' }}>
+                      <div className="flex-between" style={{ marginBottom: '2.5rem', paddingBottom: '1.5rem', borderBottom: '1px solid var(--border-strong)', flexWrap: 'wrap', gap: '1.5rem' }}>
                         <div>
                           <h2 className="heading-2">{sub.name} <span style={{ fontSize: '1rem', fontWeight: 'normal', color: 'var(--text-secondary)', marginLeft: '0.5rem' }}>({sub.trade})</span></h2>
                         </div>
@@ -2031,7 +2031,7 @@ const [profileName, setProfileName] = useState('');
                               type="number" className="input-field" placeholder="Enter Final Value" 
                               value={sub.finalValue !== null ? sub.finalValue : ''} 
                               onChange={(e) => handleUpdateSubValue(sub.id, e.target.value)}
-                              style={{ width: '150px', textAlign: 'right', fontWeight: 'bold', fontSize: '1.1rem', color: sub.finalValue !== null ? 'var(--accent-primary)' : 'var(--text-primary)', border: '1px solid rgba(255,255,255,0.2)' }} 
+                              style={{ width: '150px', textAlign: 'right', fontWeight: 'bold', fontSize: '1.1rem', color: sub.finalValue !== null ? 'var(--accent-primary)' : 'var(--text-primary)', border: '1px solid var(--glass-darker)' }} 
                             />
                           </div>
                           <button className="btn btn-primary" onClick={() => { setSubPayMode('add'); setActiveSubPayId(null); setSubPayDate(new Date().toISOString().split('T')[0]); setSubPayAmount(''); setSubPayDesc(''); setIsSubPayModalOpen(true); }}><DollarSign size={20}/> Log Payment</button>
@@ -2039,15 +2039,15 @@ const [profileName, setProfileName] = useState('');
                       </div>
 
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))', gap: '1.5rem', marginBottom: '2.5rem' }}>
-                         <div style={{ background: 'rgba(0,0,0,0.2)', padding: '1.5rem', borderRadius: 'var(--radius-md)' }}>
+                         <div style={{ background: 'var(--glass-hover)', padding: '1.5rem', borderRadius: 'var(--radius-md)' }}>
                            <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginBottom: '0.5rem' }}>Final Value</p>
                            <p style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{sub.finalValue !== null ? `Rs ${sub.finalValue.toFixed(2)}` : 'Pending'}</p>
                          </div>
-                         <div style={{ background: 'rgba(0,0,0,0.2)', padding: '1.5rem', borderRadius: 'var(--radius-md)' }}>
+                         <div style={{ background: 'var(--glass-hover)', padding: '1.5rem', borderRadius: 'var(--radius-md)' }}>
                            <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginBottom: '0.5rem' }}>Total Paid</p>
                            <p style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--text-primary)' }}>Rs {totalPaid.toFixed(2)}</p>
                          </div>
-                         <div style={{ background: 'rgba(0,0,0,0.2)', padding: '1.5rem', borderRadius: 'var(--radius-md)', border: sub.finalValue !== null ? (sub.finalValue - totalPaid === 0 ? '1px solid var(--success)' : '1px solid var(--danger)') : 'none' }}>
+                         <div style={{ background: 'var(--glass-hover)', padding: '1.5rem', borderRadius: 'var(--radius-md)', border: sub.finalValue !== null ? (sub.finalValue - totalPaid === 0 ? '1px solid var(--success)' : '1px solid var(--danger)') : 'none' }}>
                            <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginBottom: '0.5rem' }}>Remaining Balance</p>
                            <p style={{ fontSize: '1.5rem', fontWeight: 'bold', color: sub.finalValue !== null ? (sub.finalValue - totalPaid === 0 ? 'var(--success)' : 'var(--danger)') : 'var(--text-muted)' }}>
                              {sub.finalValue !== null ? `Rs ${(sub.finalValue - totalPaid).toFixed(2)}` : 'Unknown'}
@@ -2057,14 +2057,14 @@ const [profileName, setProfileName] = useState('');
 
                       <h3 className="heading-3" style={{ marginBottom: '1rem' }}>Payment Ledger</h3>
                       {subPayments.length === 0 ? (
-                        <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)', background: 'rgba(0,0,0,0.1)', borderRadius: 'var(--radius-md)' }}>
+                        <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)', background: 'var(--glass-overlay)', borderRadius: 'var(--radius-md)' }}>
                           <p>No payments recorded yet.</p>
                         </div>
                       ) : (
                         <div className="table-wrapper">
 <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
                           <thead>
-                            <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)', color: 'var(--text-muted)' }}>
+                            <tr style={{ borderBottom: '1px solid var(--border-strong)', color: 'var(--text-muted)' }}>
                               <th style={{ padding: '1rem 0.5rem', fontWeight: 500, width: '120px' }}>Date</th>
                               <th style={{ padding: '1rem 0.5rem', fontWeight: 500 }}>Description / Invoice Ref</th>
                               <th style={{ padding: '1rem 0.5rem', fontWeight: 500, textAlign: 'right', width: '150px' }}>Amount Paid</th>
@@ -2076,7 +2076,7 @@ const [profileName, setProfileName] = useState('');
                               const canModify = canModifyEntry(p.createdAt);
                               
                               return (
-                                <tr key={p.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                                <tr key={p.id} style={{ borderBottom: '1px solid var(--border-subtle)' }}>
                                   <td style={{ padding: '1rem 0.5rem', color: 'var(--text-secondary)' }}>{p.date}</td>
                                   <td style={{ padding: '1rem 0.5rem' }}>{p.description}</td>
                                   <td style={{ padding: '1rem 0.5rem', textAlign: 'right', fontWeight: 500, color: 'var(--text-primary)' }}>Rs {p.amount.toFixed(2)}</td>
@@ -2125,7 +2125,7 @@ const [profileName, setProfileName] = useState('');
                     </div>
                   </div>
 
-                  <div style={{ display: 'flex', gap: '0.5rem', overflowX: 'auto', paddingBottom: '1rem', marginBottom: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+                  <div style={{ display: 'flex', gap: '0.5rem', overflowX: 'auto', paddingBottom: '1rem', marginBottom: '1.5rem', borderBottom: '1px solid var(--border-strong)' }}>
                     <button className={`btn ${activeMaterialCategory === 'All' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setActiveMaterialCategory('All')} style={{ padding: '0.4rem 1rem', borderRadius: 'var(--radius-full)' }}>All Items</button>
                     {materialCategories.map(cat => (
                       <button key={cat.id} className={`btn ${activeMaterialCategory === cat.name ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setActiveMaterialCategory(cat.name)} style={{ padding: '0.4rem 1rem', borderRadius: 'var(--radius-full)', whiteSpace: 'nowrap' }}>{cat.name}</button>
@@ -2138,22 +2138,22 @@ const [profileName, setProfileName] = useState('');
                   </div>
 
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))', gap: '1.5rem', marginBottom: '2.5rem' }}>
-                     <div style={{ background: 'rgba(0,0,0,0.2)', padding: '1.5rem', borderRadius: 'var(--radius-md)' }}>
+                     <div style={{ background: 'var(--glass-hover)', padding: '1.5rem', borderRadius: 'var(--radius-md)' }}>
                        <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginBottom: '0.5rem' }}>Total Ordered</p>
                        <p style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>Rs {totalOrdered.toFixed(2)}</p>
                      </div>
-                     <div style={{ background: 'rgba(0,0,0,0.2)', padding: '1.5rem', borderRadius: 'var(--radius-md)' }}>
+                     <div style={{ background: 'var(--glass-hover)', padding: '1.5rem', borderRadius: 'var(--radius-md)' }}>
                        <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginBottom: '0.5rem' }}>Total Paid</p>
                        <p style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--success)' }}>Rs {totalPaid.toFixed(2)}</p>
                      </div>
-                     <div style={{ background: 'rgba(0,0,0,0.2)', padding: '1.5rem', borderRadius: 'var(--radius-md)' }}>
+                     <div style={{ background: 'var(--glass-hover)', padding: '1.5rem', borderRadius: 'var(--radius-md)' }}>
                        <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginBottom: '0.5rem' }}>Outstanding Balance</p>
                        <p style={{ fontSize: '1.5rem', fontWeight: 'bold', color: totalOutstanding > 0 ? 'var(--danger)' : 'var(--text-muted)' }}>Rs {totalOutstanding.toFixed(2)}</p>
                      </div>
                   </div>
 
                   {projMaterials.length === 0 ? (
-                    <div style={{ textAlign: 'center', padding: '4rem', color: 'var(--text-muted)', background: 'rgba(0,0,0,0.1)', borderRadius: 'var(--radius-md)' }}>
+                    <div style={{ textAlign: 'center', padding: '4rem', color: 'var(--text-muted)', background: 'var(--glass-overlay)', borderRadius: 'var(--radius-md)' }}>
                       <Package size={48} style={{ marginBottom: '1rem', opacity: 0.3 }} />
                       <p>No material orders found in this category.</p>
                     </div>
@@ -2162,7 +2162,7 @@ const [profileName, setProfileName] = useState('');
                       <div className="table-wrapper">
 <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '800px' }}>
                         <thead>
-                          <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)', color: 'var(--text-muted)' }}>
+                          <tr style={{ borderBottom: '1px solid var(--border-strong)', color: 'var(--text-muted)' }}>
                             <th style={{ padding: '1rem 0.5rem', fontWeight: 500 }}>Order Date</th>
                             <th style={{ padding: '1rem 0.5rem', fontWeight: 500 }}>Item Description</th>
                             <th style={{ padding: '1rem 0.5rem', fontWeight: 500 }}>Category</th>
@@ -2179,7 +2179,7 @@ const [profileName, setProfileName] = useState('');
                             const canModify = canModifyEntry(m.createdAt);
                             
                             return (
-                              <tr key={m.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', background: m.isArrived ? 'rgba(0,0,0,0.1)' : 'transparent' }}>
+                              <tr key={m.id} style={{ borderBottom: '1px solid var(--border-subtle)', background: m.isArrived ? 'var(--glass-overlay)' : 'transparent' }}>
                                 <td style={{ padding: '1rem 0.5rem', color: 'var(--text-secondary)' }}>{m.orderDate}</td>
                                 <td style={{ padding: '1rem 0.5rem', fontWeight: 500 }}>
                                   {m.itemName} <br/>
@@ -2244,16 +2244,16 @@ const [profileName, setProfileName] = useState('');
                   </div>
 
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))', gap: '1.5rem', marginBottom: '2.5rem' }}>
-                     <div style={{ background: 'rgba(0,0,0,0.2)', padding: '1.5rem', borderRadius: 'var(--radius-md)' }}>
+                     <div style={{ background: 'var(--glass-hover)', padding: '1.5rem', borderRadius: 'var(--radius-md)' }}>
                        <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginBottom: '0.5rem' }}>Total Advance Issued</p>
                        <p style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--text-primary)' }}>Rs {totalAdvance.toFixed(2)}</p>
                      </div>
-                     <div style={{ background: 'rgba(0,0,0,0.2)', padding: '1.5rem', borderRadius: 'var(--radius-md)' }}>
+                     <div style={{ background: 'var(--glass-hover)', padding: '1.5rem', borderRadius: 'var(--radius-md)' }}>
                        <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginBottom: '0.5rem' }}>Engineer Claimed Expenses</p>
                        <p style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--text-primary)' }}>Rs {engExpense.toFixed(2)}</p>
                        <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>Out of total Rs {totalExpense.toFixed(2)}</p>
                      </div>
-                     <div style={{ background: 'rgba(0,0,0,0.2)', padding: '1.5rem', borderRadius: 'var(--radius-md)', border: currentBalance < 0 ? '1px solid var(--danger)' : '1px solid var(--success)' }}>
+                     <div style={{ background: 'var(--glass-hover)', padding: '1.5rem', borderRadius: 'var(--radius-md)', border: currentBalance < 0 ? '1px solid var(--danger)' : '1px solid var(--success)' }}>
                        <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginBottom: '0.5rem' }}>Current Balance</p>
                        <p style={{ fontSize: '1.5rem', fontWeight: 'bold', color: currentBalance < 0 ? 'var(--danger)' : 'var(--success)' }}>Rs {Math.abs(currentBalance).toFixed(2)} {currentBalance < 0 ? '(Owed to Engineer)' : '(Owed to Company)'}</p>
                      </div>
@@ -2263,11 +2263,11 @@ const [profileName, setProfileName] = useState('');
                     {/* Advances Ledger */}
                     <div>
                       <h4 style={{ marginBottom: '1rem', color: 'var(--text-secondary)', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '0.5rem' }}><DollarSign size={16}/> Advances Issued</h4>
-                      <div className="glass-card" style={{ padding: '0', background: 'rgba(0,0,0,0.1)' }}>
+                      <div className="glass-card" style={{ padding: '0', background: 'var(--glass-overlay)' }}>
                         <div className="table-wrapper">
 <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
                           <thead>
-                            <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', color: 'var(--text-muted)' }}>
+                            <tr style={{ borderBottom: '1px solid var(--border-subtle)', color: 'var(--text-muted)' }}>
                               <th style={{ padding: '1rem', fontWeight: 500 }}>Date</th>
                               <th style={{ padding: '1rem', fontWeight: 500 }}>Description</th>
                               <th style={{ padding: '1rem', fontWeight: 500, textAlign: 'right' }}>Amount</th>
@@ -2278,7 +2278,7 @@ const [profileName, setProfileName] = useState('');
                             {projAdvances.sort((a,b) => new Date(b.date) - new Date(a.date)).map(adv => {
                               const canModify = canModifyEntry(adv.createdAt);
                               return (
-                                <tr key={adv.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.02)' }}>
+                                <tr key={adv.id} style={{ borderBottom: '1px solid var(--glass-overlay)' }}>
                                   <td style={{ padding: '1rem', color: 'var(--text-secondary)' }}>{adv.date}</td>
                                   <td style={{ padding: '1rem' }}>{adv.description}</td>
                                   <td style={{ padding: '1rem', textAlign: 'right', fontWeight: 500, color: 'var(--success)' }}>+Rs {adv.amount}</td>
@@ -2302,11 +2302,11 @@ const [profileName, setProfileName] = useState('');
                     {/* Expenses Ledger */}
                     <div>
                       <h4 style={{ marginBottom: '1rem', color: 'var(--text-secondary)', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '0.5rem' }}><FileText size={16}/> Expense Reports</h4>
-                      <div className="glass-card" style={{ padding: '0', background: 'rgba(0,0,0,0.1)' }}>
+                      <div className="glass-card" style={{ padding: '0', background: 'var(--glass-overlay)' }}>
                         <div className="table-wrapper">
 <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
                           <thead>
-                            <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', color: 'var(--text-muted)' }}>
+                            <tr style={{ borderBottom: '1px solid var(--border-subtle)', color: 'var(--text-muted)' }}>
                               <th style={{ padding: '1rem', fontWeight: 500 }}>Date</th>
                               <th style={{ padding: '1rem', fontWeight: 500 }}>Description</th>
                               <th style={{ padding: '1rem', fontWeight: 500 }}>Paid By</th>
@@ -2319,11 +2319,11 @@ const [profileName, setProfileName] = useState('');
                             {projExpenses.sort((a,b) => new Date(b.date) - new Date(a.date)).map(exp => {
                               const canModify = canModifyEntry(exp.createdAt);
                               return (
-                                <tr key={exp.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.02)' }}>
+                                <tr key={exp.id} style={{ borderBottom: '1px solid var(--glass-overlay)' }}>
                                   <td style={{ padding: '1rem', color: 'var(--text-secondary)' }}>{exp.date}</td>
                                   <td style={{ padding: '1rem' }}>{exp.description}</td>
                                   <td style={{ padding: '1rem', color: 'var(--text-secondary)' }}>
-                                    <span style={{ fontSize: '0.75rem', padding: '0.2rem 0.5rem', borderRadius: '4px', background: exp.paidBy === 'Company' ? 'rgba(99, 102, 241, 0.2)' : 'rgba(255,255,255,0.1)', color: exp.paidBy === 'Company' ? 'var(--accent-primary)' : 'var(--text-muted)' }}>
+                                    <span style={{ fontSize: '0.75rem', padding: '0.2rem 0.5rem', borderRadius: '4px', background: exp.paidBy === 'Company' ? 'rgba(99, 102, 241, 0.2)' : 'var(--border-strong)', color: exp.paidBy === 'Company' ? 'var(--accent-primary)' : 'var(--text-muted)' }}>
                                       {exp.paidBy || 'Engineer'}
                                     </span>
                                   </td>
@@ -2371,7 +2371,7 @@ const [profileName, setProfileName] = useState('');
 
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 200px), 1fr))', gap: '1.5rem' }}>
                    {allDocs.filter(d => d.projectId === activeProjectId && d.parentId === currentFolderId).map(doc => (
-                     <div key={doc.id} className="glass-card" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', cursor: 'pointer', transition: 'var(--transition)', background: doc.type === 'folder' ? 'rgba(0,0,0,0.3)' : 'rgba(255,255,255,0.03)', position: 'relative' }} onClick={() => {
+                     <div key={doc.id} className="glass-card" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', cursor: 'pointer', transition: 'var(--transition)', background: doc.type === 'folder' ? 'var(--glass-darker)' : 'var(--glass-overlay)', position: 'relative' }} onClick={() => {
                         if (doc.type === 'folder') {
                           setCurrentFolderId(doc.id);
                         } else {
@@ -2400,7 +2400,7 @@ const [profileName, setProfileName] = useState('');
                      </div>
                    ))}
                    {allDocs.filter(d => d.projectId === activeProjectId && d.parentId === currentFolderId).length === 0 && (
-                     <div style={{ gridColumn: '1 / -1', textAlign: 'center', color: 'var(--text-muted)', padding: '4rem', background: 'rgba(0,0,0,0.1)', borderRadius: 'var(--radius-md)' }}>
+                     <div style={{ gridColumn: '1 / -1', textAlign: 'center', color: 'var(--text-muted)', padding: '4rem', background: 'var(--glass-overlay)', borderRadius: 'var(--radius-md)' }}>
                        <FileText size={48} style={{ marginBottom: '1rem', opacity: 0.3 }} />
                        <p>This directory is empty.</p>
                      </div>
@@ -2418,7 +2418,7 @@ const [profileName, setProfileName] = useState('');
                   <button className="btn btn-primary" onClick={() => setIsAssetModalOpen(true)}>+ Add Asset</button>
                 </div>
                 {allAssets.filter(a => a.projectId === activeProjectId).length === 0 ? (
-                  <div style={{ textAlign: 'center', padding: '5rem', color: 'var(--text-muted)', border: '2px dashed rgba(255,255,255,0.1)', borderRadius: 'var(--radius-md)' }}>
+                  <div style={{ textAlign: 'center', padding: '5rem', color: 'var(--text-muted)', border: '2px dashed var(--border-strong)', borderRadius: 'var(--radius-md)' }}>
                     <Truck size={48} style={{ marginBottom: '1rem', opacity: 0.3 }} />
                     <p>No company assets currently mobilized to this project.</p>
                   </div>
@@ -2427,7 +2427,7 @@ const [profileName, setProfileName] = useState('');
                     <div className="table-wrapper">
 <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '800px' }}>
                       <thead>
-                        <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)', color: 'var(--text-muted)' }}>
+                        <tr style={{ borderBottom: '1px solid var(--border-strong)', color: 'var(--text-muted)' }}>
                           <th style={{ padding: '1rem 0.5rem', fontWeight: 500 }}>Asset Name</th>
                           <th style={{ padding: '1rem 0.5rem', fontWeight: 500 }}>Type / Category</th>
                           <th style={{ padding: '1rem 0.5rem', fontWeight: 500, textAlign: 'center' }}>Qty</th>
@@ -2439,13 +2439,13 @@ const [profileName, setProfileName] = useState('');
                       </thead>
                       <tbody>
                         {allAssets.filter(a => a.projectId === activeProjectId).map(asset => (
-                          <tr key={asset.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', opacity: asset.status === 'Returned' ? 0.6 : 1 }}>
+                          <tr key={asset.id} style={{ borderBottom: '1px solid var(--border-subtle)', opacity: asset.status === 'Returned' ? 0.6 : 1 }}>
                             <td style={{ padding: '1rem 0.5rem', fontWeight: 500 }}>{asset.name}</td>
                             <td style={{ padding: '1rem 0.5rem', color: 'var(--text-secondary)' }}>{asset.type}</td>
                             <td style={{ padding: '1rem 0.5rem', textAlign: 'center', fontWeight: 500 }}>{asset.quantity || 1}</td>
                             <td style={{ padding: '1rem 0.5rem', color: 'var(--text-secondary)' }}>{asset.dateMobilized}</td>
                             <td style={{ padding: '1rem 0.5rem' }}>
-                              <span style={{ fontSize: '0.75rem', padding: '0.2rem 0.5rem', borderRadius: '4px', background: asset.status === 'Mobilized' ? 'rgba(99, 102, 241, 0.2)' : 'rgba(255,255,255,0.1)', color: asset.status === 'Mobilized' ? 'var(--accent-primary)' : 'var(--text-muted)' }}>
+                              <span style={{ fontSize: '0.75rem', padding: '0.2rem 0.5rem', borderRadius: '4px', background: asset.status === 'Mobilized' ? 'rgba(99, 102, 241, 0.2)' : 'var(--border-strong)', color: asset.status === 'Mobilized' ? 'var(--accent-primary)' : 'var(--text-muted)' }}>
                                 {asset.status} {asset.status === 'Returned' && `(${asset.dateReturned})`}
                               </span>
                             </td>
@@ -2506,7 +2506,7 @@ const [profileName, setProfileName] = useState('');
                       >
                         <h4 style={{ fontWeight: 600, display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: 'var(--text-primary)' }}>
                           {col.title}
-                          <span style={{ fontSize: '0.75rem', background: 'rgba(255,255,255,0.1)', padding: '0.2rem 0.5rem', borderRadius: '4px' }}>
+                          <span style={{ fontSize: '0.75rem', background: 'var(--border-strong)', padding: '0.2rem 0.5rem', borderRadius: '4px' }}>
                             {projTasks.filter(t => t.status === col.id).length}
                           </span>
                         </h4>
@@ -2518,11 +2518,11 @@ const [profileName, setProfileName] = useState('');
                               draggable
                               onDragStart={(e) => handleDragStart(e, task.id)}
                               style={{ 
-                                background: 'rgba(0,0,0,0.4)', 
+                                background: 'var(--glass-darker)', 
                                 padding: '1rem', 
                                 borderRadius: 'var(--radius-md)', 
                                 cursor: 'grab', 
-                                border: '1px solid rgba(255,255,255,0.05)',
+                                border: '1px solid var(--border-subtle)',
                                 borderLeft: `3px solid ${getPriorityColor(task.priority)}`,
                                 opacity: draggedTaskId === task.id ? 0.5 : 1
                               }}
@@ -2534,7 +2534,7 @@ const [profileName, setProfileName] = useState('');
                               <h5 style={{ fontSize: '1rem', marginBottom: '0.5rem', color: 'var(--text-primary)' }}>{task.title}</h5>
                               <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: '1rem', lineHeight: 1.4 }}>{task.description}</p>
                               
-                              <div className="flex-between" style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '0.75rem' }}>
+                              <div className="flex-between" style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: '0.75rem' }}>
                                 <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.25rem' }}><Calendar size={12}/> {task.dueDate || 'No Date'}</span>
                                 {task.assignedTo && (
                                   <span style={{ fontSize: '0.75rem', color: 'var(--accent-primary)', display: 'flex', alignItems: 'center', gap: '0.25rem', background: 'var(--accent-glow)', padding: '0.2rem 0.5rem', borderRadius: '4px' }}>
@@ -2545,7 +2545,7 @@ const [profileName, setProfileName] = useState('');
                             </div>
                           ))}
                           {projTasks.filter(t => t.status === col.id).length === 0 && (
-                            <div style={{ textAlign: 'center', padding: '2rem 1rem', border: '2px dashed rgba(255,255,255,0.05)', borderRadius: 'var(--radius-md)', color: 'var(--text-muted)', fontSize: '0.875rem' }}>
+                            <div style={{ textAlign: 'center', padding: '2rem 1rem', border: '2px dashed var(--border-subtle)', borderRadius: 'var(--radius-md)', color: 'var(--text-muted)', fontSize: '0.875rem' }}>
                               Drop tasks here
                             </div>
                           )}
@@ -2582,7 +2582,7 @@ const [profileName, setProfileName] = useState('');
                     </div>
                     <div className="input-group">
                       <label className="input-label">Status</label>
-                      <select className="input-field" value={editProjectForm.status} onChange={e => setEditProjectForm({...editProjectForm, status: e.target.value})} style={{ padding: '0.6rem', background: 'rgba(0,0,0,0.3)' }}>
+                      <select className="input-field" value={editProjectForm.status} onChange={e => setEditProjectForm({...editProjectForm, status: e.target.value})} style={{ padding: '0.6rem', background: 'var(--glass-darker)' }}>
                         <option value="Active">Active</option>
                         <option value="On Hold">On Hold</option>
                         <option value="Completed">Completed</option>
@@ -2592,7 +2592,7 @@ const [profileName, setProfileName] = useState('');
                       <label className="input-label">Assigned Team Members</label>
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: '0.5rem' }}>
                         {allUsers.filter(u => u.id !== currentUser?.id).map(u => (
-                          <label key={u.id} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(0,0,0,0.2)', padding: '0.5rem 1rem', borderRadius: 'var(--radius-md)', cursor: 'pointer', border: (editProjectForm.assignedUsers || []).includes(u.id) ? '1px solid var(--accent-primary)' : '1px solid transparent' }}>
+                          <label key={u.id} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'var(--glass-hover)', padding: '0.5rem 1rem', borderRadius: 'var(--radius-md)', cursor: 'pointer', border: (editProjectForm.assignedUsers || []).includes(u.id) ? '1px solid var(--accent-primary)' : '1px solid transparent' }}>
                             <input type="checkbox" checked={(editProjectForm.assignedUsers || []).includes(u.id)} onChange={(e) => {
                               if (e.target.checked) setEditProjectForm({...editProjectForm, assignedUsers: [...(editProjectForm.assignedUsers || []), u.id]});
                               else setEditProjectForm({...editProjectForm, assignedUsers: (editProjectForm.assignedUsers || []).filter(id => id !== u.id)});
@@ -2646,7 +2646,7 @@ const [profileName, setProfileName] = useState('');
         )}
       {/* Change Password Modal */}
       {isPasswordModalOpen && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 60 }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(15, 23, 42, 0.4)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 60 }}>
           <div className="glass-card animate-fade-in" style={{ padding: '2.5rem', width: '100%', maxWidth: '400px', maxHeight: '90vh', overflowY: 'auto', position: 'relative' }}>
             <button onClick={() => setIsPasswordModalOpen(false)} style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}>
               <X size={24} />
@@ -2682,7 +2682,7 @@ const [profileName, setProfileName] = useState('');
       {/* ================= MODALS ================= */}
 
       {isCreateModalOpen && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(15, 23, 42, 0.4)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}>
           <div className="glass-card animate-fade-in" style={{ padding: '2.5rem', width: '100%', maxWidth: '900px', position: 'relative', display: 'flex', gap: '2.5rem', maxHeight: '90vh', overflowY: 'auto' }}>
             <button onClick={() => setIsCreateModalOpen(false)} style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}><X size={24} /></button>
             <form onSubmit={handleCreateProject} style={{ display: 'flex', width: '100%', gap: '2.5rem' }}>
@@ -2694,14 +2694,14 @@ const [profileName, setProfileName] = useState('');
                 <div style={{ display: 'flex', gap: '1rem' }}><div className="input-group" style={{ flex: 1 }}><label className="input-label">Client</label><input type="text" className="input-field" required value={pClient} onChange={e => setPClient(e.target.value)} /></div><div className="input-group" style={{ flex: 1 }}><label className="input-label">Start Date</label><input type="date" className="input-field" required value={pStartDate} onChange={e => setPStartDate(e.target.value)} style={{ colorScheme: 'dark' }} /></div></div>
                 <div className="input-group"><label className="input-label">Location</label><input type="text" className="input-field" required value={pLocation} onChange={e => setPLocation(e.target.value)} /></div>
               </div>
-              <div style={{ flex: 1, borderLeft: '1px solid rgba(255,255,255,0.1)', paddingLeft: '2.5rem', display: 'flex', flexDirection: 'column' }}>
+              <div style={{ flex: 1, borderLeft: '1px solid var(--border-strong)', paddingLeft: '2.5rem', display: 'flex', flexDirection: 'column' }}>
                 <h3 className="heading-3" style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Users size={20} className="text-gradient" /> Assign Team</h3>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', flex: 1, overflowY: 'auto', paddingRight: '0.5rem' }}>
                   {allUsers.map(user => {
                     const isRoot = user.permissions?.root;
                     const isChecked = isRoot || pAssigned.includes(user.id);
                     return (
-                      <label key={user.id} style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '0.75rem', background: isChecked ? 'rgba(99, 102, 241, 0.1)' : 'rgba(0,0,0,0.2)', border: `1px solid ${isChecked ? 'rgba(99, 102, 241, 0.3)' : 'transparent'}`, borderRadius: 'var(--radius-sm)', cursor: isRoot ? 'not-allowed' : 'pointer' }}>
+                      <label key={user.id} style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '0.75rem', background: isChecked ? 'rgba(99, 102, 241, 0.1)' : 'var(--glass-hover)', border: `1px solid ${isChecked ? 'rgba(99, 102, 241, 0.3)' : 'transparent'}`, borderRadius: 'var(--radius-sm)', cursor: isRoot ? 'not-allowed' : 'pointer' }}>
                         <input type="checkbox" checked={isChecked} onChange={() => !isRoot && toggleAssignUser(user.id)} disabled={isRoot} style={{ width: '18px', height: '18px', accentColor: 'var(--accent-primary)' }}/>
                         <div style={{ display: 'flex', flexDirection: 'column' }}><span style={{ color: isChecked ? 'var(--text-primary)' : 'var(--text-secondary)', fontWeight: 500 }}>{user.name}</span><span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{user.role}</span></div>
                       </label>
@@ -2716,7 +2716,7 @@ const [profileName, setProfileName] = useState('');
       )}
 
       {isFolderModalOpen && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(15, 23, 42, 0.4)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}>
           <div className="glass-card animate-fade-in" style={{ padding: '2.5rem', width: '100%', maxWidth: '400px', maxHeight: '90vh', overflowY: 'auto', position: 'relative' }}>
             <button onClick={() => setIsFolderModalOpen(false)} style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}><X size={24} /></button>
             <h2 className="heading-2" style={{ marginBottom: '1.5rem' }}>Create Folder</h2>
@@ -2729,7 +2729,7 @@ const [profileName, setProfileName] = useState('');
       )}
 
       {isUploadModalOpen && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(15, 23, 42, 0.4)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}>
           <div className="glass-card animate-fade-in" style={{ padding: '2.5rem', width: '100%', maxWidth: '450px', maxHeight: '90vh', overflowY: 'auto', position: 'relative' }}>
             <button onClick={() => setIsUploadModalOpen(false)} style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}><X size={24} /></button>
             <h2 className="heading-2" style={{ marginBottom: '1.5rem' }}>Upload Document</h2>
@@ -2743,7 +2743,7 @@ const [profileName, setProfileName] = useState('');
 
       {/* Register Worker Modal */}
       {isWorkerModalOpen && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(15, 23, 42, 0.4)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}>
           <div className="glass-card animate-fade-in" style={{ padding: '2.5rem', width: '100%', maxWidth: '400px', maxHeight: '90vh', overflowY: 'auto', position: 'relative' }}>
             <button onClick={() => setIsWorkerModalOpen(false)} style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}><X size={24} /></button>
             <h2 className="heading-2" style={{ marginBottom: '1.5rem' }}>Register Labourer</h2>
@@ -2768,7 +2768,7 @@ const [profileName, setProfileName] = useState('');
 
       {/* Edit Worker Modal */}
       {isEditWorkerModalOpen && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(15, 23, 42, 0.4)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}>
           <div className="glass-card animate-fade-in" style={{ padding: '2.5rem', width: '100%', maxWidth: '400px', maxHeight: '90vh', overflowY: 'auto', position: 'relative' }}>
             <button onClick={() => { setIsEditWorkerModalOpen(false); setEditWorkerObj(null); }} style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}><X size={24} /></button>
             <h2 className="heading-2" style={{ marginBottom: '1.5rem' }}>Edit Labourer</h2>
@@ -2794,7 +2794,7 @@ const [profileName, setProfileName] = useState('');
 
       {/* Register Subcontractor Modal */}
       {isSubModalOpen && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(15, 23, 42, 0.4)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}>
           <div className="glass-card animate-fade-in" style={{ padding: '2.5rem', width: '100%', maxWidth: '400px', maxHeight: '90vh', overflowY: 'auto', position: 'relative' }}>
             <button onClick={() => setIsSubModalOpen(false)} style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}><X size={24} /></button>
             <h2 className="heading-2" style={{ marginBottom: '1.5rem' }}>Hire Subcontractor</h2>
@@ -2816,7 +2816,7 @@ const [profileName, setProfileName] = useState('');
 
       {/* Log Payment Modal */}
       {isSubPayModalOpen && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(15, 23, 42, 0.4)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}>
           <div className="glass-card animate-fade-in" style={{ padding: '2.5rem', width: '100%', maxWidth: '400px', maxHeight: '90vh', overflowY: 'auto', position: 'relative' }}>
             <button onClick={() => setIsSubPayModalOpen(false)} style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}><X size={24} /></button>
             <h2 className="heading-2" style={{ marginBottom: '1.5rem' }}>{subPayMode === 'add' ? 'Log Payment' : 'Edit Payment'}</h2>
@@ -2850,7 +2850,7 @@ const [profileName, setProfileName] = useState('');
 
       {/* Category Modal */}
       {isCategoryModalOpen && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(15, 23, 42, 0.4)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}>
           <div className="glass-card animate-fade-in" style={{ padding: '2.5rem', width: '100%', maxWidth: '400px', maxHeight: '90vh', overflowY: 'auto', position: 'relative' }}>
             <button onClick={() => setIsCategoryModalOpen(false)} style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}><X size={24} /></button>
             <h2 className="heading-2" style={{ marginBottom: '1.5rem' }}>New Material Category</h2>
@@ -2867,14 +2867,14 @@ const [profileName, setProfileName] = useState('');
 
       {/* Log Material Order Modal */}
       {isMaterialModalOpen && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(15, 23, 42, 0.4)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}>
           <div className="glass-card animate-fade-in" style={{ padding: '2.5rem', width: '100%', maxWidth: '450px', maxHeight: '90vh', overflowY: 'auto', position: 'relative' }}>
             <button onClick={() => setIsMaterialModalOpen(false)} style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}><X size={24} /></button>
             <h2 className="heading-2" style={{ marginBottom: '1.5rem' }}>Log Material Order</h2>
             <form onSubmit={handleCreateMaterial}>
               <div className="input-group">
                 <label className="input-label">Category</label>
-                <select className="input-field" required value={mCategory} onChange={e => setMCategory(e.target.value)} style={{ padding: '0.6rem', background: 'rgba(0,0,0,0.3)' }}>
+                <select className="input-field" required value={mCategory} onChange={e => setMCategory(e.target.value)} style={{ padding: '0.6rem', background: 'var(--glass-darker)' }}>
                   <option value="" disabled>Select a category...</option>
                   {materialCategories.map(cat => <option key={cat.id} value={cat.name}>{cat.name}</option>)}
                 </select>
@@ -2922,7 +2922,7 @@ const [profileName, setProfileName] = useState('');
 
       {/* Issue Advance Modal */}
       {isAdvanceModalOpen && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(15, 23, 42, 0.4)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}>
           <div className="glass-card animate-fade-in" style={{ padding: '2.5rem', width: '100%', maxWidth: '400px', maxHeight: '90vh', overflowY: 'auto', position: 'relative' }}>
             <button onClick={() => setIsAdvanceModalOpen(false)} style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}><X size={24} /></button>
             <h2 className="heading-2" style={{ marginBottom: '1.5rem' }}>Issue Advance</h2>
@@ -2947,7 +2947,7 @@ const [profileName, setProfileName] = useState('');
 
       {/* Log Expense Modal */}
       {isExpenseModalOpen && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(15, 23, 42, 0.4)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}>
           <div className="glass-card animate-fade-in" style={{ padding: '2.5rem', width: '100%', maxWidth: '450px', maxHeight: '90vh', overflowY: 'auto', position: 'relative' }}>
             <button onClick={() => setIsExpenseModalOpen(false)} style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}><X size={24} /></button>
             <h2 className="heading-2" style={{ marginBottom: '1.5rem' }}>Submit Expense Report</h2>
@@ -2966,7 +2966,7 @@ const [profileName, setProfileName] = useState('');
               </div>
               <div className="input-group">
                 <label className="input-label">Paid By</label>
-                <select className="input-field" value={expPaidBy} onChange={e => setExpPaidBy(e.target.value)} style={{ padding: '0.6rem', background: 'rgba(0,0,0,0.3)' }}>
+                <select className="input-field" value={expPaidBy} onChange={e => setExpPaidBy(e.target.value)} style={{ padding: '0.6rem', background: 'var(--glass-darker)' }}>
                   <option value="Engineer">Site Engineer (Deduct from Advance)</option>
                   <option value="Company">Company / Admin (Direct Expense)</option>
                 </select>
@@ -2989,7 +2989,7 @@ const [profileName, setProfileName] = useState('');
 
       {/* Settle Labourer Modal */}
       {isSettleModalOpen && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(15, 23, 42, 0.4)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}>
           <div className="glass-card animate-fade-in" style={{ padding: '2.5rem', width: '100%', maxWidth: '400px', maxHeight: '90vh', overflowY: 'auto', position: 'relative' }}>
             <button onClick={() => { setIsSettleModalOpen(false); setSettleWorkerId(null); }} style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}><X size={24} /></button>
             <h2 className="heading-2" style={{ marginBottom: '1.5rem' }}>Settle Payroll</h2>
@@ -3012,7 +3012,7 @@ const [profileName, setProfileName] = useState('');
 
       {/* Issue Worker Advance Modal */}
       {isWorkerAdvanceModalOpen && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(15, 23, 42, 0.4)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}>
           <div className="glass-card animate-fade-in" style={{ padding: '2.5rem', width: '100%', maxWidth: '400px', maxHeight: '90vh', overflowY: 'auto', position: 'relative' }}>
             <button onClick={() => { setIsWorkerAdvanceModalOpen(false); setWorkerAdvanceWorkerId(null); }} style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}><X size={24} /></button>
             <h2 className="heading-2" style={{ marginBottom: '1.5rem' }}>Issue Cash Advance</h2>
@@ -3030,7 +3030,7 @@ const [profileName, setProfileName] = useState('');
 
       {/* Image Viewer Modal */}
       {isImageViewerOpen && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.9)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }} onClick={() => setIsImageViewerOpen(false)}>
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(15, 23, 42, 0.6)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }} onClick={() => setIsImageViewerOpen(false)}>
           <button onClick={() => setIsImageViewerOpen(false)} style={{ position: 'absolute', top: '2rem', right: '2rem', background: 'transparent', border: 'none', color: 'var(--text-primary)', cursor: 'pointer' }}><X size={32} /></button>
           <img src={viewImageUrl} alt="Receipt" style={{ maxWidth: '90%', maxHeight: '90%', objectFit: 'contain', borderRadius: 'var(--radius-md)' }} onClick={(e) => e.stopPropagation()} />
         </div>
@@ -3038,7 +3038,7 @@ const [profileName, setProfileName] = useState('');
 
       {/* Add Asset Modal */}
       {isAssetModalOpen && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(15, 23, 42, 0.4)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}>
           <div className="glass-card animate-fade-in" style={{ padding: '2.5rem', width: '100%', maxWidth: '400px', maxHeight: '90vh', overflowY: 'auto', position: 'relative' }}>
             <button onClick={() => setIsAssetModalOpen(false)} style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}><X size={24} /></button>
             <h2 className="heading-2" style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Truck size={24} className="text-gradient"/> Mobilize Asset</h2>
@@ -3071,7 +3071,7 @@ const [profileName, setProfileName] = useState('');
 
       {/* Add Task Modal */}
       {isTaskModalOpen && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(15, 23, 42, 0.4)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}>
           <div className="glass-card animate-fade-in" style={{ padding: '2.5rem', width: '100%', maxWidth: '450px', maxHeight: '90vh', overflowY: 'auto', position: 'relative' }}>
             <button onClick={() => setIsTaskModalOpen(false)} style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}><X size={24} /></button>
             <h2 className="heading-2" style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><CheckSquare size={24} className="text-gradient"/> Create Task</h2>
@@ -3086,7 +3086,7 @@ const [profileName, setProfileName] = useState('');
               </div>
               <div className="input-group">
                 <label className="input-label">Assign To</label>
-                <select className="input-field" value={taskAssignee} onChange={e => setTaskAssignee(e.target.value)} style={{ padding: '0.6rem', background: 'rgba(0,0,0,0.3)' }}>
+                <select className="input-field" value={taskAssignee} onChange={e => setTaskAssignee(e.target.value)} style={{ padding: '0.6rem', background: 'var(--glass-darker)' }}>
                   <option value="">Unassigned</option>
                   {allUsers.map(u => (
                     <option key={u.id} value={u.id}>{u.name} ({u.role})</option>
@@ -3096,7 +3096,7 @@ const [profileName, setProfileName] = useState('');
               <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
                 <div className="input-group" style={{ flex: 1, marginBottom: 0 }}>
                   <label className="input-label">Priority</label>
-                  <select className="input-field" value={taskPriority} onChange={e => setTaskPriority(e.target.value)} style={{ padding: '0.6rem', background: 'rgba(0,0,0,0.3)' }}>
+                  <select className="input-field" value={taskPriority} onChange={e => setTaskPriority(e.target.value)} style={{ padding: '0.6rem', background: 'var(--glass-darker)' }}>
                     <option value="LOW">Low</option>
                     <option value="MEDIUM">Medium</option>
                     <option value="HIGH">High</option>
@@ -3116,7 +3116,7 @@ const [profileName, setProfileName] = useState('');
 
       {/* Global My Pending Tasks Modal */}
       {isGlobalTasksModalOpen && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(15, 23, 42, 0.4)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}>
           <div className="glass-card animate-fade-in" style={{ padding: '2.5rem', width: '100%', maxWidth: '600px', maxHeight: '80vh', overflowY: 'auto', position: 'relative' }}>
             <button onClick={() => setIsGlobalTasksModalOpen(false)} style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}><X size={24} /></button>
             <h2 className="heading-2" style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><CheckSquare size={24} className="text-gradient"/> My Pending Tasks</h2>
@@ -3130,7 +3130,7 @@ const [profileName, setProfileName] = useState('');
                   {myPendingTasks.map(task => {
                     const project = projects.find(p => p.id === task.projectId);
                     return (
-                      <div key={task.id} style={{ padding: '1rem', background: 'rgba(0,0,0,0.4)', borderRadius: 'var(--radius-md)', border: '1px solid rgba(255,255,255,0.05)' }}>
+                      <div key={task.id} style={{ padding: '1rem', background: 'var(--glass-darker)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-subtle)' }}>
                         <div className="flex-between" style={{ marginBottom: '0.5rem' }}>
                           <span style={{ fontSize: '0.7rem', color: task.priority === 'CRITICAL' ? 'var(--danger)' : task.priority === 'HIGH' ? 'var(--warning)' : 'var(--accent-secondary)', fontWeight: 'bold' }}>{task.priority}</span>
                           <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Due: {task.dueDate || 'N/A'}</span>

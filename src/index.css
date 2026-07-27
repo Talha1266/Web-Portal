@@ -314,6 +314,10 @@ body {
   -webkit-overflow-scrolling: touch;
 }
 
+.table-wrapper th, .table-wrapper td {
+  white-space: nowrap !important; /* ABSOLUTELY PREVENT SQUEEZING */
+}
+
 .table-wrapper table {
   min-width: 600px; /* Ensure tables don't crush on mobile */
 }

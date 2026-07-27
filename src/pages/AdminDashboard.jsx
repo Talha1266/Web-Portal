@@ -159,6 +159,7 @@ const AdminDashboard = () => {
 
   const PERMISSION_LABELS = {
     root: "Admin Access (Manage Users)",
+    unlock_past: "Unlock Past Records",
     overview: "Overview",
     attendance: "Attendance",
     payroll: "Payroll & Wages",

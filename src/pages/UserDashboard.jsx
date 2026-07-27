@@ -122,7 +122,7 @@ const UserDashboard = () => {
 
   // Time Lock Utility: Returns true if the entry is from today or if admin has unlocked the past
   const canModifyEntry = (dateStr) => {
-    if (currentUser?.permissions?.root && adminUnlockPast) return true;
+    if ((currentUser?.permissions?.root || currentUser?.permissions?.unlock_past) && adminUnlockPast) return true;
     if (!dateStr) return true;
     const entryDate = new Date(dateStr);
     const today = new Date();
@@ -1458,9 +1458,9 @@ const [profileName, setProfileName] = useState('');
                 <h1 className="heading-1">{activeProj.name}</h1>
                 <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem', alignItems: 'center' }}>
                   <span style={{ fontSize: '0.75rem', padding: '0.2rem 0.6rem', background: 'var(--accent-glow)', color: 'var(--accent-primary)', borderRadius: 'var(--radius-full)' }}>{activeProj.status}</span>
-                  {currentUser?.permissions?.root && (
-                    <button 
-                      onClick={() => setAdminUnlockPast(!adminUnlockPast)} 
+                  {(currentUser?.permissions?.root || currentUser?.permissions?.unlock_past) && (
+                      <button 
+                        onClick={() => setAdminUnlockPast(!adminUnlockPast)} 
                       style={{ background: adminUnlockPast ? 'var(--warning-glow)' : 'transparent', border: `1px solid ${adminUnlockPast ? 'var(--warning)' : 'rgba(255,255,255,0.2)'}`, color: adminUnlockPast ? 'var(--warning)' : 'var(--text-muted)', fontSize: '0.75rem', padding: '0.2rem 0.6rem', borderRadius: 'var(--radius-full)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem', transition: 'all 0.2s' }}
                       title="Allows editing of historical financial records and past dates"
                     >
@@ -1643,7 +1643,7 @@ const [profileName, setProfileName] = useState('');
                   </div>
                   <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
                      <button className="btn btn-secondary" onClick={() => setIsWorkerModalOpen(true)}>+ Register Labourer</button>
-                     {!canModify && perms.root && (
+                     {!canModify && (perms.root || perms.unlock_past) && (
                        <button className="btn btn-warning" onClick={() => { if (window.confirm("You are about to edit historical attendance records. This can alter past payroll calculations. Proceed with caution?")) setAdminUnlockPast(true); }} style={{ background: 'transparent', border: '1px solid var(--warning)', color: 'var(--warning)' }}><Shield size={16} style={{ display: 'inline', verticalAlign: 'text-bottom', marginRight: '0.5rem' }}/> Unlock to Edit</button>
                      )}
                      {canModify && <button className="btn btn-primary" onClick={handleSaveAttendance}>Save Attendance</button>}

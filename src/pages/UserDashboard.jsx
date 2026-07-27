@@ -206,7 +206,7 @@ const UserDashboard = () => {
       expenses, assets, tasks, messages, allProj
     ] = await Promise.all([
       getUsers(), getDocuments(), getWorkers(), getAttendance(), getSubcontractors(),
-      getSubPayments(), getChangeRequests(), getMaterials(), getMaterialCategories(), getSiteAdvances(),
+      getSubPayments(), getChangeRequests(), getMaterials(), getMaterialCategories(activeProjectId), getSiteAdvances(),
       getSiteExpenses(), getAssets(), getTasks(), getMessages(), getProjects()
     ]);
 
@@ -769,7 +769,7 @@ const [profileName, setProfileName] = useState('');
     e.preventDefault();
     if (newCatName.trim() === '') return;
     try {
-      await addMaterialCategory(newCatName.trim());
+      await addMaterialCategory(newCatName.trim(), activeProjectId);
       setNewCatName('');
       await loadData();
     } catch(err) {
@@ -780,7 +780,7 @@ const [profileName, setProfileName] = useState('');
   const handleDeleteCategory = async (catName) => {
     triggerSecurityChallenge(`Delete category '${catName}'?`, 'DELETE', async () => {
       try {
-        await deleteMaterialCategory(catName);
+        await deleteMaterialCategory(catName, activeProjectId);
         if (activeMaterialCategory === catName) setActiveMaterialCategory('All');
         await loadData();
       } catch(err) {
@@ -796,7 +796,7 @@ const [profileName, setProfileName] = useState('');
     }
     triggerSecurityChallenge(`Rename category from '${oldName}' to '${editingCategoryName.trim()}'?`, 'MODIFY', async () => {
       try {
-        await updateMaterialCategory(oldName, editingCategoryName.trim());
+        await updateMaterialCategory(oldName, editingCategoryName.trim(), activeProjectId);
         if (activeMaterialCategory === oldName) setActiveMaterialCategory(editingCategoryName.trim());
         setEditingCategoryId(null);
         await loadData();

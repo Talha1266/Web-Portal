@@ -58,16 +58,16 @@ export const addMaterial = async (m) => {  const { error } = await supabase.from
 export const updateMaterial = async (id, updates) => {  const { error } = await supabase.from('materials').update(updates).eq('id', id); if (error) throw new Error(error.message); };
 export const deleteMaterial = async (id) => {  const { error } = await supabase.from('materials').delete().eq('id', id); if (error) throw new Error(error.message); };
 
-export const getMaterialCategories = async () => { const { data } = await supabase.from('material_categories').select('*'); return data || []; };
-export const addMaterialCategory = async (name) => {  const { error } = await supabase.from('material_categories').insert({ name, id: name }); if (error) throw new Error(error.message); };
-export const updateMaterialCategory = async (oldName, newName) => {
-  // Update all materials referencing this category
-  await supabase.from('materials').update({ category: newName }).eq('category', oldName);
+export const getMaterialCategories = async (projectId) => { const { data } = await supabase.from('material_categories').select('*').eq('projectId', projectId); return data || []; };
+export const addMaterialCategory = async (name, projectId) => {  const { error } = await supabase.from('material_categories').insert({ name, projectId }); if (error) throw new Error(error.message); };
+export const updateMaterialCategory = async (oldName, newName, projectId) => {
+  // Update all materials referencing this category in this project
+  await supabase.from('materials').update({ category: newName }).eq('category', oldName).eq('projectId', projectId);
   // Update the category itself
-  const { error } = await supabase.from('material_categories').update({ id: newName, name: newName }).eq('id', oldName);
+  const { error } = await supabase.from('material_categories').update({ name: newName }).eq('name', oldName).eq('projectId', projectId);
   if (error) throw new Error(error.message);
 };
-export const deleteMaterialCategory = async (name) => {  const { error } = await supabase.from('material_categories').delete().eq('name', name); if (error) throw new Error(error.message); };
+export const deleteMaterialCategory = async (name, projectId) => {  const { error } = await supabase.from('material_categories').delete().eq('name', name).eq('projectId', projectId); if (error) throw new Error(error.message); };
 
 export const getSiteAdvances = async () => { const { data } = await supabase.from('site_advances').select('*'); return data || []; };
 export const addSiteAdvance = async (a) => {  const { error } = await supabase.from('site_advances').insert({ ...a, id: a.id || Date.now().toString(), createdAt: new Date().toISOString() }); if (error) throw new Error(error.message); };

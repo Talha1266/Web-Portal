@@ -3257,7 +3257,7 @@ const [profileName, setProfileName] = useState('');
 
         const matTotal = repMaterials.reduce((acc, m) => acc + Number(m.totalCost || 0), 0);
         const subTotal = repSubs.reduce((acc, p) => acc + Number(p.amount || 0), 0);
-        const labTotal = Object.values(workerTotals).reduce((acc, val) => acc + val.net, 0);
+        const labTotal = Object.values(workerTotals).reduce((acc, val) => acc + val.gross, 0);
 
         return (
           <div className="print-view">
@@ -3339,7 +3339,7 @@ const [profileName, setProfileName] = useState('');
 
             {reportConfig.includeLabour && (
               <div style={{ marginBottom: '40px' }}>
-                <h3 style={{ borderBottom: '2px solid black', paddingBottom: '5px', marginBottom: '10px' }}>Labour & Payroll (Net Wages Earned in Period)</h3>
+                <h3 style={{ borderBottom: '2px solid black', paddingBottom: '5px', marginBottom: '10px' }}>Labour & Payroll (Gross Wages Earned in Period)</h3>
                 <table className="print-table">
                   <thead>
                     <tr>

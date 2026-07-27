@@ -3378,6 +3378,8 @@ const [profileName, setProfileName] = useState('');
                   </tbody>
                 </table>
               </div>
+            )}
+
             {reportConfig.includeExpenses && (
               <div style={{ marginBottom: '40px' }}>
                 <h3 style={{ borderBottom: '2px solid black', paddingBottom: '5px', marginBottom: '10px' }}>Site Expenses</h3>

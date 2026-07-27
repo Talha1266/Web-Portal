@@ -78,6 +78,8 @@ body {
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-sm);
   transition: var(--transition);
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 .glass-card:hover {
@@ -422,8 +424,16 @@ body {
     padding-top: 2rem;
   }
   
+  main {
+    padding: 1rem !important;
+    max-width: 100vw !important;
+    overflow-x: hidden !important;
+  }
+  
   .glass-card {
     padding: 1.5rem !important;
+    max-width: 100% !important;
+    overflow-x: hidden !important;
   }
 }
 

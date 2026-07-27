@@ -594,7 +594,7 @@ const [profileName, setProfileName] = useState('');
 
   const handleConfirmSettle = async (e) => {
     e.preventDefault();
-    if (window.confirm(`Are you sure you want to mark these wages as paid?${!settleAdvancesFlag ? ' (Note: Advances will remain outstanding)' : ''}`)) {
+    triggerSecurityChallenge(`Are you sure you want to mark these wages as paid?${!settleAdvancesFlag ? ' (Note: Advances will remain outstanding)' : ''}`, "PAY", async () => {
       await markAttendancePaid(activeProjectId, settleWorkerId, payrollStart, payrollEnd, settleAdvancesFlag);
       
       if (Number(settleAdvance) > 0) {
@@ -605,7 +605,7 @@ const [profileName, setProfileName] = useState('');
       setSettleWorkerId(null);
       setSettleAdvance('');
       await loadData();
-    }
+    });
   };
 
   const handleOpenWorkerAdvanceModal = (wId) => {
@@ -631,10 +631,10 @@ const [profileName, setProfileName] = useState('');
     const canModify = canModifyEntry(mostRecentDate);
 
     if (canModify) {
-      if (window.confirm("Are you sure you want to revert these wages back to Unpaid?")) {
+      triggerSecurityChallenge("Are you sure you want to revert these wages back to Unpaid?", "REVERT", async () => {
         await revertAttendancePaid(activeProjectId, wId, payrollStart, payrollEnd);
         await loadData();
-      }
+      });
     } else {
       if (window.confirm("These records are older than 24 hours. Request Admin approval to revert?")) {
         await addChangeRequest({
@@ -650,10 +650,10 @@ const [profileName, setProfileName] = useState('');
   };
 
   const handleMarkAllPaid = async () => {
-    if (window.confirm("Are you sure you want to mark ALL outstanding wages in this date range as paid?")) {
+    triggerSecurityChallenge("Are you sure you want to mark ALL outstanding wages in this date range as paid?", "PAY_ALL", async () => {
       await markAllAttendancePaid(activeProjectId, payrollStart, payrollEnd);
       await loadData();
-    }
+    });
   };
 
   // --- Subcontractor Logic ---
@@ -848,12 +848,11 @@ const [profileName, setProfileName] = useState('');
   };
 
   const handleDeletePayrollRecord = async (workerId) => {
-    if (!window.confirm("WARNING: Are you sure you want to permanently delete these attendance and payroll records? This action cannot be undone.")) {
-      return;
-    }
-    const isPaid = payrollViewMode === 'history';
-    await deleteAttendanceRecords(workerId, activeProjectId, payrollStart, payrollEnd, isPaid);
-    await loadData();
+    triggerSecurityChallenge("WARNING: Permanently delete these attendance and payroll records?", "DELETE", async () => {
+      const isPaid = payrollViewMode === 'history';
+      await deleteAttendanceRecords(workerId, activeProjectId, payrollStart, payrollEnd, isPaid);
+      await loadData();
+    });
   };
 
   const handleSendMessage = async (e) => {

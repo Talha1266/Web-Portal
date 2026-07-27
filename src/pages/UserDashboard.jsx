@@ -3272,161 +3272,147 @@ const [profileName, setProfileName] = useState('');
               <button className="btn btn-secondary" onClick={() => setIsReportPreviewActive(false)}>Close Preview</button>
               <button className="btn btn-primary" onClick={() => window.print()}><Printer size={18}/> Print Hardcopy</button>
             </div>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-              <thead>
-                <tr>
-                  <td style={{ border: 'none', padding: 0 }}>
-                    <div className="print-header" style={{ textAlign: 'center', marginBottom: '30px' }}>
-                      <h1 style={{ fontSize: '24px', marginBottom: '10px' }}>{activeProj.name}</h1>
-                      <h2 style={{ fontSize: '20px', marginBottom: '5px' }}>Financial & Operations Report</h2>
-                      <h3 style={{ fontSize: '16px', color: '#555' }}>{reportConfig.startDate || 'Beginning'} to {reportConfig.endDate || 'Present'}</h3>
-                    </div>
-                  </td>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td style={{ border: 'none', padding: 0 }}>
-                    {reportConfig.includeMaterials && (
-                      <>
-                        <h3 style={{ borderBottom: '2px solid black', paddingBottom: '5px', marginBottom: '10px', marginTop: '20px' }}>Material Orders</h3>
-                        <table className="print-table" style={{ marginBottom: '40px', width: '100%', borderCollapse: 'collapse' }}>
-                          <thead>
-                            <tr>
-                              <th>Date</th>
-                              <th>Item</th>
-                              <th>Category</th>
-                              <th>Quantity</th>
-                              <th>Total Cost</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {repMaterials.map(m => (
-                              <tr key={m.id}>
-                                <td>{m.orderDate}</td>
-                                <td>{m.name}</td>
-                                <td>{m.category}</td>
-                                <td>{m.quantity} {m.unit}</td>
-                                <td>Rs {Number(m.totalCost).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
-                              </tr>
-                            ))}
-                            <tr>
-                              <td colSpan="4" style={{ textAlign: 'right', fontWeight: 'bold' }}>Sub-Total Materials:</td>
-                              <td style={{ fontWeight: 'bold' }}>Rs {matTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
-                            </tr>
-                          </tbody>
-                        </table>
-                      </>
-                    )}
+            <div className="print-header" style={{ textAlign: 'center', paddingBottom: '30px' }}>
+              <h1 style={{ fontSize: '24px', paddingBottom: '10px', margin: 0 }}>{activeProj.name}</h1>
+              <h2 style={{ fontSize: '20px', paddingBottom: '5px', margin: 0 }}>Financial & Operations Report</h2>
+              <h3 style={{ fontSize: '16px', color: '#555', margin: 0 }}>{reportConfig.startDate || 'Beginning'} to {reportConfig.endDate || 'Present'}</h3>
+            </div>
 
-                    {reportConfig.includeSubcontractors && (
-                      <React.Fragment>
-                        <h3 style={{ borderBottom: '2px solid black', paddingBottom: '5px', marginBottom: '10px', marginTop: '20px' }}>Subcontractor Payments</h3>
-                        <table className="print-table" style={{ marginBottom: '40px', width: '100%', borderCollapse: 'collapse' }}>
-                          <thead>
-                            <tr>
-                              <th>Date</th>
-                              <th>Subcontractor</th>
-                              <th>Description</th>
-                              <th>Amount Paid</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {repSubs.map(p => {
-                              const sub = allSubcontractors.find(s => s.id === p.subId);
-                              return (
-                                <tr key={p.id}>
-                                  <td>{p.date}</td>
-                                  <td>{sub ? sub.name : 'Unknown'}</td>
-                                  <td>{p.description}</td>
-                                  <td>Rs {Number(p.amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
-                                </tr>
-                              )
-                            })}
-                            <tr>
-                              <td colSpan="3" style={{ textAlign: 'right', fontWeight: 'bold' }}>Sub-Total Subcontractors:</td>
-                              <td style={{ fontWeight: 'bold' }}>Rs {subTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
-                            </tr>
-                          </tbody>
-                        </table>
-                      </React.Fragment>
-                    )}
+            {reportConfig.includeMaterials && (
+              <div style={{ paddingTop: '20px', paddingBottom: '40px', pageBreakInside: 'auto' }}>
+                <h3 style={{ borderBottom: '2px solid black', paddingBottom: '5px', margin: 0 }}>Material Orders</h3>
+                <table className="print-table" style={{ width: '100%', pageBreakInside: 'auto', borderCollapse: 'separate', borderSpacing: 0 }}>
+                  <thead>
+                    <tr>
+                      <th>Date</th>
+                      <th>Item</th>
+                      <th>Category</th>
+                      <th>Quantity</th>
+                      <th>Total Cost</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {repMaterials.map(m => (
+                      <tr key={m.id}>
+                        <td>{m.orderDate}</td>
+                        <td>{m.name}</td>
+                        <td>{m.category}</td>
+                        <td>{m.quantity} {m.unit}</td>
+                        <td>Rs {Number(m.totalCost).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                      </tr>
+                    ))}
+                    <tr>
+                      <td colSpan="4" style={{ textAlign: 'right', fontWeight: 'bold' }}>Sub-Total Materials:</td>
+                      <td style={{ fontWeight: 'bold' }}>Rs {matTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            )}
 
-                    {reportConfig.includeLabour && (
-                      <>
-                        <h3 style={{ borderBottom: '2px solid black', paddingBottom: '5px', marginBottom: '10px', marginTop: '20px' }}>Labour & Payroll (Gross Wages Earned in Period)</h3>
-                        <table className="print-table" style={{ marginBottom: '40px', width: '100%', borderCollapse: 'collapse' }}>
-                          <thead>
-                            <tr>
-                              <th>Worker Name</th>
-                              <th>Trade</th>
-                              <th>Gross Pay</th>
-                              <th>Advance</th>
-                              <th>Net Pay</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {Object.entries(workerTotals).map(([wId, totals]) => {
-                              if (totals.net === 0 && totals.gross === 0) return null;
-                              const worker = allWorkers.find(w => w.id === wId);
-                              return (
-                                <tr key={wId}>
-                                  <td>{worker ? worker.name : 'Unknown'}</td>
-                                  <td>{worker ? worker.trade : ''}</td>
-                                  <td>Rs {totals.gross.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
-                                  <td>Rs {totals.advance.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
-                                  <td>Rs {totals.net.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
-                                </tr>
-                              );
-                            })}
-                            <tr>
-                              <td colSpan="4" style={{ textAlign: 'right', fontWeight: 'bold' }}>Sub-Total Labour:</td>
-                              <td style={{ fontWeight: 'bold' }}>Rs {labTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
-                            </tr>
-                          </tbody>
-                        </table>
-                      </>
-                    )}
+            {reportConfig.includeSubcontractors && (
+              <div style={{ paddingTop: '20px', paddingBottom: '40px', pageBreakInside: 'auto' }}>
+                <h3 style={{ borderBottom: '2px solid black', paddingBottom: '5px', margin: 0 }}>Subcontractor Payments</h3>
+                <table className="print-table" style={{ width: '100%', pageBreakInside: 'auto', borderCollapse: 'separate', borderSpacing: 0 }}>
+                  <thead>
+                    <tr>
+                      <th>Date</th>
+                      <th>Subcontractor</th>
+                      <th>Description</th>
+                      <th>Amount Paid</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {repSubs.map(p => {
+                      const sub = allSubcontractors.find(s => s.id === p.subId);
+                      return (
+                        <tr key={p.id}>
+                          <td>{p.date}</td>
+                          <td>{sub ? sub.name : 'Unknown'}</td>
+                          <td>{p.description}</td>
+                          <td>Rs {Number(p.amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                        </tr>
+                      )
+                    })}
+                    <tr>
+                      <td colSpan="3" style={{ textAlign: 'right', fontWeight: 'bold' }}>Sub-Total Subcontractors:</td>
+                      <td style={{ fontWeight: 'bold' }}>Rs {subTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            )}
 
-                    {reportConfig.includeExpenses && (
-                      <>
-                        <h3 style={{ borderBottom: '2px solid black', paddingBottom: '5px', marginBottom: '10px', marginTop: '20px' }}>Site Expenses</h3>
-                        <table className="print-table" style={{ marginBottom: '40px', width: '100%', borderCollapse: 'collapse' }}>
-                          <thead>
-                            <tr>
-                              <th>Date</th>
-                              <th>Description</th>
-                              <th>Paid By</th>
-                              <th>Amount</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {repExpenses.map(e => (
-                              <tr key={e.id}>
-                                <td>{e.date}</td>
-                                <td>{e.description}</td>
-                                <td>{e.paidBy}</td>
-                                <td>Rs {Number(e.amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
-                              </tr>
-                            ))}
-                            <tr>
-                              <td colSpan="3" style={{ textAlign: 'right', fontWeight: 'bold' }}>Sub-Total Expenses:</td>
-                              <td style={{ fontWeight: 'bold' }}>Rs {expTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
-                            </tr>
-                          </tbody>
-                        </table>
-                      </>
-                    )}
+            {reportConfig.includeLabour && (
+              <div style={{ paddingTop: '20px', paddingBottom: '40px', pageBreakInside: 'auto' }}>
+                <h3 style={{ borderBottom: '2px solid black', paddingBottom: '5px', margin: 0 }}>Labour & Payroll (Gross Wages Earned in Period)</h3>
+                <table className="print-table" style={{ width: '100%', pageBreakInside: 'auto', borderCollapse: 'separate', borderSpacing: 0 }}>
+                  <thead>
+                    <tr>
+                      <th>Worker Name</th>
+                      <th>Trade</th>
+                      <th>Gross Pay</th>
+                      <th>Advance</th>
+                      <th>Net Pay</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {Object.entries(workerTotals).map(([wId, totals]) => {
+                      if (totals.net === 0 && totals.gross === 0) return null;
+                      const worker = allWorkers.find(w => w.id === wId);
+                      return (
+                        <tr key={wId}>
+                          <td>{worker ? worker.name : 'Unknown'}</td>
+                          <td>{worker ? worker.trade : ''}</td>
+                          <td>Rs {totals.gross.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                          <td>Rs {totals.advance.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                          <td>Rs {totals.net.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                        </tr>
+                      );
+                    })}
+                    <tr>
+                      <td colSpan="4" style={{ textAlign: 'right', fontWeight: 'bold' }}>Sub-Total Labour:</td>
+                      <td style={{ fontWeight: 'bold' }}>Rs {labTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            )}
 
-                    <div style={{ marginTop: '50px', textAlign: 'right', fontSize: '18px' }}>
-                      <strong>Grand Total For Period: </strong> 
-                      <span style={{ borderBottom: '2px double black' }}>Rs {(matTotal + subTotal + labTotal + expTotal).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
-                    </div>
+            {reportConfig.includeExpenses && (
+              <div style={{ paddingTop: '20px', paddingBottom: '40px', pageBreakInside: 'auto' }}>
+                <h3 style={{ borderBottom: '2px solid black', paddingBottom: '5px', margin: 0 }}>Site Expenses</h3>
+                <table className="print-table" style={{ width: '100%', pageBreakInside: 'auto', borderCollapse: 'separate', borderSpacing: 0 }}>
+                  <thead>
+                    <tr>
+                      <th>Date</th>
+                      <th>Description</th>
+                      <th>Paid By</th>
+                      <th>Amount</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {repExpenses.map(e => (
+                      <tr key={e.id}>
+                        <td>{e.date}</td>
+                        <td>{e.description}</td>
+                        <td>{e.paidBy}</td>
+                        <td>Rs {Number(e.amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                      </tr>
+                    ))}
+                    <tr>
+                      <td colSpan="3" style={{ textAlign: 'right', fontWeight: 'bold' }}>Sub-Total Expenses:</td>
+                      <td style={{ fontWeight: 'bold' }}>Rs {expTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            )}
 
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+            <div style={{ paddingTop: '50px', textAlign: 'right', fontSize: '18px' }}>
+              <strong>Grand Total For Period: </strong> 
+              <span style={{ borderBottom: '2px double black' }}>Rs {(matTotal + subTotal + labTotal + expTotal).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+            </div>
 
             {reportConfig.includeExpenses && repExpenses.filter(e => e.receiptImage).map((e, index) => (
               <div key={`receipt-${e.id}`} style={{ marginTop: '40px', pageBreakBefore: 'always', padding: '20px 0' }}>

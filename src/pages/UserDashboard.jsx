@@ -1084,9 +1084,9 @@ const [profileName, setProfileName] = useState('');
   };
 
   const handlePayAllVendorBills = async (vendorName) => {
-    triggerSecurityChallenge(`Are you sure you want to mark ALL unpaid orders for ${vendorName} as Paid?`, "MODIFY", async () => {
+    triggerSecurityChallenge(`Are you sure you want to mark ALL unpaid DELIVERED orders for ${vendorName} as Paid?`, "MODIFY", async () => {
       try {
-        const unpaidOrders = allMaterials.filter(m => m.projectId === activeProjectId && m.vendorName && m.vendorName.toLowerCase() === vendorName.toLowerCase() && !m.isPaid && !m.isUndelivered);
+        const unpaidOrders = allMaterials.filter(m => m.projectId === activeProjectId && m.vendorName && m.vendorName.toLowerCase() === vendorName.toLowerCase() && !m.isPaid && m.isArrived && !m.isUndelivered);
         if (unpaidOrders.length === 0) return;
         for (const order of unpaidOrders) {
           await updateMaterial(order.id, { isPaid: true });
@@ -3274,7 +3274,7 @@ const [profileName, setProfileName] = useState('');
                                      .sort((a,b) => new Date(b.orderDate) - new Date(a.orderDate));
           
           vendorOrders.forEach(order => {
-            if (!order.isUndelivered) {
+            if (order.isArrived && !order.isUndelivered) {
               totalOrderedCost += (order.totalCost || 0);
               if (order.isPaid) {
                 totalPaid += (order.totalCost || 0);

@@ -2425,10 +2425,10 @@ const [profileName, setProfileName] = useState('');
                                   )}
                                 </td>
                                 <td style={{ padding: '1rem 0.5rem', textAlign: 'center' }}>
-                                  <input type="checkbox" checked={m.isArrived} onChange={() => handleToggleMaterial(m.id, 'isArrived', m.isArrived, m.createdAt)} style={{ width: '18px', height: '18px', accentColor: 'var(--accent-primary)', cursor: 'pointer' }}/>
+                                  <input type="checkbox" checked={m.isArrived} onChange={() => { triggerSecurityChallenge(m.isArrived ? "Mark this material as NOT delivered?" : "Mark this material as delivered?", 'MODIFY', () => handleToggleMaterial(m.id, 'isArrived', m.isArrived, m.createdAt)); }} style={{ width: '18px', height: '18px', accentColor: 'var(--accent-primary)', cursor: 'pointer' }}/>
                                 </td>
                                 <td style={{ padding: '1rem 0.5rem', textAlign: 'center' }}>
-                                  <input type="checkbox" checked={m.isPaid} onChange={() => handleToggleMaterial(m.id, 'isPaid', m.isPaid, m.createdAt)} style={{ width: '18px', height: '18px', accentColor: 'var(--success)', cursor: 'pointer' }}/>
+                                  <input type="checkbox" checked={m.isPaid} onChange={() => { triggerSecurityChallenge(m.isPaid ? "Mark this material as unpaid?" : "Mark this material as paid?", 'MODIFY', () => handleToggleMaterial(m.id, 'isPaid', m.isPaid, m.createdAt)); }} style={{ width: '18px', height: '18px', accentColor: 'var(--success)', cursor: 'pointer' }}/>
                                 </td>
                                 <td style={{ padding: '1rem 0.5rem', textAlign: 'center' }}>
                                   <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>

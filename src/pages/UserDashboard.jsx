@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LayoutDashboard, HardHat, FileText, MessageSquare, LogOut, Plus, Edit2, Trash2, PieChart, Shield, X, MapPin, Building, Calendar, Users, Folder, FolderPlus, UploadCloud, ChevronRight, ArrowLeft, CheckSquare, Settings, ClipboardList, DollarSign, CheckCircle, Briefcase, Package, CreditCard, Truck, AlertTriangle, Menu, Unlock, Printer } from 'lucide-react';
+import { LayoutDashboard, HardHat, FileText, MessageSquare, LogOut, Plus, Edit2, Trash2, PieChart, Shield, X, MapPin, Building, Calendar, Users, Folder, FolderPlus, UploadCloud, ChevronRight, ArrowLeft, CheckSquare, Settings, ClipboardList, DollarSign, CheckCircle, Briefcase, Package, CreditCard, Truck, AlertTriangle, XCircle, Menu, Unlock, Printer } from 'lucide-react';
 import { getUsers, getProjects, addProject, updateProject, deleteProject, getDocuments, addDocument, deleteDocument, getWorkers, addWorker, updateWorker, deleteWorker, getAttendance, saveAttendance, markAttendancePaid, markAllAttendancePaid, deleteAttendanceRecords, getSubcontractors, addSubcontractor, updateSubcontractor, deleteSubcontractor, getSubPayments, addSubPayment, deleteSubPayment, updateSubPayment, getChangeRequests, addChangeRequest, updateChangeRequestStatus, getMaterials, addMaterial, updateMaterial, deleteMaterial, getMaterialCategories, addMaterialCategory, updateMaterialCategory, deleteMaterialCategory, getVendors, addVendor, updateVendor, deleteVendor, getSiteAdvances, addSiteAdvance, updateSiteAdvance, deleteSiteAdvance, getSiteExpenses, addSiteExpense, updateSiteExpense, deleteSiteExpense, addAdvanceOnlyRecord, revertAttendancePaid, getAssets, addAsset, updateAsset, deleteAsset, saveFileContentToDB, getFileContentFromDB, deleteFileContentFromDB, getTasks, addTask, updateTask, deleteTask, getMessages, addMessage, updateUserProfile } from '../utils/db';
 import { supabase } from '../supabaseClient';
 import { PieChart as RechartsPieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
@@ -2394,15 +2394,15 @@ const [profileName, setProfileName] = useState('');
                           </tr>
                         </thead>
                         <tbody>
-                          {projMaterials.filter(m => materialViewMode === 'active' ? !m.isPaid : m.isPaid).sort((a,b) => new Date(b.orderDate) - new Date(a.orderDate)).map(m => {
+                          {projMaterials.filter(m => materialViewMode === 'active' ? (!m.isPaid && !m.isUndelivered) : (m.isPaid || m.isUndelivered)).sort((a,b) => new Date(b.orderDate) - new Date(a.orderDate)).map(m => {
                             const canModify = canModifyEntry(m.createdAt);
                             
                             return (
-                              <tr key={m.id} style={{ borderBottom: '1px solid var(--border-subtle)', background: m.isArrived ? 'var(--glass-overlay)' : 'transparent' }}>
+                              <tr key={m.id} style={{ borderBottom: '1px solid var(--border-subtle)', background: m.isUndelivered ? 'rgba(239, 68, 68, 0.05)' : m.isArrived ? 'var(--glass-overlay)' : 'transparent' }}>
                                 <td style={{ padding: '1rem 0.5rem', color: 'var(--text-secondary)' }}>{m.orderDate}</td>
-                                <td style={{ padding: '1rem 0.5rem', fontWeight: 500 }}>
-                                  {m.itemName} <br/>
-                                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                                <td style={{ padding: '1rem 0.5rem', fontWeight: 500, color: m.isUndelivered ? 'var(--text-muted)' : 'inherit', textDecoration: m.isUndelivered ? 'line-through' : 'none' }}>
+                                  {m.itemName} {m.isUndelivered && <span style={{ fontSize: '0.65rem', padding: '0.15rem 0.4rem', marginLeft: '0.5rem', background: 'rgba(239, 68, 68, 0.1)', color: 'var(--danger)', borderRadius: 'var(--radius-sm)', textDecoration: 'none', display: 'inline-block', verticalAlign: 'middle' }}>Undelivered</span>} <br/>
+                                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textDecoration: 'none', display: 'inline-block' }}>
                                     {m.isArrived && m.orderedQuantity && Number(m.quantity) !== Number(m.orderedQuantity)
                                       ? `${m.quantity} received (of ${m.orderedQuantity} ordered)`
                                       : `${m.quantity} units`} @ Rs {m.unitPrice}
@@ -2429,6 +2429,9 @@ const [profileName, setProfileName] = useState('');
                                 </td>
                                 <td style={{ padding: '1rem 0.5rem', textAlign: 'center' }}>
                                   <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>
+                                    <button style={{ background: 'none', border: 'none', color: m.isUndelivered ? 'var(--danger)' : 'var(--text-secondary)', cursor: 'pointer', opacity: 0.7 }} onMouseEnter={e => e.currentTarget.style.opacity = 1} onMouseLeave={e => e.currentTarget.style.opacity = 0.7} onClick={() => handleToggleMaterial(m.id, 'isUndelivered', m.isUndelivered || false, m.createdAt)} title={m.isUndelivered ? "Unmark Undelivered" : "Mark Undelivered Permanently"}>
+                                      <XCircle size={16} />
+                                    </button>
                                     <button style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', opacity: 0.7 }} onMouseEnter={e => e.currentTarget.style.opacity = 1} onMouseLeave={e => e.currentTarget.style.opacity = 0.7} onClick={(e) => { e.stopPropagation(); openEditMaterialModal(m); }} title="Modify Order">
                                       <Edit2 size={16} />
                                     </button>

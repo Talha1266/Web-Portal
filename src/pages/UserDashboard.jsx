@@ -3310,13 +3310,23 @@ const [profileName, setProfileName] = useState('');
                               <td style={{ padding: '0.75rem 0.5rem', textAlign: 'center' }}>{order.quantity}</td>
                               <td style={{ padding: '0.75rem 0.5rem', textAlign: 'right' }}>Rs {(order.totalCost || 0).toFixed(2)}</td>
                               <td style={{ padding: '0.75rem 0.5rem', textAlign: 'center' }}>
-                                {order.isUndelivered ? (
-                                  <span style={{ fontSize: '0.7rem', padding: '0.15rem 0.4rem', background: 'rgba(239, 68, 68, 0.1)', color: 'var(--danger)', borderRadius: 'var(--radius-sm)' }}>Undelivered</span>
-                                ) : order.isPaid ? (
-                                  <span style={{ fontSize: '0.7rem', padding: '0.15rem 0.4rem', background: 'rgba(16, 185, 129, 0.1)', color: 'var(--success)', borderRadius: 'var(--radius-sm)' }}>Paid</span>
-                                ) : (
-                                  <span style={{ fontSize: '0.7rem', padding: '0.15rem 0.4rem', background: 'rgba(245, 158, 11, 0.1)', color: 'var(--warning)', borderRadius: 'var(--radius-sm)' }}>Unpaid</span>
-                                )}
+                                <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>
+                                  {order.isUndelivered ? (
+                                    <span style={{ fontSize: '0.7rem', padding: '0.15rem 0.4rem', background: 'rgba(239, 68, 68, 0.1)', color: 'var(--danger)', borderRadius: 'var(--radius-sm)' }}>Canceled</span>
+                                  ) : order.isArrived ? (
+                                    <span style={{ fontSize: '0.7rem', padding: '0.15rem 0.4rem', background: 'rgba(16, 185, 129, 0.1)', color: 'var(--success)', borderRadius: 'var(--radius-sm)' }}>Delivered</span>
+                                  ) : (
+                                    <span style={{ fontSize: '0.7rem', padding: '0.15rem 0.4rem', background: 'rgba(245, 158, 11, 0.1)', color: 'var(--warning)', borderRadius: 'var(--radius-sm)' }}>Pending Delivery</span>
+                                  )}
+
+                                  {!order.isUndelivered && (
+                                    order.isPaid ? (
+                                      <span style={{ fontSize: '0.7rem', padding: '0.15rem 0.4rem', background: 'rgba(16, 185, 129, 0.1)', color: 'var(--success)', borderRadius: 'var(--radius-sm)' }}>Paid</span>
+                                    ) : (
+                                      <span style={{ fontSize: '0.7rem', padding: '0.15rem 0.4rem', background: 'rgba(245, 158, 11, 0.1)', color: 'var(--warning)', borderRadius: 'var(--radius-sm)' }}>Unpaid</span>
+                                    )
+                                  )}
+                                </div>
                               </td>
                             </tr>
                           ))

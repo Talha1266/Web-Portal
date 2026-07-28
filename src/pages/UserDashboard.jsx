@@ -3288,7 +3288,38 @@ const [profileName, setProfileName] = useState('');
             <div className="glass-card animate-fade-in" style={{ padding: '2.5rem', width: '100%', maxWidth: '800px', maxHeight: '90vh', overflowY: 'auto', position: 'relative' }}>
               <button onClick={() => { setIsVendorBillModalOpen(false); setVendorBillSelectedVendor(''); }} style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}><X size={24} /></button>
               
-              <h2 className="heading-2" style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><FileText size={24} color="var(--accent-primary)"/> Vendor Bill Compiler</h2>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                <h2 className="heading-2" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0 }}><FileText size={24} color="var(--accent-primary)"/> Vendor Bill Compiler</h2>
+                {vendorBillSelectedVendor && (
+                  <button className="btn btn-secondary" onClick={() => {
+                    const printContent = document.getElementById('vendor-bill-printable');
+                    if (!printContent) return;
+                    const windowPrint = window.open('', '', 'left=0,top=0,width=800,height=900,toolbar=0,scrollbars=0,status=0');
+                    const css = `
+                      body { font-family: sans-serif; padding: 2rem; color: #000; }
+                      table { width: 100%; border-collapse: collapse; margin-bottom: 2rem; font-size: 0.875rem; text-align: left; }
+                      th, td { padding: 0.5rem; border-bottom: 1px solid #ccc; }
+                      th { font-weight: bold; background: #f8f9fa; }
+                      .totals-grid { display: flex; justify-content: space-between; border-top: 2px solid #000; padding-top: 1rem; margin-top: 2rem; }
+                      .totals-grid > div { text-align: center; flex: 1; }
+                      @media print {
+                        button { display: none !important; }
+                        input[type="checkbox"] { display: none !important; }
+                      }
+                    `;
+                    windowPrint.document.write('<html><head><title>Vendor Bill - ' + vendorBillSelectedVendor + '</title>');
+                    windowPrint.document.write('<style>' + css + '</style></head><body>');
+                    windowPrint.document.write('<h2 style="margin-bottom: 2rem; border-bottom: 2px solid #000; padding-bottom: 0.5rem;">Vendor Bill: ' + vendorBillSelectedVendor + '</h2>');
+                    windowPrint.document.write(printContent.innerHTML);
+                    windowPrint.document.write('</body></html>');
+                    windowPrint.document.close();
+                    windowPrint.focus();
+                    setTimeout(() => { windowPrint.print(); windowPrint.close(); }, 250);
+                  }}>
+                    <Printer size={16}/> Print Bill
+                  </button>
+                )}
+              </div>
               
               <div className="input-group" style={{ marginBottom: '2rem' }}>
                 <label className="input-label">Select Vendor</label>
@@ -3301,7 +3332,7 @@ const [profileName, setProfileName] = useState('');
               </div>
 
               {vendorBillSelectedVendor && (
-                <>
+                <div id="vendor-bill-printable">
                   <div style={{ overflowX: 'auto', marginBottom: '2rem' }}>
                     <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.875rem' }}>
                       <thead>
@@ -3357,7 +3388,7 @@ const [profileName, setProfileName] = useState('');
                     </table>
                   </div>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem', background: 'var(--glass-darker)', padding: '1.5rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-subtle)' }}>
+                  <div className="totals-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem', background: 'var(--glass-darker)', padding: '1.5rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-subtle)' }}>
                     <div style={{ textAlign: 'center' }}>
                       <p style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>Total Ordered (Valid)</p>
                       <p style={{ fontSize: '1.125rem', fontWeight: 'bold', color: 'var(--text-primary)' }}>Rs {totalOrderedCost.toFixed(2)}</p>
@@ -3374,7 +3405,7 @@ const [profileName, setProfileName] = useState('');
                       )}
                     </div>
                   </div>
-                </>
+                </div>
               )}
 
             </div>

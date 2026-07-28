@@ -3296,11 +3296,12 @@ const [profileName, setProfileName] = useState('');
                           <th style={{ padding: '0.75rem 0.5rem', textAlign: 'center' }}>Qty</th>
                           <th style={{ padding: '0.75rem 0.5rem', textAlign: 'right' }}>Total Cost</th>
                           <th style={{ padding: '0.75rem 0.5rem', textAlign: 'center' }}>Status</th>
+                          <th style={{ padding: '0.75rem 0.5rem', textAlign: 'center' }}>Pay</th>
                         </tr>
                       </thead>
                       <tbody>
                         {vendorOrders.length === 0 ? (
-                          <tr><td colSpan="6" style={{ padding: '1.5rem', textAlign: 'center', color: 'var(--text-muted)' }}>No orders found for this vendor.</td></tr>
+                          <tr><td colSpan="7" style={{ padding: '1.5rem', textAlign: 'center', color: 'var(--text-muted)' }}>No orders found for this vendor.</td></tr>
                         ) : (
                           vendorOrders.map(order => (
                             <tr key={order.id} style={{ borderBottom: '1px solid var(--border-subtle)', opacity: order.isUndelivered ? 0.5 : 1 }}>
@@ -3327,6 +3328,11 @@ const [profileName, setProfileName] = useState('');
                                     )
                                   )}
                                 </div>
+                              </td>
+                              <td style={{ padding: '0.75rem 0.5rem', textAlign: 'center' }}>
+                                {!order.isUndelivered && (
+                                  <input type="checkbox" checked={order.isPaid} onChange={() => { triggerSecurityChallenge(order.isPaid ? "Mark this material as unpaid?" : "Mark this material as paid?", 'MODIFY', () => handleToggleMaterial(order.id, 'isPaid', order.isPaid, order.createdAt)); }} style={{ width: '18px', height: '18px', accentColor: 'var(--success)', cursor: 'pointer' }} title={order.isPaid ? "Unmark as paid" : "Mark as paid"} />
+                                )}
                               </td>
                             </tr>
                           ))

@@ -84,6 +84,8 @@ const UserDashboard = () => {
   const [activeMaterialCategory, setActiveMaterialCategory] = useState('All');
   const [materialViewMode, setMaterialViewMode] = useState('active'); // 'active' or 'history'
   const [isMaterialModalOpen, setIsMaterialModalOpen] = useState(false);
+  const [isVendorBillModalOpen, setIsVendorBillModalOpen] = useState(false);
+  const [vendorBillSelectedVendor, setVendorBillSelectedVendor] = useState('');
   const [mCategory, setMCategory] = useState('');
   const [mName, setMName] = useState('');
   const [mVendor, setMVendor] = useState('');
@@ -2339,6 +2341,7 @@ const [profileName, setProfileName] = useState('');
                     <h3 className="heading-3" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Package size={20} className="text-gradient"/> Material Procurement</h3>
                     <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
                       <button className="btn btn-secondary" onClick={() => setIsCategoryModalOpen(true)}><Settings size={16}/> Manage Categories</button>
+                      <button className="btn btn-secondary" onClick={() => setIsVendorBillModalOpen(true)}><FileText size={16}/> Vendor Bills</button>
                       <button className="btn btn-primary" onClick={() => setIsMaterialModalOpen(true)}>+ Log Material Order</button>
                     </div>
                   </div>
@@ -3241,6 +3244,108 @@ const [profileName, setProfileName] = useState('');
           </div>
         </div>
       )}
+
+      {/* Vendor Bill Modal */}
+      {isVendorBillModalOpen && (() => {
+        const uniqueVendors = Array.from(new Set(allVendors.filter(v => v.projectId === activeProjectId).map(v => v.name)));
+        
+        let vendorOrders = [];
+        let totalOrderedCost = 0;
+        let totalPaid = 0;
+        
+        if (vendorBillSelectedVendor) {
+          vendorOrders = allMaterials.filter(m => m.projectId === activeProjectId && m.vendorName && m.vendorName.toLowerCase() === vendorBillSelectedVendor.toLowerCase())
+                                     .sort((a,b) => new Date(b.orderDate) - new Date(a.orderDate));
+          
+          vendorOrders.forEach(order => {
+            if (!order.isUndelivered) {
+              totalOrderedCost += (order.totalCost || 0);
+              if (order.isPaid) {
+                totalPaid += (order.totalCost || 0);
+              }
+            }
+          });
+        }
+
+        return (
+          <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(9, 9, 11, 0.5)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}>
+            <div className="glass-card animate-fade-in" style={{ padding: '2.5rem', width: '100%', maxWidth: '800px', maxHeight: '90vh', overflowY: 'auto', position: 'relative' }}>
+              <button onClick={() => { setIsVendorBillModalOpen(false); setVendorBillSelectedVendor(''); }} style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}><X size={24} /></button>
+              
+              <h2 className="heading-2" style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><FileText size={24} color="var(--accent-primary)"/> Vendor Bill Compiler</h2>
+              
+              <div className="input-group" style={{ marginBottom: '2rem' }}>
+                <label className="input-label">Select Vendor</label>
+                <select className="input-field" value={vendorBillSelectedVendor} onChange={e => setVendorBillSelectedVendor(e.target.value)} style={{ padding: '0.8rem', background: 'var(--bg-tertiary)' }}>
+                  <option value="" disabled>Choose a vendor...</option>
+                  {uniqueVendors.map((vName, idx) => (
+                    <option key={idx} value={vName}>{vName}</option>
+                  ))}
+                </select>
+              </div>
+
+              {vendorBillSelectedVendor && (
+                <>
+                  <div style={{ overflowX: 'auto', marginBottom: '2rem' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.875rem' }}>
+                      <thead>
+                        <tr style={{ borderBottom: '1px solid var(--border-strong)', color: 'var(--text-muted)' }}>
+                          <th style={{ padding: '0.75rem 0.5rem' }}>Date</th>
+                          <th style={{ padding: '0.75rem 0.5rem' }}>Category</th>
+                          <th style={{ padding: '0.75rem 0.5rem' }}>Item</th>
+                          <th style={{ padding: '0.75rem 0.5rem', textAlign: 'center' }}>Qty</th>
+                          <th style={{ padding: '0.75rem 0.5rem', textAlign: 'right' }}>Total Cost</th>
+                          <th style={{ padding: '0.75rem 0.5rem', textAlign: 'center' }}>Status</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {vendorOrders.length === 0 ? (
+                          <tr><td colSpan="6" style={{ padding: '1.5rem', textAlign: 'center', color: 'var(--text-muted)' }}>No orders found for this vendor.</td></tr>
+                        ) : (
+                          vendorOrders.map(order => (
+                            <tr key={order.id} style={{ borderBottom: '1px solid var(--border-subtle)', opacity: order.isUndelivered ? 0.5 : 1 }}>
+                              <td style={{ padding: '0.75rem 0.5rem', color: 'var(--text-primary)' }}>{order.orderDate}</td>
+                              <td style={{ padding: '0.75rem 0.5rem', color: 'var(--text-secondary)' }}>{order.category}</td>
+                              <td style={{ padding: '0.75rem 0.5rem', fontWeight: 500, textDecoration: order.isUndelivered ? 'line-through' : 'none' }}>{order.itemName}</td>
+                              <td style={{ padding: '0.75rem 0.5rem', textAlign: 'center' }}>{order.quantity}</td>
+                              <td style={{ padding: '0.75rem 0.5rem', textAlign: 'right' }}>Rs {(order.totalCost || 0).toFixed(2)}</td>
+                              <td style={{ padding: '0.75rem 0.5rem', textAlign: 'center' }}>
+                                {order.isUndelivered ? (
+                                  <span style={{ fontSize: '0.7rem', padding: '0.15rem 0.4rem', background: 'rgba(239, 68, 68, 0.1)', color: 'var(--danger)', borderRadius: 'var(--radius-sm)' }}>Undelivered</span>
+                                ) : order.isPaid ? (
+                                  <span style={{ fontSize: '0.7rem', padding: '0.15rem 0.4rem', background: 'rgba(16, 185, 129, 0.1)', color: 'var(--success)', borderRadius: 'var(--radius-sm)' }}>Paid</span>
+                                ) : (
+                                  <span style={{ fontSize: '0.7rem', padding: '0.15rem 0.4rem', background: 'rgba(245, 158, 11, 0.1)', color: 'var(--warning)', borderRadius: 'var(--radius-sm)' }}>Unpaid</span>
+                                )}
+                              </td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem', background: 'var(--glass-darker)', padding: '1.5rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-subtle)' }}>
+                    <div style={{ textAlign: 'center' }}>
+                      <p style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>Total Ordered (Valid)</p>
+                      <p style={{ fontSize: '1.125rem', fontWeight: 'bold', color: 'var(--text-primary)' }}>Rs {totalOrderedCost.toFixed(2)}</p>
+                    </div>
+                    <div style={{ textAlign: 'center', borderLeft: '1px solid var(--border-strong)', borderRight: '1px solid var(--border-strong)' }}>
+                      <p style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>Total Paid</p>
+                      <p style={{ fontSize: '1.125rem', fontWeight: 'bold', color: 'var(--success)' }}>Rs {totalPaid.toFixed(2)}</p>
+                    </div>
+                    <div style={{ textAlign: 'center' }}>
+                      <p style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>Outstanding Balance</p>
+                      <p style={{ fontSize: '1.125rem', fontWeight: 'bold', color: (totalOrderedCost - totalPaid) > 0 ? 'var(--warning)' : 'var(--success)' }}>Rs {(totalOrderedCost - totalPaid).toFixed(2)}</p>
+                    </div>
+                  </div>
+                </>
+              )}
+
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Log Material Order Modal */}
       {isMaterialModalOpen && (

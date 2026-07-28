@@ -1083,6 +1083,22 @@ const [profileName, setProfileName] = useState('');
     }
   };
 
+  const handlePayAllVendorBills = async (vendorName) => {
+    triggerSecurityChallenge(`Are you sure you want to mark ALL unpaid orders for ${vendorName} as Paid?`, "MODIFY", async () => {
+      try {
+        const unpaidOrders = allMaterials.filter(m => m.projectId === activeProjectId && m.vendorName && m.vendorName.toLowerCase() === vendorName.toLowerCase() && !m.isPaid && !m.isUndelivered);
+        if (unpaidOrders.length === 0) return;
+        for (const order of unpaidOrders) {
+          await updateMaterial(order.id, { isPaid: true });
+        }
+        await loadData();
+        alert("All outstanding bills marked as paid!");
+      } catch (err) {
+        alert("Error paying bills: " + err.message);
+      }
+    });
+  };
+
   const handleToggleMaterial = async (id, field, currentValue, createdAt) => {
     const canModify = canModifyEntry(createdAt);
     const material = allMaterials.find(m => m.id === id);
@@ -3352,7 +3368,10 @@ const [profileName, setProfileName] = useState('');
                     </div>
                     <div style={{ textAlign: 'center' }}>
                       <p style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>Outstanding Balance</p>
-                      <p style={{ fontSize: '1.125rem', fontWeight: 'bold', color: (totalOrderedCost - totalPaid) > 0 ? 'var(--warning)' : 'var(--success)' }}>Rs {(totalOrderedCost - totalPaid).toFixed(2)}</p>
+                      <p style={{ fontSize: '1.125rem', fontWeight: 'bold', color: (totalOrderedCost - totalPaid) > 0 ? 'var(--warning)' : 'var(--success)', marginBottom: (totalOrderedCost - totalPaid) > 0 ? '0.5rem' : '0' }}>Rs {(totalOrderedCost - totalPaid).toFixed(2)}</p>
+                      {(totalOrderedCost - totalPaid) > 0 && (
+                        <button className="btn btn-primary" style={{ padding: '0.3rem 0.8rem', fontSize: '0.75rem' }} onClick={() => handlePayAllVendorBills(vendorBillSelectedVendor)}>Pay All Outstanding</button>
+                      )}
                     </div>
                   </div>
                 </>

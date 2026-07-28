@@ -57,6 +57,8 @@ const UserDashboard = () => {
   const [attendanceForm, setAttendanceForm] = useState({});
   const [isAttendanceDirty, setIsAttendanceDirty] = useState(false);
   const [isWorkerModalOpen, setIsWorkerModalOpen] = useState(false);
+  const [isLabourCardModalOpen, setIsLabourCardModalOpen] = useState(false);
+  const [selectedLabour, setSelectedLabour] = useState(null);
   const [wName, setWName] = useState('');
   const [wTrade, setWTrade] = useState('');
   const [wWage, setWWage] = useState(''); // Daily Wage
@@ -2101,7 +2103,10 @@ const [profileName, setProfileName] = useState('');
                              return (
                                <tr key={wId} style={{ borderBottom: '1px solid var(--border-subtle)', opacity: worker.isDeleted ? 0.6 : 1 }}>
                                  <td style={{ padding: '1rem 0.5rem', fontWeight: 500 }}>
-                                   {worker.name} {worker.isDeleted && <span style={{ fontSize: '0.75rem', color: 'var(--danger)', marginLeft: '0.5rem', fontWeight: 'normal' }}>(Removed)</span>}
+                                   <button onClick={() => { setSelectedLabour(worker); setIsLabourCardModalOpen(true); }} style={{ background: 'none', border: 'none', color: 'var(--accent-primary)', cursor: 'pointer', textDecoration: 'underline', padding: 0, font: 'inherit', fontWeight: 500, textAlign: 'left' }}>
+                                     {worker.name}
+                                   </button>
+                                   {worker.isDeleted && <span style={{ fontSize: '0.75rem', color: 'var(--danger)', marginLeft: '0.5rem', fontWeight: 'normal' }}>(Removed)</span>}
                                  </td>
                                  <td style={{ padding: '1rem 0.5rem', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>{dateStr}</td>
                                  <td style={{ padding: '1rem 0.5rem', color: 'var(--text-secondary)' }}>{worker.trade}</td>
@@ -3355,6 +3360,110 @@ const [profileName, setProfileName] = useState('');
           </div>
         </div>
       )}
+
+      {/* Labour Card Modal */}
+      {isLabourCardModalOpen && selectedLabour && (() => {
+        // Compute labour's attendance and advances
+        const labourRecords = allAttendance.filter(a => a.projectId === activeProjectId && a.workerId === selectedLabour.id)
+                                           .sort((a,b) => new Date(b.date) - new Date(a.date));
+                                           
+        let totalReg = 0;
+        let totalOT = 0;
+        let totalAdvance = 0;
+        let totalGross = 0;
+        
+        const hourlyRate = (selectedLabour.dailyWage || 0) / 8;
+
+        return (
+          <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(9, 9, 11, 0.5)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}>
+            <div className="glass-card animate-fade-in" style={{ padding: '2.5rem', width: '100%', maxWidth: '700px', maxHeight: '90vh', overflowY: 'auto', position: 'relative' }}>
+              <button onClick={() => { setIsLabourCardModalOpen(false); setSelectedLabour(null); }} style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}><X size={24} /></button>
+              
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2rem' }}>
+                <div style={{ padding: '1rem', background: 'var(--bg-tertiary)', borderRadius: 'var(--radius-full)' }}>
+                  <Users size={32} color="var(--accent-primary)" />
+                </div>
+                <div>
+                  <h2 className="heading-2" style={{ margin: 0 }}>{selectedLabour.name}</h2>
+                  <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>{selectedLabour.trade} • Rs {selectedLabour.dailyWage}/day</p>
+                </div>
+              </div>
+
+              <h3 className="heading-3" style={{ marginBottom: '1rem', fontSize: '1.1rem', color: 'var(--text-primary)' }}>Attendance & Advance Ledger</h3>
+              
+              <div style={{ overflowX: 'auto', marginBottom: '2rem' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.875rem' }}>
+                  <thead>
+                    <tr style={{ borderBottom: '1px solid var(--border-strong)', color: 'var(--text-muted)' }}>
+                      <th style={{ padding: '0.75rem 0.5rem' }}>Date</th>
+                      <th style={{ padding: '0.75rem 0.5rem', textAlign: 'center' }}>Regular Hrs</th>
+                      <th style={{ padding: '0.75rem 0.5rem', textAlign: 'center' }}>Overtime Hrs</th>
+                      <th style={{ padding: '0.75rem 0.5rem', textAlign: 'right' }}>Advance Taken</th>
+                      <th style={{ padding: '0.75rem 0.5rem', textAlign: 'center' }}>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {labourRecords.length === 0 ? (
+                      <tr><td colSpan="5" style={{ padding: '1.5rem', textAlign: 'center', color: 'var(--text-muted)' }}>No records found for this labour on the current project.</td></tr>
+                    ) : (
+                      labourRecords.map(rec => {
+                        totalReg += (rec.regularHours || 0);
+                        totalOT += (rec.overtimeHours || 0);
+                        totalAdvance += (rec.advance || 0);
+                        const grossForDay = ((rec.regularHours || 0) + (rec.overtimeHours || 0)) * hourlyRate;
+                        totalGross += grossForDay;
+                        
+                        return (
+                          <tr key={rec.id} style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+                            <td style={{ padding: '0.75rem 0.5rem', color: 'var(--text-primary)' }}>{rec.date}</td>
+                            <td style={{ padding: '0.75rem 0.5rem', textAlign: 'center', color: rec.regularHours > 0 ? 'var(--text-primary)' : 'var(--text-muted)' }}>{rec.regularHours || '-'}</td>
+                            <td style={{ padding: '0.75rem 0.5rem', textAlign: 'center', color: rec.overtimeHours > 0 ? 'var(--accent-primary)' : 'var(--text-muted)' }}>{rec.overtimeHours || '-'}</td>
+                            <td style={{ padding: '0.75rem 0.5rem', textAlign: 'right', color: rec.advance > 0 ? 'var(--danger)' : 'var(--text-muted)' }}>{rec.advance ? `Rs ${rec.advance.toFixed(2)}` : '-'}</td>
+                            <td style={{ padding: '0.75rem 0.5rem', textAlign: 'center' }}>
+                              {rec.paid ? (
+                                <span style={{ fontSize: '0.7rem', padding: '0.15rem 0.4rem', background: 'rgba(16, 185, 129, 0.1)', color: 'var(--success)', borderRadius: 'var(--radius-sm)' }}>Paid</span>
+                              ) : (
+                                <span style={{ fontSize: '0.7rem', padding: '0.15rem 0.4rem', background: 'rgba(245, 158, 11, 0.1)', color: 'var(--warning)', borderRadius: 'var(--radius-sm)' }}>Pending</span>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                  {labourRecords.length > 0 && (
+                    <tfoot>
+                      <tr style={{ borderTop: '2px solid var(--border-strong)', fontWeight: 'bold' }}>
+                        <td style={{ padding: '1rem 0.5rem' }}>Totals</td>
+                        <td style={{ padding: '1rem 0.5rem', textAlign: 'center' }}>{totalReg}</td>
+                        <td style={{ padding: '1rem 0.5rem', textAlign: 'center' }}>{totalOT}</td>
+                        <td style={{ padding: '1rem 0.5rem', textAlign: 'right', color: 'var(--danger)' }}>Rs {totalAdvance.toFixed(2)}</td>
+                        <td></td>
+                      </tr>
+                    </tfoot>
+                  )}
+                </table>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem', background: 'var(--glass-darker)', padding: '1.5rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-subtle)' }}>
+                <div style={{ textAlign: 'center' }}>
+                  <p style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>Total Gross Pay</p>
+                  <p style={{ fontSize: '1.125rem', fontWeight: 'bold', color: 'var(--text-primary)' }}>Rs {totalGross.toFixed(2)}</p>
+                </div>
+                <div style={{ textAlign: 'center', borderLeft: '1px solid var(--border-strong)', borderRight: '1px solid var(--border-strong)' }}>
+                  <p style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>Total Advances</p>
+                  <p style={{ fontSize: '1.125rem', fontWeight: 'bold', color: 'var(--danger)' }}>Rs {totalAdvance.toFixed(2)}</p>
+                </div>
+                <div style={{ textAlign: 'center' }}>
+                  <p style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>Net Pay Overall</p>
+                  <p style={{ fontSize: '1.125rem', fontWeight: 'bold', color: (totalGross - totalAdvance) >= 0 ? 'var(--success)' : 'var(--danger)' }}>Rs {(totalGross - totalAdvance).toFixed(2)}</p>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Issue Advance Modal */}
       {isAdvanceModalOpen && (

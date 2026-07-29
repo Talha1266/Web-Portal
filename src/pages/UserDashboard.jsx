@@ -1089,7 +1089,7 @@ const [profileName, setProfileName] = useState('');
         const unpaidOrders = allMaterials.filter(m => m.projectId === activeProjectId && m.vendorName && m.vendorName.toLowerCase() === vendorName.toLowerCase() && !m.isPaid && m.isArrived && !m.isUndelivered);
         if (unpaidOrders.length === 0) return;
         for (const order of unpaidOrders) {
-          await updateMaterial(order.id, { isPaid: true });
+          await updateMaterial(order.id, { isPaid: true, paidDate: new Date().toISOString() });
         }
         await loadData();
         alert("All outstanding bills marked as paid!");
@@ -1100,9 +1100,21 @@ const [profileName, setProfileName] = useState('');
   };
 
   const handleToggleMaterial = async (id, field, currentValue, createdAt) => {
-    // Allow root users to bypass the 24h lock here since they already passed the MODIFY security challenge
-    const canModify = canModifyEntry(createdAt) || currentUser?.permissions?.root;
     const material = allMaterials.find(m => m.id === id);
+
+    // Determine the relevant date to lock against.
+    // If checking a box for the first time, allow it immediately (ignore the old order date).
+    // If un-checking (reverting), lock it based on the date it was checked, or default to creation date.
+    let lockDate = createdAt;
+    if (field === 'isArrived' && currentValue) lockDate = material.arrivalDate || createdAt;
+    if (field === 'isPaid' && currentValue) lockDate = material.paidDate || createdAt;
+
+    let canModify = false;
+    if ((field === 'isArrived' || field === 'isPaid' || field === 'isUndelivered') && !currentValue) {
+      canModify = true; // Always allow applying status, regardless of order age
+    } else {
+      canModify = canModifyEntry(lockDate) || currentUser?.permissions?.root;
+    }
 
     let payload = { [field]: !currentValue };
     let remainingMaterial = null;
@@ -1121,6 +1133,7 @@ const [profileName, setProfileName] = useState('');
       payload.orderedQuantity = originalQuantity;
       payload.quantity = receivedQty;
       payload.totalCost = (receivedQty * Number(material.unitPrice)) + Number(material.karaya);
+      payload.arrivalDate = new Date().toISOString();
 
       // If received less than ordered, create a new pending entry for the remainder
       if (receivedQty < originalQuantity) {
@@ -1139,6 +1152,13 @@ const [profileName, setProfileName] = useState('');
       // Reverting back to unarrived, restore original quantity
       payload.quantity = material.orderedQuantity || material.quantity;
       payload.totalCost = (payload.quantity * Number(material.unitPrice)) + Number(material.karaya);
+      payload.arrivalDate = null;
+    }
+
+    if (field === 'isPaid' && !currentValue) {
+      payload.paidDate = new Date().toISOString();
+    } else if (field === 'isPaid' && currentValue) {
+      payload.paidDate = null;
     }
 
     if (canModify) {

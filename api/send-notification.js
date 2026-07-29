@@ -34,7 +34,7 @@ export default async function handler(req, res) {
       },
       body: JSON.stringify({
         app_id: appId,
-        included_segments: ['Active Users'], // Sends to everyone who opted in
+        included_segments: ['Subscribed Users'], // Sends to everyone who opted in
         contents: { en: message },
         headings: heading ? { en: heading } : { en: "N.M.T Update" },
       }),

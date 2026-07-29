@@ -48,12 +48,14 @@ const ProtectedRoute = ({ children }) => {
 function App() {
   useEffect(() => {
     const initOneSignal = async () => {
-      if (import.meta.env.VITE_ONESIGNAL_APP_ID) {
+      try {
         await OneSignal.init({
-          appId: import.meta.env.VITE_ONESIGNAL_APP_ID,
+          appId: '14080f6b-a747-488a-a947-0acfb6b61cd6',
           notifyButton: { enable: true },
           allowLocalhostAsSecureOrigin: true,
         });
+      } catch (err) {
+        console.error("OneSignal Init Error:", err);
       }
     };
     initOneSignal();

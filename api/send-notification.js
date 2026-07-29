@@ -17,7 +17,7 @@ export default async function handler(req, res) {
   }
 
   const { message, heading } = req.body;
-  const appId = process.env.VITE_ONESIGNAL_APP_ID;
+  const appId = '14080f6b-a747-488a-a947-0acfb6b61cd6';
   const restApiKey = process.env.ONESIGNAL_REST_API_KEY;
 
   if (!appId || !restApiKey) {

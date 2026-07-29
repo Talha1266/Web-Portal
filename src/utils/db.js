@@ -437,3 +437,17 @@ export const updateUserAdminFields = async (id, updates) => {
   const { error } = await supabase.from('users').update(updates).eq('id', id);
   if (error) throw new Error(error.message);
 };
+
+export const getActivityLogs = async () => {
+  const { data } = await supabase.from('activity_logs').select('*').order('createdAt', { ascending: false }).limit(200);
+  return data || [];
+};
+
+export const addActivityLog = async (logData) => {
+  const { error } = await supabase.from('activity_logs').insert({
+    ...logData,
+    id: Date.now().toString(),
+    createdAt: new Date().toISOString()
+  });
+  if (error) throw new Error(error.message);
+};

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { HardHat, LogIn, RefreshCw, UserPlus, Mail } from 'lucide-react';
-import { loginUser, registerUser, sendPasswordResetEmail, resetDB } from '../utils/db';
+import { loginUser, registerUser, sendPasswordResetEmail, resetDB, addActivityLog } from '../utils/db';
 
 const Login = () => {
   const [mode, setMode] = useState('login'); // 'login', 'register', 'forgot'
@@ -34,6 +34,13 @@ const Login = () => {
         
         // Success
         localStorage.setItem('currentUser', JSON.stringify(userMatch));
+        
+        await addActivityLog({
+          userId: userMatch.id,
+          projectId: null,
+          action: "User Login",
+          details: `${userMatch.name || userMatch.email} logged into the system.`
+        });
         
         if (userMatch.permissions?.root) {
           navigate('/admin');

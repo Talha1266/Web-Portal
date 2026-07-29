@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Users, LogOut, Settings, LayoutDashboard, Trash2, X, Shield, ShieldAlert, Crown, Menu, Briefcase } from 'lucide-react';
-import { getUsers, removeUser, updateUserAdminFields, getProjects, updateProject, updateUserProfile } from '../utils/db';
+import { Users, LogOut, Settings, LayoutDashboard, Trash2, X, Shield, ShieldAlert, Crown, Menu, Briefcase, Activity } from 'lucide-react';
+import { getUsers, removeUser, updateUserAdminFields, getProjects, updateProject, updateUserProfile, getActivityLogs } from '../utils/db';
 import { supabase } from '../supabaseClient';
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState('users');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [usersList, setUsersList] = useState([]);
   const [allProjects, setAllProjects] = useState([]);
+  const [activityLogs, setActivityLogs] = useState([]);
   
   // Modals
   const [isEditPermsModalOpen, setIsEditPermsModalOpen] = useState(false);
@@ -35,6 +37,7 @@ const AdminDashboard = () => {
     const fetchData = async () => {
       setUsersList(await getUsers());
       setAllProjects(await getProjects());
+      setActivityLogs(await getActivityLogs());
     };
     fetchData();
   }, [navigate]);
@@ -176,14 +179,14 @@ const AdminDashboard = () => {
       {/* Sidebar */}
       <aside className={`sidebar ${isMobileMenuOpen ? "open" : ""}`}>
         <button onClick={() => setIsMobileMenuOpen(false)} style={{ position: "absolute", top: "1rem", right: "1rem", background: "transparent", border: "none", color: "var(--text-secondary)" }} className="hide-on-desktop"><X size={20}/></button>
-        <h2 className="heading-3 text-gradient" style={{ marginBottom: '2rem' }}>{currentUser?.name || 'Admin'}</h2>
-        
-        <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', flex: 1 }}>
-          <button className="btn btn-secondary" style={{ justifyContent: 'flex-start' }}><LayoutDashboard size={20}/> Overview</button>
-          <button className="btn btn-primary" style={{ justifyContent: 'flex-start' }}><Users size={20}/> Manage Users</button>
-          <button className="btn btn-secondary" style={{ justifyContent: 'flex-start' }}><Settings size={20}/> Settings</button>
+          <h2 className="heading-3 text-gradient" style={{ marginBottom: '2rem' }}>{currentUser?.name || 'Admin'}</h2>
           
-          <button className="btn btn-secondary" onClick={() => navigate('/dashboard')} style={{ justifyContent: 'flex-start', marginTop: '1rem', border: '1px solid var(--accent-secondary)' }}>
+          <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', flex: 1 }}>
+            <button className={`btn ${activeTab === 'users' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => {setActiveTab('users'); setIsMobileMenuOpen(false);}} style={{ justifyContent: 'flex-start' }}><Users size={20}/> Manage Users</button>
+            <button className={`btn ${activeTab === 'activity' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => {setActiveTab('activity'); setIsMobileMenuOpen(false);}} style={{ justifyContent: 'flex-start' }}><Activity size={20}/> Activity Log</button>
+            <button className="btn btn-secondary" style={{ justifyContent: 'flex-start' }}><Settings size={20}/> Settings</button>
+            
+            <button className="btn btn-secondary" onClick={() => navigate('/dashboard')} style={{ justifyContent: 'flex-start', marginTop: '1rem', border: '1px solid var(--accent-secondary)' }}>
             <LayoutDashboard size={20}/> User Dashboard
           </button>
         </nav>
@@ -207,15 +210,18 @@ const AdminDashboard = () => {
             </button>
           </div>
         </div>
-        <header className="flex-between animate-fade-in mobile-stack" style={{ marginBottom: '3rem' }}>
-          <div>
-            <h1 className="heading-1">User Management</h1>
-            <p style={{ color: 'var(--text-secondary)' }}>Review pending users, assign roles, and manage access.</p>
-          </div>
-        </header>
-
-        <div className="glass-card animate-fade-in" style={{ padding: '1.5rem', overflowX: 'auto', animationDelay: '0.1s' }}>
-          <div className="table-wrapper">
+          
+          {activeTab === 'users' ? (
+            <>
+              <header className="flex-between animate-fade-in mobile-stack" style={{ marginBottom: '3rem' }}>
+                <div>
+                  <h1 className="heading-1">User Management</h1>
+                  <p style={{ color: 'var(--text-secondary)' }}>Review pending users, assign roles, and manage access.</p>
+                </div>
+              </header>
+      
+              <div className="glass-card animate-fade-in" style={{ padding: '1.5rem', overflowX: 'auto', animationDelay: '0.1s' }}>
+                <div className="table-wrapper">
             <table className="data-table">
               <thead>
                 <tr>
@@ -275,7 +281,48 @@ const AdminDashboard = () => {
             </table>
           </div>
         </div>
-      </main>
+            </>
+          ) : (
+            <>
+              <header className="flex-between animate-fade-in mobile-stack" style={{ marginBottom: '3rem' }}>
+                <div>
+                  <h1 className="heading-1">Activity Log</h1>
+                  <p style={{ color: 'var(--text-secondary)' }}>Timeline of all actions performed by users across all projects.</p>
+                </div>
+              </header>
+
+              <div className="glass-card animate-fade-in" style={{ padding: '1.5rem', overflowX: 'auto', animationDelay: '0.1s' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  {activityLogs.length === 0 ? (
+                    <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '2rem' }}>No recent activity to display.</p>
+                  ) : (
+                    activityLogs.map(log => {
+                      const user = usersList.find(u => u.id === log.userId);
+                      const project = allProjects.find(p => p.id === log.projectId);
+                      const timeStr = new Date(log.createdAt).toLocaleString();
+                      
+                      return (
+                        <div key={log.id} style={{ display: 'flex', gap: '1rem', padding: '1rem', background: 'var(--glass-darker)', borderRadius: 'var(--radius-md)', borderLeft: '4px solid var(--accent-primary)' }}>
+                          <div style={{ flex: 1 }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
+                              <strong style={{ color: 'var(--text-primary)' }}>{log.action}</strong>
+                              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{timeStr}</span>
+                            </div>
+                            <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginBottom: '0.5rem' }}>{log.details}</p>
+                            <div style={{ display: 'flex', gap: '1rem', fontSize: '0.75rem' }}>
+                              {user && <span style={{ color: 'var(--accent-secondary)' }}><Users size={12} style={{ display: 'inline', verticalAlign: 'text-bottom', marginRight: '0.25rem' }}/>{user.name || user.email}</span>}
+                              {project && <span style={{ color: 'var(--text-muted)' }}><Briefcase size={12} style={{ display: 'inline', verticalAlign: 'text-bottom', marginRight: '0.25rem' }}/>{project.name}</span>}
+                            </div>
+                          </div>
+                        </div>
+                      )
+                    })
+                  )}
+                </div>
+              </div>
+            </>
+          )}
+        </main>
 
       {/* Edit Permissions / Approval Modal */}
       {isEditPermsModalOpen && userToEdit && (

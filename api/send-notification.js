@@ -16,7 +16,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { message, heading } = req.body;
+  const { message, heading, targetIds } = req.body;
   const appId = '14080f6b-a747-488a-a947-0acfb6b61cd6';
   const restApiKey = process.env.ONESIGNAL_REST_API_KEY;
 
@@ -26,19 +26,26 @@ export default async function handler(req, res) {
   }
 
   try {
+    const payload = {
+      app_id: appId,
+      target_channel: "push",
+      contents: { en: message },
+      headings: heading ? { en: heading } : { en: "N.M.T Update" },
+    };
+
+    if (targetIds && targetIds.length > 0) {
+      payload.include_external_user_ids = targetIds;
+    } else {
+      payload.included_segments = ['Subscribed Users', 'Total Subscriptions', 'All', 'Active Users'];
+    }
+
     const response = await fetch('https://onesignal.com/api/v1/notifications', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Basic ${restApiKey}`,
       },
-      body: JSON.stringify({
-        app_id: appId,
-        target_channel: "push",
-        included_segments: ['Subscribed Users', 'Total Subscriptions', 'All', 'Active Users'], 
-        contents: { en: message },
-        headings: heading ? { en: heading } : { en: "N.M.T Update" },
-      }),
+      body: JSON.stringify(payload),
     });
 
     const data = await response.json();

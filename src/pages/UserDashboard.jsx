@@ -215,10 +215,15 @@ const UserDashboard = () => {
   
   const notifyAdmins = async (message, heading) => {
     try {
+      const rootAdmins = allUsers.filter(u => u.permissions?.root).map(u => u.id);
+      const activeProjObj = activeProjectId ? projects.find(p => p.id === activeProjectId) : null;
+      const teamMembers = activeProjObj?.assignedUsers || [];
+      const targetIds = [...new Set([...rootAdmins, ...teamMembers])];
+
       const response = await fetch('/api/send-notification', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message, heading })
+        body: JSON.stringify({ message, heading, targetIds })
       });
       if (!response.ok) {
         const errData = await response.json();
@@ -251,6 +256,9 @@ const UserDashboard = () => {
     }
     const user = JSON.parse(userStr);
     setCurrentUser(user);
+    if (window.OneSignal) {
+      window.OneSignal.login(user.id);
+    }
     
     const [
       users, docs, workers, attendance, subs, 

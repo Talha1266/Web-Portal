@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+    <script>
+      window.OneSignalDeferred = window.OneSignalDeferred || [];
+      OneSignalDeferred.push(async function(OneSignal) {
+        try {
+          await OneSignal.init({
+            appId: "14080f6b-a747-488a-a947-0acfb6b61cd6",
+            safari_web_id: "",
+            notifyButton: { enable: true },
+          });
+          await OneSignal.Slidedown.promptPush();
+          console.log("OS Init success");
+        } catch (e) {
+          console.error("OS Error:", e);
+        }
+      });
+    </script>
+</head>
+<body>
+    <h1>OneSignal Test</h1>
+</body>
+</html>

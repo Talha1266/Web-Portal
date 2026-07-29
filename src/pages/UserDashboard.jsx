@@ -1437,6 +1437,9 @@ const [profileName, setProfileName] = useState('');
       <main className="main-content">
         <div className="mobile-header">
           <h2 className="heading-3 text-gradient" style={{ margin: 0 }}>{currentUser.name}</h2>
+          <button onClick={handleTestOS} style={{ background: 'red', color: 'white', padding: '8px', borderRadius: '4px', border: 'none', fontWeight: 'bold' }}>
+            Diag
+          </button>
           <div style={{ display: 'flex', gap: '1.25rem', alignItems: 'center' }}>
             <button onClick={handleLogout} style={{ background: 'transparent', border: 'none', color: 'var(--danger)', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: 0 }}>
               <LogOut size={22} />

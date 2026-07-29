@@ -702,10 +702,11 @@ const [profileName, setProfileName] = useState('');
     if (Number(workerAdvanceAmount) > 0) {
       await addAdvanceOnlyRecord(activeProjectId, workerAdvanceWorkerId, Number(workerAdvanceAmount), currentUser.id);
       setIsWorkerAdvanceModalOpen(false);
-      setWorkerAdvanceWorkerId(null);
       setWorkerAdvanceAmount('');
       await loadData();
-      alert("Advance issued successfully!");
+      const workerName = allWorkers.find(w => w.id === workerAdvanceWorkerId)?.name || "a worker";
+      notifyAdmins(`${currentUser?.name || "A user"} issued an advance of Rs ${workerAdvanceAmount} to ${workerName}`, "Worker Advance Issued");
+      setWorkerAdvanceWorkerId(null);
     }
   };
 
@@ -717,6 +718,8 @@ const [profileName, setProfileName] = useState('');
       triggerSecurityChallenge("Are you sure you want to revert these wages back to Unpaid?", "REVERT", async () => {
         await revertAttendancePaid(activeProjectId, wId, payrollStart, payrollEnd);
         await loadData();
+        const workerName = allWorkers.find(w => w.id === wId)?.name || "a worker";
+        notifyAdmins(`${currentUser?.name || "A user"} reverted payroll for ${workerName} back to unpaid`, "Payroll Reverted");
       });
     } else {
       if (window.confirm("These records are older than 24 hours. Request Admin approval to revert?")) {
@@ -745,6 +748,7 @@ const [profileName, setProfileName] = useState('');
     e.preventDefault();
     await addSubcontractor({ projectId: activeProjectId, name: subName, trade: subTrade, finalValue: null });
     setSubName(''); setSubTrade(''); setIsSubModalOpen(false); await loadData();
+    notifyAdmins(`${currentUser?.name || "A user"} added a new Subcontractor: ${subName}`, "Subcontractor Added");
   };
 
   const handleUpdateSubValue = async (subId, value) => {
@@ -756,8 +760,10 @@ const [profileName, setProfileName] = useState('');
   const handleDeleteSub = async (e, id) => {
     e.stopPropagation();
     triggerSecurityChallenge("Delete this subcontractor and all their ledger history?", "DELETE", async () => {
+      const sub = allSubcontractors.find(s => s.id === id);
       await deleteSubcontractor(id);
       await loadData();
+      notifyAdmins(`${currentUser?.name || "A user"} deleted Subcontractor: ${sub?.name || 'Unknown'}`, "Subcontractor Deleted");
       if (activeSubId === id) setActiveSubId(null);
     });
   };
@@ -767,6 +773,8 @@ const [profileName, setProfileName] = useState('');
     if (subPayMode === 'add') {
       await addSubPayment({ subId: activeSubId, projectId: activeProjectId, date: subPayDate, amount: Number(subPayAmount), description: subPayDesc });
       await loadData();
+      const sub = allSubcontractors.find(s => s.id === activeSubId);
+      notifyAdmins(`${currentUser?.name || "A user"} paid Rs ${subPayAmount} to Subcontractor: ${sub?.name || 'Unknown'}`, "Subcontractor Payment");
     } else {
       const payment = allSubPayments.find(p => p.id === activeSubPayId);
       const canModify = payment ? canModifyEntry(payment.createdAt) : true;
@@ -797,6 +805,8 @@ const [profileName, setProfileName] = useState('');
       triggerSecurityChallenge("Delete this payment record?", "DELETE", async () => {
         await deleteSubPayment(payment.id);
         await loadData();
+        const sub = allSubcontractors.find(s => s.id === payment.subId);
+        notifyAdmins(`${currentUser?.name || "A user"} deleted a payment of Rs ${payment.amount} for Subcontractor: ${sub?.name || 'Unknown'}`, "Subcontractor Payment Deleted");
       });
     } else {
       if (window.confirm("This payment is older than 24 hours. Request Root Admin approval to delete it?")) {
@@ -848,6 +858,7 @@ const [profileName, setProfileName] = useState('');
       await addMaterialCategory(newCatName.trim(), activeProjectId);
       setNewCatName('');
       await loadData();
+      notifyAdmins(`${currentUser?.name || "A user"} created a new material category: ${newCatName.trim()}`, "Material Category Added");
     } catch(err) {
       alert("Error: " + err.message);
     }
@@ -859,6 +870,7 @@ const [profileName, setProfileName] = useState('');
         await deleteMaterialCategory(catName, activeProjectId);
         if (activeMaterialCategory === catName) setActiveMaterialCategory('All');
         await loadData();
+        notifyAdmins(`${currentUser?.name || "A user"} deleted material category: ${catName}`, "Material Category Deleted");
       } catch(err) {
         alert('Error: ' + err.message);
       }
@@ -1248,6 +1260,7 @@ const [profileName, setProfileName] = useState('');
       triggerSecurityChallenge("Delete this material record?", "DELETE", async () => {
         await deleteMaterial(material.id);
         await loadData();
+        notifyAdmins(`${currentUser?.name || "A user"} deleted a material record for ${material.itemName}`, "Material Deleted");
       });
     } else {
       if (window.confirm("This record is older than 24 hours. Request Admin approval to delete?")) {
@@ -1292,11 +1305,13 @@ const [profileName, setProfileName] = useState('');
       projectId: activeProjectId,
       date: advDate,
       amount: Number(advAmount),
-      description: advDesc
+      description: advDesc,
+      issuedBy: currentUser?.name || 'Admin'
     });
     setAdvAmount(''); setAdvDesc(''); setAdvDate(new Date().toISOString().split('T')[0]);
     setIsAdvanceModalOpen(false);
     await loadData();
+    notifyAdmins(`${currentUser?.name || "A user"} issued a site advance of Rs ${advAmount}`, "Site Advance Issued");
   };
 
   const handleDeleteAdvance = async (e, adv) => {
@@ -1307,6 +1322,7 @@ const [profileName, setProfileName] = useState('');
       triggerSecurityChallenge("Delete this advance record?", "DELETE", async () => {
         await deleteSiteAdvance(adv.id);
         await loadData();
+        notifyAdmins(`${currentUser?.name || "A user"} deleted a site advance of Rs ${adv.amount}`, "Site Advance Deleted");
       });
     } else {
       if (window.confirm("This record is older than 24 hours. Request Admin approval to delete?")) {
@@ -1357,7 +1373,7 @@ const [profileName, setProfileName] = useState('');
       setExpAmount(''); setExpDesc(''); setExpReceipt(null); setExpPaidBy('Engineer'); setExpDate(new Date().toISOString().split('T')[0]);
       setIsExpenseModalOpen(false);
       await loadData();
-      alert("Expense added successfully!");
+      notifyAdmins(`${currentUser?.name || "A user"} logged an expense of Rs ${expAmount}: ${expDesc}`, "Site Expense Added");
     } catch (err) {
       alert("Error adding expense: " + err.message);
     }
@@ -1371,6 +1387,7 @@ const [profileName, setProfileName] = useState('');
       triggerSecurityChallenge("Delete this expense report?", "DELETE", async () => {
         await deleteSiteExpense(exp.id);
         await loadData();
+        notifyAdmins(`${currentUser?.name || "A user"} deleted an expense report of Rs ${exp.amount}`, "Site Expense Deleted");
       });
     } else {
       if (window.confirm("This record is older than 24 hours. Request Admin approval to delete?")) {

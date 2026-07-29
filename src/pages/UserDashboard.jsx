@@ -1100,7 +1100,8 @@ const [profileName, setProfileName] = useState('');
   };
 
   const handleToggleMaterial = async (id, field, currentValue, createdAt) => {
-    const canModify = canModifyEntry(createdAt);
+    // Allow root users to bypass the 24h lock here since they already passed the MODIFY security challenge
+    const canModify = canModifyEntry(createdAt) || currentUser?.permissions?.root;
     const material = allMaterials.find(m => m.id === id);
 
     let payload = { [field]: !currentValue };
@@ -1166,7 +1167,7 @@ const [profileName, setProfileName] = useState('');
 
   const handleDeleteMaterial = async (e, material) => {
     e.stopPropagation();
-    const canModify = canModifyEntry(material.createdAt);
+    const canModify = canModifyEntry(material.createdAt) || currentUser?.permissions?.root;
 
     if (canModify) {
       triggerSecurityChallenge("Delete this material record?", "DELETE", async () => {

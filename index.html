@@ -9,13 +9,16 @@
     <script>
       window.OneSignalDeferred = window.OneSignalDeferred || [];
       OneSignalDeferred.push(async function(OneSignal) {
-        await OneSignal.init({
-          appId: "14080f6b-a747-488a-a947-0acfb6b61cd6",
-          safari_web_id: "",
-          notifyButton: {
-            enable: true,
-          },
-        });
+        try {
+          await OneSignal.init({
+            appId: "14080f6b-a747-488a-a947-0acfb6b61cd6",
+            safari_web_id: "",
+            notifyButton: { enable: true },
+          });
+          OneSignal.Slidedown.promptPush();
+        } catch (e) {
+          alert("OneSignal Error: " + e.message);
+        }
       });
     </script>
   </head>

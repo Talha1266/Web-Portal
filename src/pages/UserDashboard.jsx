@@ -229,6 +229,20 @@ const UserDashboard = () => {
     }
   };
 
+  const handleTestOS = async () => {
+    try {
+      const permission = window.OneSignal?.Notifications?.permission;
+      alert("Browser Permission State: " + permission);
+      if (window.OneSignal) {
+        await window.OneSignal.Slidedown.promptPush({ force: true });
+      } else {
+        alert("OneSignal script not loaded!");
+      }
+    } catch (e) {
+      alert("OS Debug Error: " + e.message);
+    }
+  };
+
   const loadData = async () => {
     const userStr = localStorage.getItem('currentUser');
     if (!userStr) {

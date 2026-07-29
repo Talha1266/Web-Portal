@@ -1810,7 +1810,8 @@ const [profileName, setProfileName] = useState('');
               const totalSubs = allSubPayments.filter(p => p.projectId === activeProj.id).reduce((acc, p) => acc + (p.amount || 0), 0);
               const projectMaterials = allMaterials.filter(m => m.projectId === activeProj.id);
               const totalMaterials = projectMaterials.filter(m => m.isArrived).reduce((acc, m) => acc + (m.totalCost || 0), 0);
-              const outstandingMaterials = projectMaterials.filter(m => !m.isPaid).reduce((acc, m) => acc + (m.totalCost || 0), 0);
+              const totalPaidMaterials = projectMaterials.filter(m => m.isPaid).reduce((acc, m) => acc + (m.totalCost || 0), 0);
+              const outstandingMaterials = totalMaterials - totalPaidMaterials;
               const totalExpenses = allSiteExpenses.filter(e => e.projectId === activeProj.id).reduce((acc, e) => acc + (e.amount || 0), 0);
 
               const pieData = [

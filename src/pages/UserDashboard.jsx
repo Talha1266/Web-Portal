@@ -212,6 +212,19 @@ const UserDashboard = () => {
   const [taskDueDate, setTaskDueDate] = useState('');
   const [draggedTaskId, setDraggedTaskId] = useState(null);
 
+  
+  const notifyAdmins = async (message, heading) => {
+    try {
+      await fetch('/api/send-notification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message, heading })
+      });
+    } catch (error) {
+      console.error("Notification failed:", error);
+    }
+  };
+
   const loadData = async () => {
     const userStr = localStorage.getItem('currentUser');
     if (!userStr) {
@@ -1077,6 +1090,7 @@ const [profileName, setProfileName] = useState('');
       setMCategory(''); setMName(''); setMVendor(''); setMPrice(''); setMQty(''); setMKaraya(''); setMOrderDate(new Date().toISOString().split('T')[0]); setMReceipt(null);
       setIsMaterialModalOpen(false);
       await loadData();
+      notifyAdmins(`${currentUser?.name || "A user"} added ${mQty} ${mName} to ${activeProj?.name || "Project"}`, "Material Ordered");
       alert("Material added successfully!");
     } catch (err) {
       alert("Database Schema Error: " + err.message);
@@ -1092,7 +1106,8 @@ const [profileName, setProfileName] = useState('');
           await updateMaterial(order.id, { isPaid: true, paidDate: new Date().toISOString() });
         }
         await loadData();
-        alert("All outstanding bills marked as paid!");
+          notifyAdmins(`${currentUser?.name || "A user"} paid all outstanding bills for ${vendorName}`, "Vendor Bill Paid");
+          alert("All outstanding bills marked as paid!");
       } catch (err) {
         alert("Error paying bills: " + err.message);
       }
@@ -1164,6 +1179,8 @@ const [profileName, setProfileName] = useState('');
     if (canModify) {
       try {
         await updateMaterial(id, payload);
+        if (field === 'isArrived' && payload.isArrived) notifyAdmins(`${currentUser?.name || "A user"} marked ${payload.quantity} ${material.name} as ARRIVED`, "Material Arrived");
+        if (field === 'isPaid' && payload.isPaid) notifyAdmins(`${currentUser?.name || "A user"} marked ${payload.quantity} ${material.name} as PAID`, "Material Paid");
         if (remainingMaterial) {
           await addMaterial(remainingMaterial);
         }
@@ -1181,6 +1198,7 @@ const [profileName, setProfileName] = useState('');
       // Note: Admin change requests don't natively support multiple simultaneous operations in our current structure.
       // We will only request the edit for the arrived portion to keep it simple.
       await loadData();
+      notifyAdmins(`${currentUser?.name || "A user"} submitted an Admin Edit Request`, "Admin Request");
       alert('Modification request sent to Admin. (Note: Remaining quantity splitting must be done manually by Admin if requested late)');
     }
   };

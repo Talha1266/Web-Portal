@@ -1,0 +1,53 @@
+export default async function handler(req, res) {
+  // CORS Headers for local development, Vercel handles this in production usually but good to have
+  res.setHeader('Access-Control-Allow-Credentials', true);
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
+  res.setHeader(
+    'Access-Control-Allow-Headers',
+    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
+  );
+
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  const { message, heading } = req.body;
+  const appId = process.env.VITE_ONESIGNAL_APP_ID;
+  const restApiKey = process.env.ONESIGNAL_REST_API_KEY;
+
+  if (!appId || !restApiKey) {
+    console.error('Missing OneSignal keys. Check Vercel Environment Variables.');
+    return res.status(500).json({ error: 'OneSignal keys not configured' });
+  }
+
+  try {
+    const response = await fetch('https://onesignal.com/api/v1/notifications', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Basic ${restApiKey}`,
+      },
+      body: JSON.stringify({
+        app_id: appId,
+        included_segments: ['Active Users'], // Sends to everyone who opted in
+        contents: { en: message },
+        headings: heading ? { en: heading } : { en: "N.M.T Update" },
+      }),
+    });
+
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.errors?.[0] || 'Unknown error from OneSignal');
+    }
+
+    res.status(200).json({ success: true, data });
+  } catch (err) {
+    console.error('OneSignal Push Error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+}

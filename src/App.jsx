@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import OneSignal from 'react-onesignal';
 import Login from './pages/Login';
 import AdminDashboard from './pages/AdminDashboard';
 import UserDashboard from './pages/UserDashboard';
@@ -45,6 +46,19 @@ const ProtectedRoute = ({ children }) => {
 };
 
 function App() {
+  useEffect(() => {
+    const initOneSignal = async () => {
+      if (import.meta.env.VITE_ONESIGNAL_APP_ID) {
+        await OneSignal.init({
+          appId: import.meta.env.VITE_ONESIGNAL_APP_ID,
+          notifyButton: { enable: true },
+          allowLocalhostAsSecureOrigin: true,
+        });
+      }
+    };
+    initOneSignal();
+  }, []);
+
   return (
     <BrowserRouter>
       <AuthListener>

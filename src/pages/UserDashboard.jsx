@@ -215,13 +215,17 @@ const UserDashboard = () => {
   
   const notifyAdmins = async (message, heading) => {
     try {
-      await fetch('/api/send-notification', {
+      const response = await fetch('/api/send-notification', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message, heading })
       });
+      if (!response.ok) {
+        const errData = await response.json();
+        alert("Push Failed (Backend): " + (errData.error || response.statusText));
+      }
     } catch (error) {
-      console.error("Notification failed:", error);
+      alert("Push Failed (Network): " + error.message);
     }
   };
 

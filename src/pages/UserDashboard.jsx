@@ -686,6 +686,8 @@ const [profileName, setProfileName] = useState('');
       setSettleAdvance('');
       setSettleNetOwed(0);
       await loadData();
+      const workerName = allWorkers.find(w => w.id === settleWorkerId)?.name || "a worker";
+      notifyAdmins(`${currentUser?.name || "A user"} settled wages for ${workerName}`, "Payroll Settled");
     });
   };
 
@@ -734,6 +736,7 @@ const [profileName, setProfileName] = useState('');
     triggerSecurityChallenge("Are you sure you want to mark ALL outstanding wages in this date range as paid?", "PAY_ALL", async () => {
       await markAllAttendancePaid(activeProjectId, payrollStart, payrollEnd);
       await loadData();
+      notifyAdmins(`${currentUser?.name || "A user"} settled all outstanding wages for this project`, "Bulk Payroll Settled");
     });
   };
 

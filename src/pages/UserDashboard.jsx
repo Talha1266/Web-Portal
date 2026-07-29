@@ -598,6 +598,7 @@ const [profileName, setProfileName] = useState('');
       setIsEditWorkerModalOpen(false);
       setEditWorkerObj(null);
       await loadData();
+      notifyAdmins(`${currentUser?.name || "A user"} updated worker profile for ${ewName}`, "Worker Modified");
     } catch(err) {
       alert("Failed to modify labourer: " + err.message);
     }
@@ -673,6 +674,10 @@ const [profileName, setProfileName] = useState('');
     e.preventDefault();
     triggerSecurityChallenge(`Are you sure you want to mark these wages as paid?`, "PAY", async () => {
       const amountPaid = Number(settleAdvance);
+      if (amountPaid < 0) {
+        alert("Amount paid cannot be negative.");
+        return;
+      }
       const difference = amountPaid - settleNetOwed;
       
       await markAttendancePaid(activeProjectId, settleWorkerId, payrollStart, payrollEnd, false);
@@ -753,8 +758,14 @@ const [profileName, setProfileName] = useState('');
 
   const handleUpdateSubValue = async (subId, value) => {
     const val = value === '' ? null : Number(value);
+    if (val !== null && val < 0) {
+      alert("Value cannot be negative.");
+      return;
+    }
     await updateSubcontractor(subId, { finalValue: val });
     await loadData();
+    const sub = allSubcontractors.find(s => s.id === subId);
+    notifyAdmins(`${currentUser?.name || "A user"} set the Final Value for Subcontractor ${sub?.name || 'Unknown'} to Rs ${val}`, "Subcontractor Modified");
   };
 
   const handleDeleteSub = async (e, id) => {
@@ -770,6 +781,10 @@ const [profileName, setProfileName] = useState('');
 
   const handleCreateSubPay = async (e) => {
     e.preventDefault();
+    if (Number(subPayAmount) < 0) {
+      alert("Payment amount cannot be negative.");
+      return;
+    }
     if (subPayMode === 'add') {
       await addSubPayment({ subId: activeSubId, projectId: activeProjectId, date: subPayDate, amount: Number(subPayAmount), description: subPayDesc });
       await loadData();
@@ -1093,7 +1108,7 @@ const [profileName, setProfileName] = useState('');
         setIsEditMaterialModalOpen(false);
         setEditMaterialObj(null);
         await loadData();
-        alert("Material updated successfully!");
+        notifyAdmins(`${currentUser?.name || "A user"} modified material order for ${emName}`, "Material Order Modified");
       } catch (err) {
         alert("Error updating material: " + err.message);
       }
@@ -1302,6 +1317,10 @@ const [profileName, setProfileName] = useState('');
   // --- Site Expenses Logic ---
   const handleCreateAdvance = async (e) => {
     e.preventDefault();
+    if (Number(advAmount) < 0) {
+      alert("Advance amount cannot be negative.");
+      return;
+    }
     await addSiteAdvance({
       projectId: activeProjectId,
       date: advDate,
@@ -1362,6 +1381,10 @@ const [profileName, setProfileName] = useState('');
 
   const handleCreateExpense = async (e) => {
     e.preventDefault();
+    if (Number(expAmount) < 0) {
+      alert("Expense amount cannot be negative.");
+      return;
+    }
     try {
       await addSiteExpense({
         projectId: activeProjectId,

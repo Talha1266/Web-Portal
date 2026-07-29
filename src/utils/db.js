@@ -24,7 +24,27 @@ export const DEFAULT_PERMISSIONS = {
 export const getProjects = async () => { const { data } = await supabase.from('projects').select('*'); return data || []; };
 export const addProject = async (p) => {  const { error } = await supabase.from('projects').insert({ ...p, id: p.id || Date.now().toString(), progress: 0, createdAt: new Date().toISOString() }); if (error) throw new Error(error.message); };
 export const updateProject = async (id, updates) => {  const { error } = await supabase.from('projects').update(updates).eq('id', id); if (error) throw new Error(error.message); };
-export const deleteProject = async (id) => {  const { error } = await supabase.from('projects').delete().eq('id', id); if (error) throw new Error(error.message); };
+export const deleteProject = async (id) => {
+  // Cascading deletes to prevent orphaned data
+  await Promise.all([
+    supabase.from('attendance').delete().eq('projectId', id),
+    supabase.from('subcontractors').delete().eq('projectId', id),
+    supabase.from('sub_payments').delete().eq('projectId', id),
+    supabase.from('materials').delete().eq('projectId', id),
+    supabase.from('material_categories').delete().eq('projectId', id),
+    supabase.from('vendors').delete().eq('projectId', id),
+    supabase.from('site_advances').delete().eq('projectId', id),
+    supabase.from('site_expenses').delete().eq('projectId', id),
+    supabase.from('assets').delete().eq('projectId', id),
+    supabase.from('tasks').delete().eq('projectId', id),
+    supabase.from('documents').delete().eq('projectId', id),
+    supabase.from('messages').delete().eq('projectId', id),
+    supabase.from('activity_logs').delete().eq('projectId', id),
+  ]);
+  
+  const { error } = await supabase.from('projects').delete().eq('id', id);
+  if (error) throw new Error(error.message);
+};
 
 export const getWorkers = async () => { const { data } = await supabase.from('workers').select('*'); return data || []; };
 export const addWorker = async (w) => {  const { error } = await supabase.from('workers').insert({ ...w, id: w.id || Date.now().toString(), createdAt: new Date().toISOString() }); if (error) throw new Error(error.message); };

@@ -629,6 +629,7 @@ const [profileName, setProfileName] = useState('');
         await saveAttendance(activeProjectId, attendanceDate, recordsToSave);
         setIsAttendanceDirty(false);
         await loadData();
+        notifyAdmins(`${currentUser?.name || "A user"} saved attendance for ${recordsToSave.length} workers on ${attendanceDate}`, "Attendance Marked");
         alert('Attendance Saved Successfully');
       } else {
         await addChangeRequest({

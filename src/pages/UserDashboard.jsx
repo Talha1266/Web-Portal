@@ -1206,8 +1206,8 @@ const [profileName, setProfileName] = useState('');
     if (canModify) {
       try {
         await updateMaterial(id, payload);
-        if (field === 'isArrived' && payload.isArrived) notifyAdmins(`${currentUser?.name || "A user"} marked ${payload.quantity} ${material.name} as ARRIVED`, "Material Arrived");
-        if (field === 'isPaid' && payload.isPaid) notifyAdmins(`${currentUser?.name || "A user"} marked ${payload.quantity} ${material.name} as PAID`, "Material Paid");
+        if (field === 'isArrived' && payload.isArrived) notifyAdmins(`${currentUser?.name || "A user"} marked ${payload.quantity} ${material.itemName} as ARRIVED`, "Material Arrived");
+        if (field === 'isPaid' && payload.isPaid) notifyAdmins(`${currentUser?.name || "A user"} marked ${payload.quantity} ${material.itemName} as PAID`, "Material Paid");
         if (remainingMaterial) {
           await addMaterial(remainingMaterial);
         }

@@ -1260,6 +1260,7 @@ const [profileName, setProfileName] = useState('');
         requestedBy: currentUser.id,
         payload
       });
+      alert('This record is locked (older than 24h). An edit request has been sent to the Administrator.');
       // Note: Admin change requests don't natively support multiple simultaneous operations in our current structure.
       // We will only request the edit for the arrived portion to keep it simple.
       await loadData();
@@ -2057,7 +2058,11 @@ const [profileName, setProfileName] = useState('');
                      {!canModify && (perms.root || perms.unlock_past) && (
                        <button className="btn btn-warning" onClick={() => { if (window.confirm("You are about to edit historical attendance records. This can alter past payroll calculations. Proceed with caution?")) setAdminUnlockPast(true); }} style={{ background: 'transparent', border: '1px solid var(--warning)', color: 'var(--warning)' }}><Shield size={16} style={{ display: 'inline', verticalAlign: 'text-bottom', marginRight: '0.5rem' }}/> Unlock to Edit</button>
                      )}
-                     {canModify && <button className="btn btn-primary" onClick={handleSaveAttendance}>Save Attendance</button>}
+                     {canModify ? (
+                       <button className="btn btn-primary" onClick={handleSaveAttendance}>Save Attendance</button>
+                     ) : (
+                       <button className="btn btn-primary" style={{ opacity: 0.5, cursor: 'not-allowed' }} onClick={() => alert("This entry is locked due to the 24-hour rule. Please ask your administrator to unlock the past to amend this entry.")}>Save Attendance (Locked)</button>
+                     )}
                   </div>
                 </div>
 

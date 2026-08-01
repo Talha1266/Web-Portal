@@ -127,6 +127,13 @@ const UserDashboard = () => {
   const [expPaidBy, setExpPaidBy] = useState('Engineer');
   const [expReceipt, setExpReceipt] = useState(null);
 
+  // Modals & State - Partial Deliveries
+  const [isArrivalModalOpen, setIsArrivalModalOpen] = useState(false);
+  const [arrivalMaterialObj, setArrivalMaterialObj] = useState(null);
+  const [arrivalQty, setArrivalQty] = useState('');
+  const [arrivalDate, setArrivalDate] = useState(todayStrGlobal);
+  const [arrivalReceipt, setArrivalReceipt] = useState(null);
+
   // Modals & State - Labour Settle with Advance
   const [isSettleModalOpen, setIsSettleModalOpen] = useState(false);
   const [settleWorkerId, setSettleWorkerId] = useState(null);
@@ -1172,6 +1179,81 @@ const [profileName, setProfileName] = useState('');
     });
   };
 
+  const handleArrivalImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = (event) => {
+      const img = new Image();
+      img.src = event.target.result;
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const MAX_WIDTH = 800;
+        const scaleSize = MAX_WIDTH / img.width;
+        canvas.width = MAX_WIDTH;
+        canvas.height = img.height * scaleSize;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        setArrivalReceipt(canvas.toDataURL('image/jpeg', 0.6));
+      };
+    };
+  };
+
+  const handleConfirmArrival = async (e) => {
+    e.preventDefault();
+    if (!arrivalMaterialObj) return;
+    const receivedQty = Number(arrivalQty);
+    if (isNaN(receivedQty) || receivedQty <= 0) {
+      alert('Invalid quantity entered.');
+      return;
+    }
+    const originalQuantity = Number(arrivalMaterialObj.orderedQuantity || arrivalMaterialObj.quantity);
+    if (receivedQty > originalQuantity) {
+      alert(`Cannot receive more than ordered (${originalQuantity}).`);
+      return;
+    }
+
+    let payload = {
+      isArrived: true,
+      orderedQuantity: originalQuantity,
+      quantity: receivedQty,
+      totalCost: (receivedQty * Number(arrivalMaterialObj.unitPrice)) + Number(arrivalMaterialObj.karaya),
+      arrivalDate: new Date(arrivalDate).toISOString(),
+      receiptImage: arrivalReceipt || arrivalMaterialObj.receiptImage
+    };
+
+    let remainingMaterial = null;
+    if (receivedQty < originalQuantity) {
+      const remainingQty = originalQuantity - receivedQty;
+      remainingMaterial = {
+        ...arrivalMaterialObj,
+        id: undefined,
+        quantity: remainingQty,
+        orderedQuantity: remainingQty,
+        totalCost: (remainingQty * Number(arrivalMaterialObj.unitPrice)),
+        karaya: 0,
+        isArrived: false,
+        isPaid: false,
+        receiptImage: arrivalMaterialObj.receiptImage
+      };
+    }
+
+    try {
+      await updateMaterial(arrivalMaterialObj.id, payload);
+      if (remainingMaterial) {
+        await addMaterial(remainingMaterial);
+      }
+      setIsArrivalModalOpen(false);
+      setArrivalMaterialObj(null);
+      await loadData();
+      notifyAdmins(`${currentUser?.name || "A user"} marked ${receivedQty} ${arrivalMaterialObj.itemName} as ARRIVED`, "Material Arrived");
+      alert("Material arrival confirmed.");
+    } catch (err) {
+      alert(`Database Error: ${err.message}`);
+    }
+  };
+
   const handleToggleMaterial = async (id, field, currentValue, createdAt) => {
     const material = allMaterials.find(m => m.id === id);
 
@@ -1192,36 +1274,7 @@ const [profileName, setProfileName] = useState('');
     let payload = { [field]: !currentValue };
     let remainingMaterial = null;
 
-    if (field === 'isArrived' && !currentValue) {
-      const receivedQtyStr = prompt('How many units were actually received?', material.quantity);
-      if (receivedQtyStr === null) return; // User cancelled
-
-      const receivedQty = Number(receivedQtyStr);
-      if (isNaN(receivedQty) || receivedQty < 0) {
-        alert('Invalid quantity entered.');
-        return;
-      }
-
-      const originalQuantity = Number(material.orderedQuantity || material.quantity);
-      payload.orderedQuantity = originalQuantity;
-      payload.quantity = receivedQty;
-      payload.totalCost = (receivedQty * Number(material.unitPrice)) + Number(material.karaya);
-      payload.arrivalDate = new Date().toISOString();
-
-      // If received less than ordered, create a new pending entry for the remainder
-      if (receivedQty < originalQuantity) {
-        const remainingQty = originalQuantity - receivedQty;
-        remainingMaterial = {
-          ...material,
-          id: undefined, // Let addMaterial assign a new ID
-          quantity: remainingQty,
-          orderedQuantity: remainingQty,
-          totalCost: (remainingQty * Number(material.unitPrice)) + Number(material.karaya),
-          isArrived: false,
-          isPaid: false
-        };
-      }
-    } else if (field === 'isArrived' && currentValue) {
+    if (field === 'isArrived' && currentValue) {
       // Reverting back to unarrived, restore original quantity
       payload.quantity = material.orderedQuantity || material.quantity;
       payload.totalCost = (payload.quantity * Number(material.unitPrice)) + Number(material.karaya);
@@ -2564,7 +2617,19 @@ const [profileName, setProfileName] = useState('');
                                     <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>None</span>
                                   )}
                                 </td>
-                                <td style={{ padding: '1rem 0.5rem', textAlign: 'center', cursor: 'pointer' }} onClick={() => { triggerSecurityChallenge(m.isArrived ? "Mark this material as NOT delivered?" : "Mark this material as delivered?", 'MODIFY', () => handleToggleMaterial(m.id, 'isArrived', m.isArrived, m.createdAt)); }}>
+                                <td style={{ padding: '1rem 0.5rem', textAlign: 'center', cursor: 'pointer' }} onClick={() => {
+                                  if (!m.isArrived) {
+                                    triggerSecurityChallenge("Mark this material as delivered?", 'MODIFY', () => {
+                                      setArrivalMaterialObj(m);
+                                      setArrivalQty(m.quantity);
+                                      setArrivalDate(todayStrGlobal);
+                                      setArrivalReceipt(null);
+                                      setIsArrivalModalOpen(true);
+                                    });
+                                  } else {
+                                    triggerSecurityChallenge("Mark this material as NOT delivered?", 'MODIFY', () => handleToggleMaterial(m.id, 'isArrived', m.isArrived, m.createdAt));
+                                  }
+                                }}>
                                   <input type="checkbox" checked={m.isArrived} readOnly style={{ width: '18px', height: '18px', accentColor: 'var(--accent-primary)', pointerEvents: 'none' }}/>
                                 </td>
                                 <td style={{ padding: '1rem 0.5rem', textAlign: 'center', cursor: 'pointer' }} onClick={() => { triggerSecurityChallenge(m.isPaid ? "Mark this material as unpaid?" : "Mark this material as paid?", 'MODIFY', () => handleToggleMaterial(m.id, 'isPaid', m.isPaid, m.createdAt)); }}>
@@ -3787,6 +3852,43 @@ const [profileName, setProfileName] = useState('');
                 <input type="text" className="input-field" required value={advDesc} onChange={e => setAdvDesc(e.target.value)} placeholder="e.g. Initial petty cash" />
               </div>
               <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '1rem' }}><DollarSign size={20}/> Give Advance</button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Material Arrival Modal */}
+      {isArrivalModalOpen && arrivalMaterialObj && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(15, 23, 42, 0.4)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}>
+          <div className="glass-card animate-fade-in" style={{ padding: '2.5rem', width: '100%', maxWidth: '450px', maxHeight: '90vh', overflowY: 'auto', position: 'relative' }}>
+            <button onClick={() => { setIsArrivalModalOpen(false); setArrivalMaterialObj(null); }} style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}><X size={24} /></button>
+            <h2 className="heading-2" style={{ marginBottom: '1.5rem' }}>Confirm Material Delivery</h2>
+            <p style={{ marginBottom: '1.5rem', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>Confirming delivery for <strong>{arrivalMaterialObj.itemName}</strong>.</p>
+            <form onSubmit={handleConfirmArrival}>
+              <div className="input-group">
+                <label className="input-label">Quantity Received</label>
+                <input type="number" step="0.01" className="input-field" required min="0.01" max={arrivalMaterialObj.orderedQuantity || arrivalMaterialObj.quantity} value={arrivalQty} onChange={e => setArrivalQty(e.target.value)} />
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.25rem', display: 'block' }}>Ordered: {arrivalMaterialObj.orderedQuantity || arrivalMaterialObj.quantity}</span>
+              </div>
+              <div className="input-group">
+                <label className="input-label">Date Received</label>
+                <input type="date" className="input-field" required value={arrivalDate} onChange={e => setArrivalDate(e.target.value)} style={{ colorScheme: 'dark' }} />
+              </div>
+              <div className="input-group">
+                <label className="input-label">Delivery Receipt / Bilty (Optional)</label>
+                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                  <label className="btn btn-secondary" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1, minWidth: '120px' }}>
+                    <UploadCloud size={18} style={{ marginRight: '0.5rem' }}/> Gallery
+                    <input type="file" accept="image/*" onChange={handleArrivalImageUpload} style={{ display: 'none' }} />
+                  </label>
+                  <label className="btn btn-primary" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1, minWidth: '120px' }}>
+                    <Camera size={18} style={{ marginRight: '0.5rem' }}/> Camera
+                    <input type="file" accept="image/*" capture="environment" onChange={handleArrivalImageUpload} style={{ display: 'none' }} />
+                  </label>
+                </div>
+                {arrivalReceipt && <div style={{ marginTop: '0.5rem', fontSize: '0.875rem', color: 'var(--success)', display: 'flex', alignItems: 'center' }}><CheckCircle size={16} style={{ marginRight: '0.25rem' }}/> Receipt Attached</div>}
+              </div>
+              <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '1rem' }}><CheckSquare size={20}/> Confirm Arrival</button>
             </form>
           </div>
         </div>

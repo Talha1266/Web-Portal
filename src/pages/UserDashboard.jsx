@@ -4055,6 +4055,7 @@ const [profileName, setProfileName] = useState('');
           if (reportConfig.startDate && d < new Date(reportConfig.startDate)) return false;
           if (reportConfig.endDate && d > new Date(reportConfig.endDate)) return false;
           return true;
+        };
         const repMaterials = allMaterials.filter(m => m.projectId === activeProjectId && isWithinDate(m.orderDate));
         const repSubs = allSubPayments.filter(p => p.projectId === activeProjectId && isWithinDate(p.date));
         const repExpenses = allSiteExpenses.filter(e => e.projectId === activeProjectId && isWithinDate(e.date));

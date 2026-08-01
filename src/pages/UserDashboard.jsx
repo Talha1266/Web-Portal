@@ -131,7 +131,7 @@ const UserDashboard = () => {
   const [isArrivalModalOpen, setIsArrivalModalOpen] = useState(false);
   const [arrivalMaterialObj, setArrivalMaterialObj] = useState(null);
   const [arrivalQty, setArrivalQty] = useState('');
-  const [arrivalDate, setArrivalDate] = useState(todayStrGlobal);
+  const [arrivalDate, setArrivalDate] = useState(new Date().toISOString().split('T')[0]);
   const [arrivalReceipt, setArrivalReceipt] = useState(null);
 
   // Modals & State - Labour Settle with Advance

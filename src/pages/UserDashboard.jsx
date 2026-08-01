@@ -1131,12 +1131,6 @@ const [profileName, setProfileName] = useState('');
     e.preventDefault();
     try {
       let finalVendor = mVendor.trim();
-      if (finalVendor) {
-        const vendorExists = allVendors.some(v => v.projectId === activeProjectId && v.name.toLowerCase() === finalVendor.toLowerCase() && v.categoryName === mCategory);
-        if (!vendorExists) {
-          await addVendor(finalVendor, activeProjectId, mCategory);
-        }
-      }
       await addMaterial({
         projectId: activeProjectId,
         category: mCategory,
@@ -3559,10 +3553,10 @@ const [profileName, setProfileName] = useState('');
               </div>
               <div className="input-group">
                 <label className="input-label">Vendor (Optional)</label>
-                <input type="text" list="vendors-list" className="input-field" value={mVendor} onChange={e => setMVendor(e.target.value)} placeholder={mCategory ? "Select or type new vendor..." : "Select a category first..."} disabled={!mCategory} />
-                <datalist id="vendors-list">
-                  {allVendors.filter(v => v.projectId === activeProjectId && v.categoryName === mCategory).map(v => <option key={v.id} value={v.name} />)}
-                </datalist>
+                <select className="input-field" value={mVendor} onChange={e => setMVendor(e.target.value)} style={{ padding: '0.6rem', background: 'var(--glass-darker)' }} disabled={!mCategory}>
+                  <option value="">Select a vendor...</option>
+                  {allVendors.filter(v => v.projectId === activeProjectId && v.categoryName === mCategory).map(v => <option key={v.id} value={v.name}>{v.name}</option>)}
+                </select>
               </div>
               <div className="input-group">
                 <label className="input-label">Item Description</label>
@@ -3629,10 +3623,10 @@ const [profileName, setProfileName] = useState('');
               </div>
               <div className="input-group">
                 <label className="input-label">Vendor (Optional)</label>
-                <input type="text" list="edit-vendors-list" className="input-field" value={emVendor} onChange={e => setEmVendor(e.target.value)} placeholder={emCategory ? "Select or type new vendor..." : "Select a category first..."} disabled={!emCategory} />
-                <datalist id="edit-vendors-list">
-                  {allVendors.filter(v => v.projectId === activeProjectId && v.categoryName === emCategory).map(v => <option key={v.id} value={v.name} />)}
-                </datalist>
+                <select className="input-field" value={emVendor} onChange={e => setEmVendor(e.target.value)} style={{ padding: '0.6rem', background: 'var(--glass-darker)' }} disabled={!emCategory}>
+                  <option value="">Select a vendor...</option>
+                  {allVendors.filter(v => v.projectId === activeProjectId && v.categoryName === emCategory).map(v => <option key={v.id} value={v.name}>{v.name}</option>)}
+                </select>
               </div>
               <div className="input-group">
                 <label className="input-label">Item Description</label>

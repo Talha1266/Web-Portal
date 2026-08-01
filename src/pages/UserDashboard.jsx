@@ -4055,31 +4055,32 @@ const [profileName, setProfileName] = useState('');
           if (reportConfig.startDate && d < new Date(reportConfig.startDate)) return false;
           if (reportConfig.endDate && d > new Date(reportConfig.endDate)) return false;
           return true;
-        };
-
         const repMaterials = allMaterials.filter(m => m.projectId === activeProjectId && isWithinDate(m.orderDate));
         const repSubs = allSubPayments.filter(p => p.projectId === activeProjectId && isWithinDate(p.date));
         const repExpenses = allSiteExpenses.filter(e => e.projectId === activeProjectId && isWithinDate(e.date));
-        
         const repAttendance = allAttendance.filter(a => a.projectId === activeProjectId && isWithinDate(a.date));
         const workerTotals = {};
         repAttendance.forEach(a => {
-          if (!workerTotals[a.workerId]) workerTotals[a.workerId] = { gross: 0, advance: 0, net: 0 };
+          if (!workerTotals[a.workerId]) workerTotals[a.workerId] = { gross: 0, advance: 0, net: 0, totalPaid: 0, pending: 0 };
           const w = allWorkers.find(wk => wk.id === a.workerId);
           if (w) {
             const hrRate = (w.dailyWage || 0) / 8;
             const gross = ((Number(a.regularHours) + Number(a.overtimeHours)) * hrRate);
             const adv = Number(a.advance || 0);
+            const netSettled = a.isPaid ? (gross - adv) : 0;
+            const pending = a.isPaid ? 0 : (gross - adv);
             workerTotals[a.workerId].gross += gross;
             workerTotals[a.workerId].advance += adv;
             workerTotals[a.workerId].net += (gross - adv);
+            workerTotals[a.workerId].totalPaid += (adv + netSettled);
+            workerTotals[a.workerId].pending += pending;
           }
         });
 
-        const matTotal = repMaterials.reduce((acc, m) => acc + Number(m.totalCost || 0), 0);
+        const matTotal = repMaterials.reduce((acc, m) => acc + (m.isPaid ? Number(m.totalCost || 0) : 0), 0);
         const subTotal = repSubs.reduce((acc, p) => acc + Number(p.amount || 0), 0);
         const expTotal = repExpenses.reduce((acc, e) => acc + Number(e.amount || 0), 0);
-        const labTotal = Object.values(workerTotals).reduce((acc, val) => acc + val.gross, 0);
+        const labTotal = Object.values(workerTotals).reduce((acc, val) => acc + val.totalPaid, 0);
 
         return (
           <div className="print-view">
@@ -4104,7 +4105,8 @@ const [profileName, setProfileName] = useState('');
                       <th>Category</th>
                       <th>Vendor</th>
                       <th>Quantity</th>
-                      <th>Total Cost</th>
+                      <th>Status</th>
+                      <th>Cost (Paid)</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -4115,11 +4117,12 @@ const [profileName, setProfileName] = useState('');
                         <td>{m.category}</td>
                         <td>{m.vendorName || '-'}</td>
                         <td>{m.quantity} {m.unit}</td>
-                        <td>Rs {Number(m.totalCost).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                        <td style={{ fontSize: '0.85em', color: '#555' }}>{m.isArrived ? 'Arrived' : 'Pending'} / {m.isPaid ? 'Paid' : 'Unpaid'}</td>
+                        <td>Rs {Number(m.totalCost).toLocaleString(undefined, { minimumFractionDigits: 2 })} {!m.isPaid && <span style={{fontSize: '0.8em', color: 'red'}}>(Unpaid)</span>}</td>
                       </tr>
                     ))}
                     <tr>
-                      <td colSpan="5" style={{ textAlign: 'right', fontWeight: 'bold' }}>Sub-Total Materials:</td>
+                      <td colSpan="6" style={{ textAlign: 'right', fontWeight: 'bold' }}>Sub-Total Materials (Paid Only):</td>
                       <td style={{ fontWeight: 'bold' }}>Rs {matTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
                     </tr>
                   </tbody>
@@ -4162,34 +4165,34 @@ const [profileName, setProfileName] = useState('');
 
             {reportConfig.includeLabour && (
               <div style={{ paddingTop: '20px', paddingBottom: '40px', pageBreakInside: 'auto' }}>
-                <h3 style={{ borderBottom: '2px solid black', paddingBottom: '5px', margin: 0 }}>Labour & Payroll (Gross Wages Earned in Period)</h3>
+                <h3 style={{ borderBottom: '2px solid black', paddingBottom: '5px', margin: 0 }}>Labour & Payroll</h3>
                 <table className="print-table" style={{ width: '100%', pageBreakInside: 'auto', borderCollapse: 'separate', borderSpacing: 0 }}>
                   <thead>
                     <tr>
                       <th>Worker Name</th>
                       <th>Trade</th>
-                      <th>Gross Pay</th>
-                      <th>Advance</th>
-                      <th>Net Pay</th>
+                      <th>Gross Earned</th>
+                      <th>Total Paid (Adv + Net)</th>
+                      <th>Pending Unpaid</th>
                     </tr>
                   </thead>
                   <tbody>
                     {Object.entries(workerTotals).map(([wId, totals]) => {
-                      if (totals.net === 0 && totals.gross === 0) return null;
+                      if (totals.gross === 0) return null;
                       const worker = allWorkers.find(w => w.id === wId);
                       return (
                         <tr key={wId}>
                           <td>{worker ? worker.name : 'Unknown'}</td>
                           <td>{worker ? worker.trade : ''}</td>
                           <td>Rs {totals.gross.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
-                          <td>Rs {totals.advance.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
-                          <td>Rs {totals.net.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                          <td>Rs {totals.totalPaid.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                          <td>Rs {totals.pending.toLocaleString(undefined, { minimumFractionDigits: 2 })} {totals.pending > 0 && <span style={{fontSize: '0.8em', color: 'red'}}>(Unpaid)</span>}</td>
                         </tr>
                       );
                     })}
                     <tr>
-                      <td colSpan="4" style={{ textAlign: 'right', fontWeight: 'bold' }}>Sub-Total Labour:</td>
-                      <td style={{ fontWeight: 'bold' }}>Rs {labTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                      <td colSpan="3" style={{ textAlign: 'right', fontWeight: 'bold' }}>Sub-Total Labour (Paid Only):</td>
+                      <td colSpan="2" style={{ fontWeight: 'bold' }}>Rs {labTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
                     </tr>
                   </tbody>
                 </table>

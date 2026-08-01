@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LayoutDashboard, HardHat, FileText, MessageSquare, LogOut, Plus, Edit2, Trash2, PieChart, Shield, X, MapPin, Building, Calendar, Users, Folder, FolderPlus, UploadCloud, ChevronRight, ArrowLeft, CheckSquare, Settings, ClipboardList, DollarSign, CheckCircle, Briefcase, Package, CreditCard, Truck, AlertTriangle, XCircle, Menu, Unlock, Printer } from 'lucide-react';
+import { LayoutDashboard, HardHat, FileText, MessageSquare, LogOut, Plus, Edit2, Trash2, PieChart, Shield, X, MapPin, Building, Calendar, Users, Folder, FolderPlus, UploadCloud, ChevronRight, ArrowLeft, CheckSquare, Settings, ClipboardList, DollarSign, CheckCircle, Briefcase, Package, CreditCard, Truck, AlertTriangle, XCircle, Menu, Unlock, Printer, Camera } from 'lucide-react';
 import { getUsers, getProjects, addProject, updateProject, deleteProject, getDocuments, addDocument, deleteDocument, getWorkers, addWorker, updateWorker, deleteWorker, getAttendance, saveAttendance, markAttendancePaid, markAllAttendancePaid, deleteAttendanceRecords, getSubcontractors, addSubcontractor, updateSubcontractor, deleteSubcontractor, getSubPayments, addSubPayment, deleteSubPayment, updateSubPayment, getChangeRequests, addChangeRequest, updateChangeRequestStatus, getMaterials, addMaterial, updateMaterial, deleteMaterial, getMaterialCategories, addMaterialCategory, updateMaterialCategory, deleteMaterialCategory, getVendors, addVendor, updateVendor, deleteVendor, getSiteAdvances, addSiteAdvance, updateSiteAdvance, deleteSiteAdvance, getSiteExpenses, addSiteExpense, updateSiteExpense, deleteSiteExpense, addAdvanceOnlyRecord, revertAttendancePaid, getAssets, addAsset, updateAsset, deleteAsset, saveFileContentToDB, getFileContentFromDB, deleteFileContentFromDB, getTasks, addTask, updateTask, deleteTask, getMessages, addMessage, updateUserProfile, addActivityLog } from '../utils/db';
 import { supabase } from '../supabaseClient';
 import { PieChart as RechartsPieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
@@ -1384,6 +1384,10 @@ const [profileName, setProfileName] = useState('');
     e.preventDefault();
     if (Number(expAmount) < 0) {
       alert("Expense amount cannot be negative.");
+      return;
+    }
+    if (!expReceipt) {
+      alert("Please attach a photo of the expense sheet or receipt.");
       return;
     }
     try {
@@ -3587,13 +3591,17 @@ const [profileName, setProfileName] = useState('');
               </div>
               <div className="input-group">
                 <label className="input-label">Bill / Receipt Picture (Optional)</label>
-                <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                  <label className="btn btn-secondary" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <UploadCloud size={18} style={{ marginRight: '0.5rem' }}/> Choose Image
+                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                  <label className="btn btn-secondary" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1, minWidth: '120px' }}>
+                    <UploadCloud size={18} style={{ marginRight: '0.5rem' }}/> Gallery
                     <input type="file" accept="image/*" onChange={handleImageUpload} style={{ display: 'none' }} />
                   </label>
-                  {mReceipt && <span style={{ fontSize: '0.875rem', color: 'var(--success)' }}><CheckCircle size={16} style={{ display: 'inline', verticalAlign: 'text-bottom', marginRight: '0.25rem' }}/> Image Attached</span>}
+                  <label className="btn btn-primary" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1, minWidth: '120px' }}>
+                    <Camera size={18} style={{ marginRight: '0.5rem' }}/> Camera
+                    <input type="file" accept="image/*" capture="environment" onChange={handleImageUpload} style={{ display: 'none' }} />
+                  </label>
                 </div>
+                {mReceipt && <div style={{ marginTop: '0.5rem', fontSize: '0.875rem', color: 'var(--success)', display: 'flex', alignItems: 'center' }}><CheckCircle size={16} style={{ marginRight: '0.25rem' }}/> Image Attached</div>}
               </div>
               <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '1rem' }}><Package size={20}/> Submit Order</button>
             </form>
@@ -3818,13 +3826,17 @@ const [profileName, setProfileName] = useState('');
               </div>
               <div className="input-group">
                 <label className="input-label">Photo of Expense Sheet / Receipts</label>
-                <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                  <label className="btn btn-secondary" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <UploadCloud size={18} style={{ marginRight: '0.5rem' }}/> Choose Image
-                    <input type="file" accept="image/*" required onChange={handleExpenseImageUpload} style={{ display: 'none' }} />
+                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                  <label className="btn btn-secondary" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1, minWidth: '120px' }}>
+                    <UploadCloud size={18} style={{ marginRight: '0.5rem' }}/> Gallery
+                    <input type="file" accept="image/*" onChange={handleExpenseImageUpload} style={{ display: 'none' }} />
                   </label>
-                  {expReceipt && <span style={{ fontSize: '0.875rem', color: 'var(--success)' }}><CheckCircle size={16} style={{ display: 'inline', verticalAlign: 'text-bottom', marginRight: '0.25rem' }}/> Attached</span>}
+                  <label className="btn btn-primary" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1, minWidth: '120px' }}>
+                    <Camera size={18} style={{ marginRight: '0.5rem' }}/> Camera
+                    <input type="file" accept="image/*" capture="environment" onChange={handleExpenseImageUpload} style={{ display: 'none' }} />
+                  </label>
                 </div>
+                {expReceipt && <div style={{ marginTop: '0.5rem', fontSize: '0.875rem', color: 'var(--success)', display: 'flex', alignItems: 'center' }}><CheckCircle size={16} style={{ marginRight: '0.25rem' }}/> Attached</div>}
               </div>
               <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '1rem' }}><FileText size={20}/> Submit Report</button>
             </form>

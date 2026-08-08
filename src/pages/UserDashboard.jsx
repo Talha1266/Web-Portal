@@ -1,10 +1,3 @@
-import TasksTab from '../components/tabs/TasksTab';
-import AssetsTab from '../components/tabs/AssetsTab';
-import ExpensesTab from '../components/tabs/ExpensesTab';
-import SubcontractorsTab from '../components/tabs/SubcontractorsTab';
-import PayrollTab from '../components/tabs/PayrollTab';
-import AttendanceTab from '../components/tabs/AttendanceTab';
-import MaterialsTab from '../components/tabs/MaterialsTab';
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LayoutDashboard, HardHat, FileText, MessageSquare, LogOut, Plus, Edit2, Trash2, PieChart, Shield, X, MapPin, Building, Calendar, Users, Folder, FolderPlus, UploadCloud, ChevronRight, ArrowLeft, CheckSquare, Settings, ClipboardList, DollarSign, CheckCircle, Briefcase, Package, CreditCard, Truck, AlertTriangle, XCircle, Menu, Unlock, Printer, Camera } from 'lucide-react';
@@ -29,6 +22,7 @@ const UserDashboard = () => {
   const [allWorkers, setAllWorkers] = useState([]);
   const [allAttendance, setAllAttendance] = useState([]);
   const [allSubcontractors, setAllSubcontractors] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
   const [allSubPayments, setAllSubPayments] = useState([]);
   const [allChangeRequests, setAllChangeRequests] = useState([]);
   const [allMaterials, setAllMaterials] = useState([]);
@@ -2117,69 +2111,736 @@ const [profileName, setProfileName] = useState('');
               );
             })()}
 
-            {projectTab === 'attendance' && (
-              <AttendanceTab 
-                attendanceDate={attendanceDate} setAttendanceDate={setAttendanceDate} 
-                allAttendance={allAttendance} activeProjectId={activeProjectId} 
-                allWorkers={allWorkers} handleToggleAttendance={handleToggleAttendance} 
-                triggerSecurityChallenge={triggerSecurityChallenge} handleDeleteAttendance={handleDeleteAttendance} 
-                setIsWorkerModalOpen={setIsWorkerModalOpen}
-               handleOpenEditWorker={handleOpenEditWorker} attendanceForm={attendanceForm} handleAttendanceChange={handleAttendanceChange} handleNav={handleNav} handleSaveAttendance={handleSaveAttendance} canModifyEntry={canModifyEntry} perms={perms} setAdminUnlockPast={setAdminUnlockPast}/>
-            )}
+            {projectTab === 'attendance' && (() => {
+              const canModify = canModifyEntry(attendanceDate);
+
+              return (
+              <div className="glass-card animate-fade-in" style={{ padding: '2.5rem', minHeight: '500px' }}>
+                <div className="flex-between" style={{ marginBottom: '2rem', flexWrap: 'wrap', gap: '1.5rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap' }}>
+                    <h3 className="heading-3" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><ClipboardList size={20} className="text-gradient"/> Daily Log</h3>
+                    <input type="date" className="input-field" value={attendanceDate} onChange={e => handleNav(() => setAttendanceDate(e.target.value))} style={{ padding: '0.5rem', colorScheme: 'dark', cursor: 'pointer' }} />
+                    {!canModify && !perms.root && <span style={{ color: 'var(--warning)', fontSize: '0.875rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Shield size={14}/> Locked (Admin Approval Req.)</span>}
+                    {!canModify && perms.root && <span style={{ color: 'var(--warning)', fontSize: '0.875rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Shield size={14}/> Historical Record (Locked)</span>}
+                  </div>
+                  <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+                     <button className="btn btn-secondary" onClick={() => setIsWorkerModalOpen(true)}>+ Register Labourer</button>
+                     {!canModify && (perms.root || perms.unlock_past) && (
+                       <button className="btn btn-warning" onClick={() => { if (window.confirm("You are about to edit historical attendance records. This can alter past payroll calculations. Proceed with caution?")) setAdminUnlockPast(true); }} style={{ background: 'transparent', border: '1px solid var(--warning)', color: 'var(--warning)' }}><Shield size={16} style={{ display: 'inline', verticalAlign: 'text-bottom', marginRight: '0.5rem' }}/> Unlock to Edit</button>
+                     )}
+                     {canModify ? (
+                       <button className="btn btn-primary" onClick={handleSaveAttendance}>Save Attendance</button>
+                     ) : (
+                       <button className="btn btn-primary" style={{ opacity: 0.5, cursor: 'not-allowed' }} onClick={() => alert("This entry is locked due to the 24-hour rule. Please ask your administrator to unlock the past to amend this entry.")}>Save Attendance (Locked)</button>
+                     )}
+                  </div>
+                </div>
+
+                {allWorkers.filter(w => w.projectId === activeProjectId && !w.isDeleted).length === 0 ? (
+                   <div style={{ textAlign: 'center', padding: '5rem', color: 'var(--text-muted)', border: '2px dashed var(--border-strong)', borderRadius: 'var(--radius-md)', marginTop: '2rem' }}>
+                     <Users size={48} style={{ marginBottom: '1rem', opacity: 0.3 }} />
+                     <p>No labourers registered on this project yet.</p>
+                     <p style={{ fontSize: '0.875rem', marginTop: '0.5rem' }}>Click "Register Labourer" to start building your workforce database.</p>
+                   </div>
+                ) : (
+                  <div style={{ overflowX: 'auto' }}>
+                    <div className="table-wrapper">
+<table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '800px' }}>
+                      <thead>
+                        <tr style={{ borderBottom: '1px solid var(--border-strong)', color: 'var(--text-muted)' }}>
+                          <th style={{ padding: '1rem 0.5rem', fontWeight: 500 }}>Name</th>
+                          <th style={{ padding: '1rem 0.5rem', fontWeight: 500 }}>Trade</th>
+                          <th style={{ padding: '1rem 0.5rem', fontWeight: 500, textAlign: 'center' }}>Present (Full Day)</th>
+                          <th style={{ padding: '1rem 0.5rem', fontWeight: 500, textAlign: 'center', width: '120px' }}>Regular Hrs</th>
+                          <th style={{ padding: '1rem 0.5rem', fontWeight: 500, textAlign: 'center', width: '120px' }}>Overtime Hrs</th>
+                          <th style={{ padding: '1rem 0.5rem', fontWeight: 500, textAlign: 'center', width: '120px' }}>Advance (Rs)</th>
+                          <th style={{ padding: '1rem 0.5rem', fontWeight: 500, textAlign: 'right' }}>Net Earned</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {allWorkers.filter(w => w.projectId === activeProjectId && !w.isDeleted).map(w => {
+                          const form = attendanceForm[w.id] || { isPresent: false, regularHours: 0, overtimeHours: 0, advance: 0, dailyWage: w.dailyWage };
+                          const regHrs = Number(form.regularHours) || 0;
+                          const otHrs = Number(form.overtimeHours) || 0;
+                          const adv = Number(form.advance) || 0;
+                          const hourlyRate = (form.dailyWage || 0) / 8;
+                          const earned = ((regHrs + otHrs) * hourlyRate) - adv;
+                          
+                          return (
+                            <tr key={w.id} style={{ borderBottom: '1px solid var(--border-subtle)', background: form.isPresent ? 'rgba(99, 102, 241, 0.05)' : 'transparent' }}>
+                              <td style={{ padding: '1rem 0.5rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                <button onClick={(e) => { e.stopPropagation(); handleOpenEditWorker(w); }} style={{ background: 'none', border: 'none', color: 'var(--accent-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', opacity: 0.7 }} onMouseEnter={e => e.currentTarget.style.opacity = 1} onMouseLeave={e => e.currentTarget.style.opacity = 0.7} title="Edit Labourer">
+                                  <Edit2 size={14} />
+                                </button>
+                                {w.name}
+                              </td>
+                              <td style={{ padding: '1rem 0.5rem', color: 'var(--text-secondary)' }}>{w.trade}</td>
+                              <td style={{ padding: '1rem 0.5rem', textAlign: 'center' }}>
+                                <input 
+                                  type="checkbox" 
+                                  checked={form.isPresent}
+                                  disabled={!canModify}
+                                  onChange={e => handleAttendanceChange(w.id, 'isPresent', e.target.checked)}
+                                  style={{ width: '20px', height: '20px', accentColor: 'var(--accent-primary)', cursor: canModify ? 'pointer' : 'not-allowed', opacity: canModify ? 1 : 0.5 }}
+                                />
+                              </td>
+                              <td style={{ padding: '1rem 0.5rem' }}>
+                                <input 
+                                  type="number" min="0" max="24" step="0.5"
+                                  className="input-field" 
+                                  value={form.regularHours}
+                                  disabled={!canModify}
+                                  onChange={e => handleAttendanceChange(w.id, 'regularHours', e.target.value)}
+                                  style={{ padding: '0.4rem', textAlign: 'center', width: '100%', borderColor: form.regularHours > 0 ? 'var(--accent-primary)' : 'var(--border-strong)', opacity: canModify ? 1 : 0.5 }}
+                                />
+                              </td>
+                              <td style={{ padding: '1rem 0.5rem' }}>
+                                <input 
+                                  type="number" min="0" max="24" step="0.5"
+                                  className="input-field" 
+                                  value={form.overtimeHours}
+                                  disabled={!canModify}
+                                  onChange={e => handleAttendanceChange(w.id, 'overtimeHours', e.target.value)}
+                                  style={{ padding: '0.4rem', textAlign: 'center', width: '100%', borderColor: form.overtimeHours > 0 ? 'var(--warning)' : 'var(--border-strong)', opacity: canModify ? 1 : 0.5 }}
+                                />
+                              </td>
+                              <td style={{ padding: '1rem 0.5rem' }}>
+                                <input 
+                                  type="number" min="0" step="1"
+                                  className="input-field" 
+                                  value={form.advance}
+                                  disabled={!canModify}
+                                  onChange={e => handleAttendanceChange(w.id, 'advance', e.target.value)}
+                                  style={{ padding: '0.4rem', textAlign: 'center', width: '100%', borderColor: form.advance > 0 ? 'var(--danger)' : 'var(--border-strong)', opacity: canModify ? 1 : 0.5 }}
+                                />
+                              </td>
+                              <td style={{ padding: '1rem 0.5rem', textAlign: 'right', fontWeight: 500, color: earned >= 0 ? 'var(--accent-primary)' : 'var(--danger)' }}>
+                                Rs {earned.toFixed(2)}
+                              </td>
+                            </tr>
+                          )
+                        })}
+                      </tbody>
+                    </table>
+</div>
+                  </div>
+                )}
+              </div>
+            )})()}
 
             {projectTab === 'payroll' && (
-              <PayrollTab 
-                payrollStartDate={payrollStartDate} setPayrollStartDate={setPayrollStartDate} 
-                payrollEndDate={payrollEndDate} setPayrollEndDate={setPayrollEndDate}
-                allWorkers={allWorkers} activeProjectId={activeProjectId} 
-                workerTotals={workerTotals} setSettleWorkerId={setSettleWorkerId} 
-                setIsSettleModalOpen={setIsSettleModalOpen} handleToggleAdvancePaid={handleToggleAdvancePaid} 
-                setWorkerReceiptObj={setWorkerReceiptObj} setIsWorkerReceiptModalOpen={setIsWorkerReceiptModalOpen}
-                handleNav={handleNav}
-               handleRevertPaid={handleRevertPaid} handleOpenWorkerAdvanceModal={handleOpenWorkerAdvanceModal} handleMarkAllPaid={handleMarkAllPaid} setSelectedLabour={setSelectedLabour} setIsLabourCardModalOpen={setIsLabourCardModalOpen} allAttendance={allAttendance} handleOpenSettleModal={handleOpenSettleModal}/>
+              <div className="glass-card animate-fade-in" style={{ padding: '2.5rem', minHeight: '500px' }}>
+                <div className="flex-between" style={{ marginBottom: '2.5rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+                    <h3 className="heading-3" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><DollarSign size={20} className="text-gradient"/> Project Payroll</h3>
+                    
+                    <div style={{ display: 'flex', background: 'var(--glass-hover)', padding: '0.25rem', borderRadius: 'var(--radius-md)' }}>
+                      <button className={`btn ${payrollViewMode === 'outstanding' ? 'btn-primary' : ''}`} onClick={() => handleNav(() => setPayrollViewMode('outstanding'))} style={{ padding: '0.4rem 1rem', background: payrollViewMode === 'outstanding' ? 'var(--accent-primary)' : 'transparent', color: payrollViewMode === 'outstanding' ? '#fff' : 'var(--text-secondary)' }}>Outstanding</button>
+                      <button className={`btn ${payrollViewMode === 'history' ? 'btn-primary' : ''}`} onClick={() => handleNav(() => setPayrollViewMode('history'))} style={{ padding: '0.4rem 1rem', background: payrollViewMode === 'history' ? 'var(--accent-primary)' : 'transparent', color: payrollViewMode === 'history' ? '#fff' : 'var(--text-secondary)' }}>Paid History</button>
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flex: 1, minWidth: '200px' }}>
+                      <label style={{ color: 'var(--text-secondary)' }}>From:</label>
+                      <input type="date" className="input-field" value={payrollStart} onChange={e => handleNav(() => setPayrollStart(e.target.value))} style={{ padding: '0.5rem', colorScheme: 'dark' }} />
+                    </div>
+                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flex: 1, minWidth: '200px' }}>
+                      <label style={{ color: 'var(--text-secondary)' }}>To:</label>
+                      <input type="date" className="input-field" value={payrollEnd} onChange={e => handleNav(() => setPayrollEnd(e.target.value))} style={{ padding: '0.5rem', colorScheme: 'dark' }} />
+                    </div>
+                  </div>
+                </div>
+
+                {(() => {
+                   const relevantLogs = allAttendance.filter(a => 
+                     a.projectId === activeProjectId && 
+                     a.date >= payrollStart && 
+                     a.date <= payrollEnd &&
+                     (payrollViewMode === 'outstanding' ? !a.paid : a.paid)
+                   );
+                   if (relevantLogs.length === 0) {
+                     return (
+                       <div style={{ textAlign: 'center', padding: '5rem', color: 'var(--text-muted)', border: '2px dashed var(--border-strong)', borderRadius: 'var(--radius-md)' }}>
+                         <DollarSign size={48} style={{ marginBottom: '1rem', opacity: 0.3 }} />
+                         <p>No attendance records found for this timeframe.</p>
+                       </div>
+                     )
+                   }
+                   
+                   const payrollData = {};
+                   relevantLogs.forEach(log => {
+                     if (!payrollData[log.workerId]) payrollData[log.workerId] = { regHours: 0, otHours: 0, advance: 0, dates: new Set(), grossPay: 0 };
+                     
+                     const worker = allWorkers.find(w => w.id === log.workerId);
+                     const logWage = log.dailyWage !== undefined ? log.dailyWage : (worker?.dailyWage || 0);
+                     const logHourlyRate = logWage / 8;
+                     const logGross = ((log.regularHours || 0) + (log.overtimeHours || 0)) * logHourlyRate;
+                     
+                     payrollData[log.workerId].grossPay += logGross;
+                     payrollData[log.workerId].regHours += log.regularHours || 0;
+                     payrollData[log.workerId].otHours += log.overtimeHours || 0;
+                     payrollData[log.workerId].advance += log.advance || 0;
+                     payrollData[log.workerId].dates.add(log.date);
+                   });
+                   
+                   let grandTotal = 0;
+
+                   return (
+                     <div style={{ overflowX: 'auto' }}>
+                       <div className="table-wrapper">
+<table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '800px' }}>
+                         <thead>
+                           <tr style={{ borderBottom: '1px solid var(--border-strong)', color: 'var(--text-muted)' }}>
+                             <th style={{ padding: '1rem 0.5rem', fontWeight: 500 }}>Name</th>
+                             <th style={{ padding: '1rem 0.5rem', fontWeight: 500 }}>Dates Covered</th>
+                             <th style={{ padding: '1rem 0.5rem', fontWeight: 500 }}>Trade</th>
+                             <th style={{ padding: '1rem 0.5rem', fontWeight: 500, textAlign: 'center' }}>Total Hrs</th>
+                             <th style={{ padding: '1rem 0.5rem', fontWeight: 500, textAlign: 'right' }}>Gross Pay</th>
+                             <th style={{ padding: '1rem 0.5rem', fontWeight: 500, textAlign: 'right' }}>Advances</th>
+                             <th style={{ padding: '1rem 0.5rem', fontWeight: 500, textAlign: 'right' }}>{payrollViewMode === 'outstanding' ? 'Net Owed' : 'Net Paid'}</th>
+                             <th style={{ padding: '1rem 0.5rem', fontWeight: 500, textAlign: 'center', width: '100px' }}>Action</th>
+                           </tr>
+                         </thead>
+                         <tbody>
+                           {Object.keys(payrollData).map(wId => {
+                             const worker = allWorkers.find(w => w.id === wId);
+                             if (!worker) return null;
+                             const data = payrollData[wId];
+                             const totalHours = data.regHours + data.otHours;
+                             const gross = data.grossPay;
+                             const owed = gross - data.advance;
+                             grandTotal += owed;
+                             
+                             const sortedDates = Array.from(data.dates).sort();
+                             const dateStr = sortedDates.length > 2 ? `${sortedDates[0]} to ${sortedDates[sortedDates.length - 1]}` : sortedDates.join(', ');
+                             
+                             return (
+                               <tr key={wId} style={{ borderBottom: '1px solid var(--border-subtle)', opacity: worker.isDeleted ? 0.6 : 1 }}>
+                                 <td style={{ padding: '1rem 0.5rem', fontWeight: 500 }}>
+                                   <button onClick={() => { setSelectedLabour(worker); setIsLabourCardModalOpen(true); }} style={{ background: 'none', border: 'none', color: 'var(--accent-primary)', cursor: 'pointer', textDecoration: 'underline', padding: 0, font: 'inherit', fontWeight: 500, textAlign: 'left' }}>
+                                     {worker.name}
+                                   </button>
+                                   {worker.isDeleted && <span style={{ fontSize: '0.75rem', color: 'var(--danger)', marginLeft: '0.5rem', fontWeight: 'normal' }}>(Removed)</span>}
+                                 </td>
+                                 <td style={{ padding: '1rem 0.5rem', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>{dateStr}</td>
+                                 <td style={{ padding: '1rem 0.5rem', color: 'var(--text-secondary)' }}>{worker.trade}</td>
+                                 <td style={{ padding: '1rem 0.5rem', textAlign: 'center' }}>
+                                   <span style={{ fontWeight: 500 }}>{totalHours}</span> <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>({data.regHours}R + {data.otHours}OT)</span>
+                                 </td>
+                                 <td style={{ padding: '1rem 0.5rem', textAlign: 'right', color: 'var(--text-secondary)' }}>
+                                   Rs {gross.toFixed(2)}
+                                 </td>
+                                 <td style={{ padding: '1rem 0.5rem', textAlign: 'right', color: 'var(--danger)' }}>
+                                   Rs {data.advance.toFixed(2)}
+                                 </td>
+                                 <td style={{ padding: '1rem 0.5rem', textAlign: 'right', fontWeight: 'bold', color: owed >= 0 ? 'var(--text-primary)' : 'var(--danger)' }}>
+                                   Rs {owed.toFixed(2)}
+                                 </td>
+                                 {payrollViewMode === 'outstanding' ? (
+                                   <td style={{ padding: '1rem 0.5rem', textAlign: 'center', display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>
+                                     <button className={`btn ${owed > 0 ? 'btn-primary' : 'btn-secondary'}`} onClick={() => handleOpenSettleModal(wId, owed)} style={{ padding: '0.4rem 0.75rem', fontSize: '0.75rem' }} title={owed > 0 ? "Mark as Paid" : "Clear Account"}>
+                                       <CheckCircle size={14} /> {owed > 0 ? 'Settle' : 'Clear'}
+                                     </button>
+                                     <button className="btn btn-secondary" onClick={() => handleOpenWorkerAdvanceModal(wId)} style={{ padding: '0.4rem 0.75rem', fontSize: '0.75rem', background: 'transparent', border: '1px solid var(--accent-primary)', color: 'var(--accent-primary)' }} title="Issue Cash Advance">
+                                       <CreditCard size={14} /> Advance
+                                     </button>
+                                   </td>
+                                 ) : (
+                                   <td style={{ padding: '1rem 0.5rem', textAlign: 'center', display: 'flex', gap: '0.5rem', justifyContent: 'center', alignItems: 'center' }}>
+                                     <button className="btn btn-danger" onClick={() => handleRevertPaid(wId, sortedDates)} style={{ padding: '0.4rem 0.75rem', fontSize: '0.75rem', background: 'transparent', border: '1px solid var(--danger)', color: 'var(--danger)' }} title="Revert to Unpaid">
+                                       <Edit2 size={14} /> Revert
+                                     </button>
+                                   </td>
+                                 )}
+                               </tr>
+                             )
+                           })}
+                         </tbody>
+                         <tfoot>
+                           <tr style={{ borderTop: '2px solid var(--border-strong)', background: 'var(--glass-hover)' }}>
+                             <td colSpan="6" style={{ padding: '1.5rem 1rem', textAlign: 'right', color: 'var(--text-secondary)' }}>Grand Total ({payrollViewMode === 'outstanding' ? 'Owed' : 'Paid'}):</td>
+                             <td style={{ padding: '1.5rem 0.5rem', textAlign: 'right', fontWeight: 'bold', fontSize: '1.25rem', color: 'var(--accent-primary)' }}>Rs {grandTotal.toFixed(2)}</td>
+                             {payrollViewMode === 'outstanding' && (
+                               <td style={{ padding: '1.5rem 0.5rem', textAlign: 'center' }}>
+                                 {grandTotal > 0 && (
+                                   <button className="btn btn-primary" onClick={handleMarkAllPaid} style={{ padding: '0.5rem 1rem', fontSize: '0.875rem', background: 'var(--success)', borderColor: 'var(--success)' }}>
+                                     Settle All
+                                   </button>
+                                 )}
+                               </td>
+                             )}
+                           </tr>
+                         </tfoot>
+                       </table>
+</div>
+                     </div>
+                   );
+                })()}
+              </div>
             )}
 
             {projectTab === 'subcontractors' && (
-              <SubcontractorsTab 
-                allSubcontractors={allSubcontractors} activeProjectId={activeProjectId} 
-                activeSubId={activeSubId} setActiveSubId={setActiveSubId}
-                setIsSubcontractorModalOpen={setIsSubcontractorModalOpen} 
-                handleDeleteSubcontractor={handleDeleteSubcontractor} canModifyEntry={canModifyEntry}
-                triggerSecurityChallenge={triggerSecurityChallenge} allSubcontractorLedger={allSubcontractorLedger}
-                handleSaveFinalValue={handleSaveFinalValue} setIsSubLedgerModalOpen={setIsSubLedgerModalOpen}
-                setIsSubLedgerReceiptModalOpen={setIsSubLedgerReceiptModalOpen} 
-                setSubLedgerReceiptObj={setSubLedgerReceiptObj}
-               handleUpdateSubValue={handleUpdateSubValue} setSubPayAmount={setSubPayAmount} setSubPayMode={setSubPayMode} setIsSubPayModalOpen={setIsSubPayModalOpen} setSubPayDate={setSubPayDate} setActiveSubPayId={setActiveSubPayId} handleDeleteSubPay={handleDeleteSubPay} handleDeleteSub={handleDeleteSub} setSubPayDesc={setSubPayDesc} setIsSubModalOpen={setIsSubModalOpen} allSubPayments={allSubPayments}/>
+              <div className="glass-card animate-fade-in" style={{ padding: '2.5rem', minHeight: '500px' }}>
+                {activeSubId === null ? (
+                  <>
+                    <div className="flex-between" style={{ marginBottom: '2.5rem', flexWrap: 'wrap', gap: '1.5rem' }}>
+                      <h3 className="heading-3" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Briefcase size={20} className="text-gradient"/> Subcontractors</h3>
+                      <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                        <div style={{ position: 'relative' }}>
+                          <span style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }}>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                          </span>
+                          <input type="text" placeholder="Search by name or trade..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} style={{ padding: '0.5rem 1rem 0.5rem 2.5rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-strong)', background: 'var(--surface-color)', color: 'var(--text-primary)', width: '250px' }} />
+                        </div>
+                        <button className="btn btn-primary" onClick={() => setIsSubModalOpen(true)}>+ Hire Subcontractor</button>
+                      </div>
+                    </div>
+
+                    {allSubcontractors.filter(s => s.projectId === activeProjectId).length === 0 ? (
+                      <div style={{ textAlign: 'center', padding: '5rem', color: 'var(--text-muted)', border: '2px dashed var(--border-strong)', borderRadius: 'var(--radius-md)' }}>
+                        <Briefcase size={48} style={{ marginBottom: '1rem', opacity: 0.3 }} />
+                        <p>No subcontractors assigned to this project.</p>
+                      </div>
+                    ) : (
+                      <div style={{ overflowX: 'auto' }}>
+                        <div className="table-wrapper">
+<table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '800px' }}>
+                          <thead>
+                            <tr style={{ borderBottom: '1px solid var(--border-strong)', color: 'var(--text-muted)' }}>
+                              <th style={{ padding: '1rem 0.5rem', fontWeight: 500 }}>Company Name</th>
+                              <th style={{ padding: '1rem 0.5rem', fontWeight: 500 }}>Trade / Role</th>
+                              <th style={{ padding: '1rem 0.5rem', fontWeight: 500, textAlign: 'right' }}>Final Measured Value</th>
+                              <th style={{ padding: '1rem 0.5rem', fontWeight: 500, textAlign: 'right' }}>Total Paid</th>
+                              <th style={{ padding: '1rem 0.5rem', fontWeight: 500, textAlign: 'right' }}>Remaining Balance</th>
+                              <th style={{ padding: '1rem 0.5rem', fontWeight: 500, textAlign: 'center' }}>Action</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {allSubcontractors.filter(s => s.projectId === activeProjectId && (searchQuery.trim() === '' || s.name.toLowerCase().includes(searchQuery.toLowerCase()) || s.trade.toLowerCase().includes(searchQuery.toLowerCase()))).map(sub => {
+                              const subPayments = allSubPayments.filter(p => p.subId === sub.id);
+                              const totalPaid = subPayments.reduce((sum, p) => sum + p.amount, 0);
+                              
+                              let balanceDisplay = <span style={{ color: 'var(--text-muted)' }}>Pending Measurement</span>;
+                              if (sub.finalValue !== null) {
+                                const bal = sub.finalValue - totalPaid;
+                                balanceDisplay = <span style={{ color: bal === 0 ? 'var(--success)' : (bal > 0 ? 'var(--danger)' : 'var(--warning)') }}>{bal === 0 ? 'Settled (Rs 0)' : `Rs ${bal.toFixed(2)}`}</span>;
+                              }
+
+                              return (
+                                <tr key={sub.id} style={{ borderBottom: '1px solid var(--border-subtle)', cursor: 'pointer', transition: 'var(--transition)' }} onClick={() => setActiveSubId(sub.id)} onMouseEnter={e => e.currentTarget.style.background = 'var(--glass-overlay)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                                  <td style={{ padding: '1rem 0.5rem', fontWeight: 500 }}>{sub.name}</td>
+                                  <td style={{ padding: '1rem 0.5rem', color: 'var(--text-secondary)' }}>{sub.trade}</td>
+                                  <td style={{ padding: '1rem 0.5rem', textAlign: 'right', fontWeight: 500, color: sub.finalValue !== null ? 'var(--text-primary)' : 'var(--text-muted)' }}>{sub.finalValue !== null ? `Rs ${sub.finalValue.toFixed(2)}` : 'Pending'}</td>
+                                  <td style={{ padding: '1rem 0.5rem', textAlign: 'right', color: 'var(--text-primary)' }}>Rs {totalPaid.toFixed(2)}</td>
+                                  <td style={{ padding: '1rem 0.5rem', textAlign: 'right', fontWeight: 'bold' }}>{balanceDisplay}</td>
+                                  <td style={{ padding: '1rem 0.5rem', textAlign: 'center' }}>
+                                    <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>
+                                      <button className="btn btn-secondary" style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem' }} onClick={(e) => { e.stopPropagation(); setActiveSubId(sub.id); }}>Ledger</button>
+                                      <button className="btn btn-danger" style={{ padding: '0.4rem' }} onClick={(e) => handleDeleteSub(e, sub.id)}><Trash2 size={14} /></button>
+                                    </div>
+                                  </td>
+                                </tr>
+                              )
+                            })}
+                          </tbody>
+                        </table>
+</div>
+                      </div>
+                    )}
+                  </>
+                ) : (() => {
+                  const sub = allSubcontractors.find(s => s.id === activeSubId);
+                  if (!sub) { setActiveSubId(null); return null; }
+                  
+                  const subPayments = allSubPayments.filter(p => p.subId === sub.id).sort((a,b) => new Date(a.date) - new Date(b.date));
+                  const totalPaid = subPayments.reduce((sum, p) => sum + p.amount, 0);
+
+                  return (
+                    <div className="animate-fade-in">
+                      <button className="btn btn-secondary" onClick={() => setActiveSubId(null)} style={{ marginBottom: '1.5rem', background: 'transparent', border: 'none', color: 'var(--text-secondary)' }}><ArrowLeft size={18}/> Back to Subcontractors</button>
+                      
+                      <div className="flex-between" style={{ marginBottom: '2.5rem', paddingBottom: '1.5rem', borderBottom: '1px solid var(--border-strong)', flexWrap: 'wrap', gap: '1.5rem' }}>
+                        <div>
+                          <h2 className="heading-2">{sub.name} <span style={{ fontSize: '1rem', fontWeight: 'normal', color: 'var(--text-secondary)', marginLeft: '0.5rem' }}>({sub.trade})</span></h2>
+                        </div>
+                        <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                            <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px' }}>Final Measured Value</label>
+                            <input 
+                              key={`final-val-${sub.id}`}
+                              type="number" className="input-field" placeholder="Enter Final Value" 
+                              defaultValue={sub.finalValue !== null ? sub.finalValue : ''} 
+                              onBlur={(e) => {
+                                const newVal = e.target.value === '' ? null : Number(e.target.value);
+                                if (newVal !== sub.finalValue) handleUpdateSubValue(sub.id, e.target.value);
+                              }}
+                              onKeyDown={(e) => { if (e.key === 'Enter') e.target.blur(); }}
+                              style={{ width: '150px', textAlign: 'right', fontWeight: 'bold', fontSize: '1.1rem', color: sub.finalValue !== null ? 'var(--accent-primary)' : 'var(--text-primary)', border: '1px solid var(--glass-darker)' }} 
+                            />
+                          </div>
+                          <button className="btn btn-primary" onClick={() => { setSubPayMode('add'); setActiveSubPayId(null); setSubPayDate(new Date().toISOString().split('T')[0]); setSubPayAmount(''); setSubPayDesc(''); setIsSubPayModalOpen(true); }}><DollarSign size={20}/> Log Payment</button>
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))', gap: '1.5rem', marginBottom: '2.5rem' }}>
+                         <div style={{ background: 'var(--glass-hover)', padding: '1.5rem', borderRadius: 'var(--radius-md)' }}>
+                           <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginBottom: '0.5rem' }}>Final Value</p>
+                           <p style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{sub.finalValue !== null ? `Rs ${sub.finalValue.toFixed(2)}` : 'Pending'}</p>
+                         </div>
+                         <div style={{ background: 'var(--glass-hover)', padding: '1.5rem', borderRadius: 'var(--radius-md)' }}>
+                           <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginBottom: '0.5rem' }}>Total Paid</p>
+                           <p style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--text-primary)' }}>Rs {totalPaid.toFixed(2)}</p>
+                         </div>
+                         <div style={{ background: 'var(--glass-hover)', padding: '1.5rem', borderRadius: 'var(--radius-md)', border: sub.finalValue !== null ? (sub.finalValue - totalPaid === 0 ? '1px solid var(--success)' : '1px solid var(--danger)') : 'none' }}>
+                           <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginBottom: '0.5rem' }}>Remaining Balance</p>
+                           <p style={{ fontSize: '1.5rem', fontWeight: 'bold', color: sub.finalValue !== null ? (sub.finalValue - totalPaid === 0 ? 'var(--success)' : 'var(--danger)') : 'var(--text-muted)' }}>
+                             {sub.finalValue !== null ? `Rs ${(sub.finalValue - totalPaid).toFixed(2)}` : 'Unknown'}
+                           </p>
+                         </div>
+                      </div>
+
+                      <h3 className="heading-3" style={{ marginBottom: '1rem' }}>Payment Ledger</h3>
+                      {subPayments.length === 0 ? (
+                        <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)', background: 'var(--glass-overlay)', borderRadius: 'var(--radius-md)' }}>
+                          <p>No payments recorded yet.</p>
+                        </div>
+                      ) : (
+                        <div className="table-wrapper">
+<table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                          <thead>
+                            <tr style={{ borderBottom: '1px solid var(--border-strong)', color: 'var(--text-muted)' }}>
+                              <th style={{ padding: '1rem 0.5rem', fontWeight: 500, width: '120px' }}>Date</th>
+                              <th style={{ padding: '1rem 0.5rem', fontWeight: 500 }}>Description / Invoice Ref</th>
+                              <th style={{ padding: '1rem 0.5rem', fontWeight: 500, textAlign: 'right', width: '150px' }}>Amount Paid</th>
+                              <th style={{ padding: '1rem 0.5rem', fontWeight: 500, textAlign: 'center', width: '80px' }}></th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {subPayments.map(p => {
+                              const canModify = canModifyEntry(p.createdAt);
+                              
+                              return (
+                                <tr key={p.id} style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+                                  <td style={{ padding: '1rem 0.5rem', color: 'var(--text-secondary)' }}>{p.date}</td>
+                                  <td style={{ padding: '1rem 0.5rem' }}>{p.description}</td>
+                                  <td style={{ padding: '1rem 0.5rem', textAlign: 'right', fontWeight: 500, color: 'var(--text-primary)' }}>Rs {p.amount.toFixed(2)}</td>
+                                  <td style={{ padding: '1rem 0.5rem', textAlign: 'center' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem' }}>
+                                      <button style={{ background: 'none', border: 'none', color: canModify ? 'var(--text-primary)' : 'var(--warning)', cursor: 'pointer', opacity: 0.7 }} onMouseEnter={e => e.currentTarget.style.opacity = 1} onMouseLeave={e => e.currentTarget.style.opacity = 0.7} onClick={() => {
+                                        setSubPayMode('edit');
+                                        setActiveSubPayId(p.id);
+                                        setSubPayDate(p.date);
+                                        setSubPayAmount(p.amount);
+                                        setSubPayDesc(p.description);
+                                        setIsSubPayModalOpen(true);
+                                      }} title={canModify ? "Edit Payment" : "Request Edit"}><Edit2 size={16} /></button>
+                                      
+                                      <button style={{ background: 'none', border: 'none', color: canModify ? 'var(--danger)' : 'var(--warning)', cursor: 'pointer', opacity: 0.7 }} onMouseEnter={e => e.currentTarget.style.opacity = 1} onMouseLeave={e => e.currentTarget.style.opacity = 0.7} onClick={(e) => handleDeleteSubPay(e, p)} title={canModify ? "Delete Payment" : "Request Delete"}><Trash2 size={16} /></button>
+                                    </div>
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+</div>
+                      )}
+                    </div>
+                  );
+                })()}
+              </div>
             )}
 
-            {projectTab === 'materials' && (
-              <MaterialsTab 
-                materialCategories={materialCategories} activeProjectId={activeProjectId} 
-                allMaterials={allMaterials} activeMaterialCategory={activeMaterialCategory} 
-                setIsCategoryModalOpen={setIsCategoryModalOpen} setIsVendorBillModalOpen={setIsVendorBillModalOpen} 
-                setIsMaterialModalOpen={setIsMaterialModalOpen} setActiveMaterialCategory={setActiveMaterialCategory} 
-                materialViewMode={materialViewMode} setMaterialViewMode={setMaterialViewMode} 
-                triggerSecurityChallenge={triggerSecurityChallenge} handleDeleteMaterialCategory={handleDeleteMaterialCategory} 
-                canModifyEntry={canModifyEntry} setArrivalMaterialObj={setArrivalMaterialObj} 
-                setArrivalQty={setArrivalQty} setIsArrivalModalOpen={setIsArrivalModalOpen} 
-                handleToggleMaterial={handleToggleMaterial} setPaymentMaterialObj={setPaymentMaterialObj} 
-                setPaymentDate={setPaymentDate} setIsPaymentModalOpen={setIsPaymentModalOpen} 
-                setEditMaterialObj={setEditMaterialObj} setIsEditMaterialModalOpen={setIsEditMaterialModalOpen} 
-                handleDeleteMaterial={handleDeleteMaterial}
-               todayStrGlobal={todayStrGlobal} setArrivalReceipt={setArrivalReceipt} setIsImageViewerOpen={setIsImageViewerOpen} setArrivalDate={setArrivalDate} setViewImageUrl={setViewImageUrl} openEditMaterialModal={openEditMaterialModal}/>
-            )}
+            {projectTab === 'materials' && (() => {
+              const projCategories = materialCategories.filter(c => c.projectId === activeProjectId);
+              const projMaterials = allMaterials.filter(m => m.projectId === activeProjectId && (activeMaterialCategory === 'All' || m.category === activeMaterialCategory));
+              
+              const totalOrdered = projMaterials.reduce((acc, m) => acc + (m.totalCost || 0), 0);
+              const totalArrivedValue = projMaterials.filter(m => m.isArrived).reduce((acc, m) => acc + (m.totalCost || 0), 0);
+              const totalPaid = projMaterials.filter(m => m.isPaid).reduce((acc, m) => acc + (m.totalCost || 0), 0);
+              const totalOutstanding = totalArrivedValue - totalPaid;
 
-            {projectTab === 'site_expenses' && (
-              <ExpensesTab 
-                allExpenses={allExpenses} activeProjectId={activeProjectId} 
-                expenseViewMode={expenseViewMode} setExpenseViewMode={setExpenseViewMode}
-                setIsExpenseModalOpen={setIsExpenseModalOpen} 
-                triggerSecurityChallenge={triggerSecurityChallenge} handleDeleteExpense={handleDeleteExpense}
-                canModifyEntry={canModifyEntry} handleToggleExpenseStatus={handleToggleExpenseStatus}
-                handleEditExpense={handleEditExpense} setExpenseReceiptObj={setExpenseReceiptObj}
-                setIsExpenseReceiptModalOpen={setIsExpenseReceiptModalOpen}
-               allSiteAdvances={allSiteAdvances} handleDeleteAdvance={handleDeleteAdvance} allSiteExpenses={allSiteExpenses} setIsImageViewerOpen={setIsImageViewerOpen} setViewImageUrl={setViewImageUrl} setIsAdvanceModalOpen={setIsAdvanceModalOpen}/>
-            )}
+              return (
+                <div className="glass-card animate-fade-in" style={{ padding: '2.5rem', minHeight: '500px' }}>
+                  <div className="flex-between" style={{ marginBottom: '2rem', flexWrap: 'wrap', gap: '1.5rem' }}>
+                    <h3 className="heading-3" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Package size={20} className="text-gradient"/> Material Procurement</h3>
+                    <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+                      <button className="btn btn-secondary" onClick={() => setIsCategoryModalOpen(true)}><Settings size={16}/> Manage Categories</button>
+                      <button className="btn btn-secondary" onClick={() => setIsVendorBillModalOpen(true)}><FileText size={16}/> Vendor Bills</button>
+                      <button className="btn btn-primary" onClick={() => setIsMaterialModalOpen(true)}>+ Log Material Order</button>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '0.5rem', overflowX: 'auto', paddingBottom: '1rem', marginBottom: '1.5rem', borderBottom: '1px solid var(--border-strong)' }}>
+                    <button className={`btn ${activeMaterialCategory === 'All' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setActiveMaterialCategory('All')} style={{ padding: '0.4rem 1rem', borderRadius: 'var(--radius-full)' }}>All Items</button>
+                    {projCategories.map(cat => (
+                      <button key={cat.id} className={`btn ${activeMaterialCategory === cat.name ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setActiveMaterialCategory(cat.name)} style={{ padding: '0.4rem 1rem', borderRadius: 'var(--radius-full)', whiteSpace: 'nowrap' }}>{cat.name}</button>
+                    ))}
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
+                    <button className={`btn ${materialViewMode === 'active' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setMaterialViewMode('active')} style={{ flex: 1, minWidth: '150px' }}>Active Orders</button>
+                    <button className={`btn ${materialViewMode === 'history' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setMaterialViewMode('history')} style={{ flex: 1, minWidth: '150px' }}>Payment History</button>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))', gap: '1.5rem', marginBottom: '2.5rem' }}>
+                     <div style={{ background: 'var(--glass-hover)', padding: '1.5rem', borderRadius: 'var(--radius-md)' }}>
+                       <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginBottom: '0.5rem' }}>Total Ordered</p>
+                       <p style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>Rs {totalOrdered.toFixed(2)}</p>
+                     </div>
+                     <div style={{ background: 'var(--glass-hover)', padding: '1.5rem', borderRadius: 'var(--radius-md)' }}>
+                       <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginBottom: '0.5rem' }}>Total Paid</p>
+                       <p style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--success)' }}>Rs {totalPaid.toFixed(2)}</p>
+                     </div>
+                     <div style={{ background: 'var(--glass-hover)', padding: '1.5rem', borderRadius: 'var(--radius-md)' }}>
+                       <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginBottom: '0.5rem' }}>Outstanding Balance</p>
+                       <p style={{ fontSize: '1.5rem', fontWeight: 'bold', color: totalOutstanding > 0 ? 'var(--danger)' : 'var(--text-muted)' }}>Rs {totalOutstanding.toFixed(2)}</p>
+                     </div>
+                  </div>
+
+                  {projMaterials.length === 0 ? (
+                    <div style={{ textAlign: 'center', padding: '4rem', color: 'var(--text-muted)', background: 'var(--glass-overlay)', borderRadius: 'var(--radius-md)' }}>
+                      <Package size={48} style={{ marginBottom: '1rem', opacity: 0.3 }} />
+                      <p>No material orders found in this category.</p>
+                    </div>
+                  ) : (
+                    <div style={{ overflowX: 'auto' }}>
+                      <div className="table-wrapper">
+<table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '800px' }}>
+                        <thead>
+                          <tr style={{ borderBottom: '1px solid var(--border-strong)', color: 'var(--text-muted)' }}>
+                            <th style={{ padding: '1rem 0.5rem', fontWeight: 500 }}>Order Date</th>
+                            <th style={{ padding: '1rem 0.5rem', fontWeight: 500 }}>Item Description</th>
+                            <th style={{ padding: '1rem 0.5rem', fontWeight: 500 }}>Category</th>
+                            <th style={{ padding: '1rem 0.5rem', fontWeight: 500 }}>Vendor</th>
+                            <th style={{ padding: '1rem 0.5rem', fontWeight: 500, textAlign: 'right' }}>Karaya (Freight)</th>
+                            <th style={{ padding: '1rem 0.5rem', fontWeight: 500, textAlign: 'right' }}>Total Cost</th>
+                            <th style={{ padding: '1rem 0.5rem', fontWeight: 500, textAlign: 'center' }}>Receipt</th>
+                            <th style={{ padding: '1rem 0.5rem', fontWeight: 500, textAlign: 'center' }}>Arrived</th>
+                            <th style={{ padding: '1rem 0.5rem', fontWeight: 500, textAlign: 'center' }}>Paid</th>
+                            <th style={{ padding: '1rem 0.5rem', fontWeight: 500, textAlign: 'center' }}>Action</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {projMaterials.filter(m => materialViewMode === 'active' ? (!m.isPaid && !m.isUndelivered) : (m.isPaid || m.isUndelivered)).sort((a,b) => new Date(b.orderDate) - new Date(a.orderDate)).map(m => {
+                            const canModify = canModifyEntry(m.createdAt);
+                            
+                            return (
+                              <tr key={m.id} onClick={() => openEditMaterialModal(m)} style={{ borderBottom: '1px solid var(--border-subtle)', background: m.isUndelivered ? 'rgba(239, 68, 68, 0.05)' : m.isArrived ? 'var(--glass-overlay)' : 'transparent', cursor: 'pointer' }}>
+                                <td style={{ padding: '1rem 0.5rem', color: 'var(--text-secondary)' }}>
+                                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', fontSize: '0.8rem' }}>
+                                    <span><strong>Order:</strong> {m.orderDate}</span>
+                                    {m.isArrived && m.arrivalDate && <span><strong>Arrived:</strong> {m.arrivalDate.split('T')[0]}</span>}
+                                    {m.isPaid && m.paidDate && <span><strong>Paid:</strong> {m.paidDate.split('T')[0]}</span>}
+                                  </div>
+                                </td>
+                                <td style={{ padding: '1rem 0.5rem', fontWeight: 500, color: m.isUndelivered ? 'var(--text-muted)' : 'inherit', textDecoration: m.isUndelivered ? 'line-through' : 'none' }}>
+                                  {m.itemName} {m.isUndelivered && <span style={{ fontSize: '0.65rem', padding: '0.15rem 0.4rem', marginLeft: '0.5rem', background: 'rgba(239, 68, 68, 0.1)', color: 'var(--danger)', borderRadius: 'var(--radius-sm)', textDecoration: 'none', display: 'inline-block', verticalAlign: 'middle' }}>Undelivered</span>} <br/>
+                                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textDecoration: 'none', display: 'inline-block' }}>
+                                    {m.isArrived && m.orderedQuantity && Number(m.quantity) !== Number(m.orderedQuantity)
+                                      ? `${m.quantity} received (of ${m.orderedQuantity} ordered)`
+                                      : `${m.quantity} units`} @ Rs {m.unitPrice}
+                                  </span>
+                                </td>
+                                <td style={{ padding: '1rem 0.5rem', color: 'var(--text-secondary)' }}>{m.category}</td>
+                                <td style={{ padding: '1rem 0.5rem', color: 'var(--text-secondary)' }}>{m.vendorName || '-'}</td>
+                                <td style={{ padding: '1rem 0.5rem', textAlign: 'right', color: 'var(--text-secondary)' }}>Rs {m.karaya || 0}</td>
+                                <td style={{ padding: '1rem 0.5rem', textAlign: 'right', fontWeight: 500, color: 'var(--text-primary)' }}>Rs {m.totalCost.toFixed(2)}</td>
+                                <td style={{ padding: '1rem 0.5rem', textAlign: 'center' }}>
+                                  {m.receiptImage ? (
+                                    <button onClick={(e) => { e.stopPropagation(); setViewImageUrl(m.receiptImage); setIsImageViewerOpen(true); }} style={{ background: 'none', border: 'none', color: 'var(--accent-secondary)', cursor: 'pointer' }} title="View Receipt">
+                                      <FileText size={18} />
+                                    </button>
+                                  ) : (
+                                    <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>None</span>
+                                  )}
+                                </td>
+                                <td style={{ padding: '1rem 0.5rem', textAlign: 'center', cursor: 'pointer' }} onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (!m.isArrived) {
+                                    triggerSecurityChallenge("Mark this material as delivered?", 'MODIFY', () => {
+                                      setArrivalMaterialObj(m);
+                                      setArrivalQty(m.quantity);
+                                      setArrivalDate(todayStrGlobal);
+                                      setArrivalReceipt(null);
+                                      setIsArrivalModalOpen(true);
+                                    });
+                                  } else {
+                                    triggerSecurityChallenge("Mark this material as NOT delivered?", 'MODIFY', () => handleToggleMaterial(m.id, 'isArrived', m.isArrived, m.createdAt));
+                                  }
+                                }}>
+                                  <input type="checkbox" checked={m.isArrived} readOnly style={{ width: '18px', height: '18px', accentColor: 'var(--accent-primary)', pointerEvents: 'none' }}/>
+                                </td>
+                                <td style={{ padding: '1rem 0.5rem', textAlign: 'center', cursor: 'pointer' }} onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (!m.isPaid) {
+                                    triggerSecurityChallenge("Mark this material as paid?", 'MODIFY', () => {
+                                      setPaymentMaterialObj(m);
+                                      setPaymentDate(new Date().toISOString().split('T')[0]);
+                                      setIsPaymentModalOpen(true);
+                                    });
+                                  } else {
+                                    triggerSecurityChallenge("Mark this material as unpaid?", 'MODIFY', () => handleToggleMaterial(m.id, 'isPaid', m.isPaid, m.createdAt));
+                                  }
+                                }}>
+                                  <input type="checkbox" checked={m.isPaid} readOnly style={{ width: '18px', height: '18px', accentColor: 'var(--success)', pointerEvents: 'none' }}/>
+                                </td>
+                                <td style={{ padding: '1rem 0.5rem', textAlign: 'center' }}>
+                                  <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>
+                                    <button style={{ background: 'none', border: 'none', color: m.isUndelivered ? 'var(--danger)' : 'var(--text-secondary)', cursor: 'pointer', opacity: 0.7 }} onMouseEnter={e => e.currentTarget.style.opacity = 1} onMouseLeave={e => e.currentTarget.style.opacity = 0.7} onClick={(e) => { e.stopPropagation(); triggerSecurityChallenge(m.isUndelivered ? "Unmark this material as undelivered?" : "Mark this material as permanently undelivered?", 'MODIFY', () => handleToggleMaterial(m.id, 'isUndelivered', m.isUndelivered || false, m.createdAt)); }} title={m.isUndelivered ? "Unmark Undelivered" : "Mark Undelivered Permanently"}>
+                                      <XCircle size={16} />
+                                    </button>
+                                    <button style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', opacity: 0.7 }} onMouseEnter={e => e.currentTarget.style.opacity = 1} onMouseLeave={e => e.currentTarget.style.opacity = 0.7} onClick={(e) => { e.stopPropagation(); openEditMaterialModal(m); }} title="Modify Order">
+                                      <Edit2 size={16} />
+                                    </button>
+                                    <button style={{ background: 'none', border: 'none', color: canModify ? 'var(--danger)' : 'var(--warning)', cursor: 'pointer', opacity: 0.7 }} onMouseEnter={e => e.currentTarget.style.opacity = 1} onMouseLeave={e => e.currentTarget.style.opacity = 0.7} onClick={(e) => handleDeleteMaterial(e, m)} title={canModify ? "Delete Order" : "Request Delete"}>
+                                      <Trash2 size={16} />
+                                    </button>
+                                  </div>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+</div>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
+
+            {projectTab === 'site_expenses' && (() => {
+              const projAdvances = allSiteAdvances.filter(a => a.projectId === activeProjectId);
+              const projExpenses = allSiteExpenses.filter(e => e.projectId === activeProjectId);
+              
+              const totalAdvance = projAdvances.reduce((sum, a) => sum + (a.amount || 0), 0);
+              const totalExpense = projExpenses.reduce((sum, e) => sum + (e.amount || 0), 0);
+              const engExpense = projExpenses.filter(e => e.paidBy !== 'Company').reduce((sum, e) => sum + (e.amount || 0), 0);
+              const currentBalance = totalAdvance - engExpense;
+
+              return (
+                <div className="glass-card animate-fade-in" style={{ padding: '2.5rem', minHeight: '500px' }}>
+                  <div className="flex-between" style={{ marginBottom: '2.5rem', flexWrap: 'wrap', gap: '1.5rem' }}>
+                    <h3 className="heading-3" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><CreditCard size={20} className="text-gradient"/> Site Expenses & Petty Cash</h3>
+                    <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+                      <button className="btn btn-secondary" onClick={() => setIsAdvanceModalOpen(true)}>+ Issue Advance</button>
+                      <button className="btn btn-primary" onClick={() => setIsExpenseModalOpen(true)}>+ Submit Expense Report</button>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))', gap: '1.5rem', marginBottom: '2.5rem' }}>
+                     <div style={{ background: 'var(--glass-hover)', padding: '1.5rem', borderRadius: 'var(--radius-md)' }}>
+                       <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginBottom: '0.5rem' }}>Total Advance Issued</p>
+                       <p style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--text-primary)' }}>Rs {totalAdvance.toFixed(2)}</p>
+                     </div>
+                     <div style={{ background: 'var(--glass-hover)', padding: '1.5rem', borderRadius: 'var(--radius-md)' }}>
+                       <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginBottom: '0.5rem' }}>Engineer Claimed Expenses</p>
+                       <p style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--text-primary)' }}>Rs {engExpense.toFixed(2)}</p>
+                       <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>Out of total Rs {totalExpense.toFixed(2)}</p>
+                     </div>
+                     <div style={{ background: 'var(--glass-hover)', padding: '1.5rem', borderRadius: 'var(--radius-md)', border: currentBalance < 0 ? '1px solid var(--danger)' : '1px solid var(--success)' }}>
+                       <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginBottom: '0.5rem' }}>Current Balance</p>
+                       <p style={{ fontSize: '1.5rem', fontWeight: 'bold', color: currentBalance < 0 ? 'var(--danger)' : 'var(--success)' }}>Rs {Math.abs(currentBalance).toFixed(2)} {currentBalance < 0 ? '(Owed to Engineer)' : '(Owed to Company)'}</p>
+                     </div>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 350px), 1fr))', gap: '2.5rem' }}>
+                    {/* Advances Ledger */}
+                    <div>
+                      <h4 style={{ marginBottom: '1rem', color: 'var(--text-secondary)', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '0.5rem' }}><DollarSign size={16}/> Advances Issued</h4>
+                      <div className="glass-card" style={{ padding: '0', background: 'var(--glass-overlay)' }}>
+                        <div className="table-wrapper">
+<table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                          <thead>
+                            <tr style={{ borderBottom: '1px solid var(--border-subtle)', color: 'var(--text-muted)' }}>
+                              <th style={{ padding: '1rem', fontWeight: 500 }}>Date</th>
+                              <th style={{ padding: '1rem', fontWeight: 500 }}>Description</th>
+                              <th style={{ padding: '1rem', fontWeight: 500, textAlign: 'right' }}>Amount</th>
+                              <th style={{ padding: '1rem', fontWeight: 500, textAlign: 'center' }}></th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {projAdvances.sort((a,b) => new Date(b.date) - new Date(a.date)).map(adv => {
+                              const canModify = canModifyEntry(adv.createdAt);
+                              return (
+                                <tr key={adv.id} style={{ borderBottom: '1px solid var(--glass-overlay)' }}>
+                                  <td style={{ padding: '1rem', color: 'var(--text-secondary)' }}>{adv.date}</td>
+                                  <td style={{ padding: '1rem' }}>{adv.description}</td>
+                                  <td style={{ padding: '1rem', textAlign: 'right', fontWeight: 500, color: 'var(--success)' }}>+Rs {adv.amount}</td>
+                                  <td style={{ padding: '1rem', textAlign: 'center' }}>
+                                    <button onClick={(e) => handleDeleteAdvance(e, adv)} style={{ background: 'none', border: 'none', color: canModify ? 'var(--danger)' : 'var(--warning)', cursor: 'pointer', opacity: 0.7 }} title="Delete">
+                                      <Trash2 size={16} />
+                                    </button>
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                            {projAdvances.length === 0 && (
+                              <tr><td colSpan="4" style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>No advances issued yet.</td></tr>
+                            )}
+                          </tbody>
+                        </table>
+</div>
+                      </div>
+                    </div>
+
+                    {/* Expenses Ledger */}
+                    <div>
+                      <h4 style={{ marginBottom: '1rem', color: 'var(--text-secondary)', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '0.5rem' }}><FileText size={16}/> Expense Reports</h4>
+                      <div className="glass-card" style={{ padding: '0', background: 'var(--glass-overlay)' }}>
+                        <div className="table-wrapper">
+<table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                          <thead>
+                            <tr style={{ borderBottom: '1px solid var(--border-subtle)', color: 'var(--text-muted)' }}>
+                              <th style={{ padding: '1rem', fontWeight: 500 }}>Date</th>
+                              <th style={{ padding: '1rem', fontWeight: 500 }}>Description</th>
+                              <th style={{ padding: '1rem', fontWeight: 500 }}>Paid By</th>
+                              <th style={{ padding: '1rem', fontWeight: 500, textAlign: 'right' }}>Amount</th>
+                              <th style={{ padding: '1rem', fontWeight: 500, textAlign: 'center' }}>Receipt</th>
+                              <th style={{ padding: '1rem', fontWeight: 500, textAlign: 'center' }}></th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {projExpenses.sort((a,b) => new Date(b.date) - new Date(a.date)).map(exp => {
+                              const canModify = canModifyEntry(exp.createdAt);
+                              return (
+                                <tr key={exp.id} style={{ borderBottom: '1px solid var(--glass-overlay)' }}>
+                                  <td style={{ padding: '1rem', color: 'var(--text-secondary)' }}>{exp.date}</td>
+                                  <td style={{ padding: '1rem' }}>{exp.description}</td>
+                                  <td style={{ padding: '1rem', color: 'var(--text-secondary)' }}>
+                                    <span style={{ fontSize: '0.75rem', padding: '0.2rem 0.5rem', borderRadius: '4px', background: exp.paidBy === 'Company' ? 'rgba(99, 102, 241, 0.2)' : 'var(--border-strong)', color: exp.paidBy === 'Company' ? 'var(--accent-primary)' : 'var(--text-muted)' }}>
+                                      {exp.paidBy || 'Engineer'}
+                                    </span>
+                                  </td>
+                                  <td style={{ padding: '1rem', textAlign: 'right', fontWeight: 500, color: 'var(--danger)' }}>-Rs {exp.amount}</td>
+                                  <td style={{ padding: '1rem', textAlign: 'center' }}>
+                                    {exp.receiptImage ? (
+                                      <button onClick={() => { setViewImageUrl(exp.receiptImage); setIsImageViewerOpen(true); }} style={{ background: 'none', border: 'none', color: 'var(--accent-secondary)', cursor: 'pointer' }} title="View Receipt">
+                                        <FileText size={18} />
+                                      </button>
+                                    ) : <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>None</span>}
+                                  </td>
+                                  <td style={{ padding: '1rem', textAlign: 'center' }}>
+                                    <button onClick={(e) => handleDeleteExpense(e, exp)} style={{ background: 'none', border: 'none', color: canModify ? 'var(--danger)' : 'var(--warning)', cursor: 'pointer', opacity: 0.7 }} title="Delete">
+                                      <Trash2 size={16} />
+                                    </button>
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                            {projExpenses.length === 0 && (
+                              <tr><td colSpan="5" style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>No expense reports submitted yet.</td></tr>
+                            )}
+                          </tbody>
+                        </table>
+</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
 
             {projectTab === 'documents' && (
               <div className="glass-card animate-fade-in" style={{ padding: '2.5rem', minHeight: '500px' }}>
@@ -2235,21 +2896,155 @@ const [profileName, setProfileName] = useState('');
             )}
 
             {projectTab === 'assets' && (
-              <AssetsTab 
-                allAssets={allAssets} activeProjectId={activeProjectId} 
-                setIsAssetModalOpen={setIsAssetModalOpen} triggerSecurityChallenge={triggerSecurityChallenge}
-                handleDeleteAsset={handleDeleteAsset} canModifyEntry={canModifyEntry}
-                handleToggleAssetStatus={handleToggleAssetStatus}
-              />
+              <div className="glass-card animate-fade-in" style={{ padding: '2.5rem', minHeight: '500px' }}>
+                <div className="flex-between" style={{ marginBottom: '2.5rem', flexWrap: 'wrap', gap: '1.5rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap' }}>
+                    <h3 className="heading-3" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Truck size={20} className="text-gradient"/> Mobilized Assets</h3>
+                  </div>
+                  <button className="btn btn-primary" onClick={() => setIsAssetModalOpen(true)}>+ Add Asset</button>
+                </div>
+                {allAssets.filter(a => a.projectId === activeProjectId).length === 0 ? (
+                  <div style={{ textAlign: 'center', padding: '5rem', color: 'var(--text-muted)', border: '2px dashed var(--border-strong)', borderRadius: 'var(--radius-md)' }}>
+                    <Truck size={48} style={{ marginBottom: '1rem', opacity: 0.3 }} />
+                    <p>No company assets currently mobilized to this project.</p>
+                  </div>
+                ) : (
+                  <div style={{ overflowX: 'auto' }}>
+                    <div className="table-wrapper">
+<table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '800px' }}>
+                      <thead>
+                        <tr style={{ borderBottom: '1px solid var(--border-strong)', color: 'var(--text-muted)' }}>
+                          <th style={{ padding: '1rem 0.5rem', fontWeight: 500 }}>Asset Name</th>
+                          <th style={{ padding: '1rem 0.5rem', fontWeight: 500 }}>Type / Category</th>
+                          <th style={{ padding: '1rem 0.5rem', fontWeight: 500, textAlign: 'center' }}>Qty</th>
+                          <th style={{ padding: '1rem 0.5rem', fontWeight: 500 }}>Date Mobilized</th>
+                          <th style={{ padding: '1rem 0.5rem', fontWeight: 500 }}>Status</th>
+                          <th style={{ padding: '1rem 0.5rem', fontWeight: 500 }}>Notes</th>
+                          <th style={{ padding: '1rem 0.5rem', fontWeight: 500, textAlign: 'center' }}>Action</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {allAssets.filter(a => a.projectId === activeProjectId).map(asset => (
+                          <tr key={asset.id} style={{ borderBottom: '1px solid var(--border-subtle)', opacity: asset.status === 'Returned' ? 0.6 : 1 }}>
+                            <td style={{ padding: '1rem 0.5rem', fontWeight: 500 }}>{asset.name}</td>
+                            <td style={{ padding: '1rem 0.5rem', color: 'var(--text-secondary)' }}>{asset.type}</td>
+                            <td style={{ padding: '1rem 0.5rem', textAlign: 'center', fontWeight: 500 }}>{asset.quantity || 1}</td>
+                            <td style={{ padding: '1rem 0.5rem', color: 'var(--text-secondary)' }}>{asset.dateMobilized}</td>
+                            <td style={{ padding: '1rem 0.5rem' }}>
+                              <span style={{ fontSize: '0.75rem', padding: '0.2rem 0.5rem', borderRadius: '4px', background: asset.status === 'Mobilized' ? 'var(--accent-light)' : 'var(--bg-tertiary)', color: asset.status === 'Mobilized' ? 'var(--accent-primary)' : 'var(--text-muted)' }}>
+                                {asset.status} {asset.status === 'Returned' && `(${asset.dateReturned})`}
+                              </span>
+                            </td>
+                            <td style={{ padding: '1rem 0.5rem', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>{asset.notes}</td>
+                            <td style={{ padding: '1rem 0.5rem', textAlign: 'center', display: 'flex', justifyContent: 'center', gap: '0.5rem' }}>
+                              <button className="btn btn-secondary" onClick={() => openEditAssetModal(asset)} style={{ padding: '0.4rem 0.75rem', fontSize: '0.75rem', background: 'transparent', border: '1px solid var(--text-secondary)' }} title="Modify Asset">
+                                <Edit2 size={14} />
+                              </button>
+                              {asset.status === 'Mobilized' && (
+                                <button className="btn btn-primary" onClick={() => handleReturnAsset(asset.id)} style={{ padding: '0.4rem 0.75rem', fontSize: '0.75rem' }} title="Mark Returned">
+                                  Return
+                                </button>
+                              )}
+                              <button className="btn btn-danger" onClick={() => handleDeleteAsset(asset.id)} style={{ padding: '0.4rem 0.75rem', fontSize: '0.75rem', background: 'transparent', border: '1px solid var(--danger)', color: 'var(--danger)' }} title="Delete Record">
+                                <Trash2 size={14} />
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+</div>
+                  </div>
+                )}
+              </div>
             )}
 
-            {projectTab === 'tasks' && (
-              <TasksTab 
-                allTasks={allTasks} activeProjectId={activeProjectId} 
-                setIsTaskModalOpen={setIsTaskModalOpen} triggerSecurityChallenge={triggerSecurityChallenge}
-                handleDeleteTask={handleDeleteTask} handleToggleTaskStatus={handleToggleTaskStatus}
-               draggedTaskId={draggedTaskId} handleDragOver={handleDragOver} allUsers={allUsers} handleDrop={handleDrop} handleDragStart={handleDragStart}/>
-            )}
+            {projectTab === 'tasks' && (() => {
+              const projTasks = allTasks.filter(t => t.projectId === activeProjectId);
+              const columns = [
+                { id: 'TODO', title: 'To Do', color: 'var(--text-primary)' },
+                { id: 'IN_PROGRESS', title: 'In Progress', color: 'var(--accent-primary)' },
+                { id: 'REVIEW', title: 'In Review', color: 'var(--warning)' },
+                { id: 'DONE', title: 'Done', color: 'var(--success)' }
+              ];
+
+              const getPriorityColor = (priority) => {
+                if (priority === 'CRITICAL') return 'var(--danger)';
+                if (priority === 'HIGH') return 'var(--warning)';
+                if (priority === 'MEDIUM') return 'var(--accent-secondary)';
+                return 'var(--success)';
+              };
+
+              return (
+                <div className="animate-fade-in" style={{ minHeight: '500px' }}>
+                  <div className="flex-between" style={{ marginBottom: '2.5rem', flexWrap: 'wrap', gap: '1.5rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap' }}>
+                      <h3 className="heading-3" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><CheckSquare size={20} className="text-gradient"/> Project Tasks</h3>
+                    </div>
+                    <button className="btn btn-primary" onClick={() => setIsTaskModalOpen(true)}>+ Add Task</button>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 250px), 1fr))', gap: '1.5rem', alignItems: 'start' }}>
+                    {columns.map(col => (
+                      <div 
+                        key={col.id} 
+                        className="glass-card" 
+                        style={{ padding: '1rem', minHeight: '400px', display: 'flex', flexDirection: 'column', gap: '1rem', borderTop: `4px solid ${col.color}` }}
+                        onDragOver={handleDragOver}
+                        onDrop={(e) => handleDrop(e, col.id)}
+                      >
+                        <h4 style={{ fontWeight: 600, display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: 'var(--text-primary)' }}>
+                          {col.title}
+                          <span style={{ fontSize: '0.75rem', background: 'var(--border-strong)', padding: '0.2rem 0.5rem', borderRadius: '4px' }}>
+                            {projTasks.filter(t => t.status === col.id).length}
+                          </span>
+                        </h4>
+                        
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', flex: 1 }}>
+                          {projTasks.filter(t => t.status === col.id).map(task => (
+                            <div 
+                              key={task.id}
+                              draggable
+                              onDragStart={(e) => handleDragStart(e, task.id)}
+                              style={{ 
+                                background: 'var(--glass-darker)', 
+                                padding: '1rem', 
+                                borderRadius: 'var(--radius-md)', 
+                                cursor: 'grab', 
+                                border: '1px solid var(--border-subtle)',
+                                borderLeft: `3px solid ${getPriorityColor(task.priority)}`,
+                                opacity: draggedTaskId === task.id ? 0.5 : 1
+                              }}
+                            >
+                              <div className="flex-between" style={{ marginBottom: '0.5rem' }}>
+                                <span style={{ fontSize: '0.7rem', color: getPriorityColor(task.priority), fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px' }}>{task.priority}</span>
+                                <button onClick={(e) => handleDeleteTask(e, task.id)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}><Trash2 size={14}/></button>
+                              </div>
+                              <h5 style={{ fontSize: '1rem', marginBottom: '0.5rem', color: 'var(--text-primary)' }}>{task.title}</h5>
+                              <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: '1rem', lineHeight: 1.4 }}>{task.description}</p>
+                              
+                              <div className="flex-between" style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: '0.75rem' }}>
+                                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.25rem' }}><Calendar size={12}/> {task.dueDate || 'No Date'}</span>
+                                {task.assignedTo && (
+                                  <span style={{ fontSize: '0.75rem', color: 'var(--accent-primary)', display: 'flex', alignItems: 'center', gap: '0.25rem', background: 'var(--accent-glow)', padding: '0.2rem 0.5rem', borderRadius: '4px' }}>
+                                    <Users size={12}/> {allUsers.find(u => u.id === task.assignedTo)?.name || 'Unknown'}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                          {projTasks.filter(t => t.status === col.id).length === 0 && (
+                            <div style={{ textAlign: 'center', padding: '2rem 1rem', border: '2px dashed var(--border-subtle)', borderRadius: 'var(--radius-md)', color: 'var(--text-muted)', fontSize: '0.875rem' }}>
+                              Drop tasks here
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
 
             {projectTab === 'settings' && (
               <div className="animate-fade-in" style={{ maxWidth: '800px' }}>

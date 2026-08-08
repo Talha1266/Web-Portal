@@ -13,6 +13,7 @@
     "@supabase/supabase-js": "^2.110.8",
     "dotenv": "^17.4.2",
     "lucide-react": "^1.26.0",
+    "puppeteer": "^25.5.0",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "react-onesignal": "^3.5.6",

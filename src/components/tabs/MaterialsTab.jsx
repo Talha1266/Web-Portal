@@ -85,7 +85,7 @@ export default function MaterialsTab({
                             const canModify = canModifyEntry(m.createdAt);
                             
                             return (
-                              <tr key={m.id} style={{ borderBottom: '1px solid var(--border-subtle)', background: m.isUndelivered ? 'rgba(239, 68, 68, 0.05)' : m.isArrived ? 'var(--glass-overlay)' : 'transparent' }}>
+                              <tr key={m.id} onClick={() => openEditMaterialModal(m)} style={{ cursor: 'pointer', borderBottom: '1px solid var(--border-subtle)', background: m.isUndelivered ? 'rgba(239, 68, 68, 0.05)' : m.isArrived ? 'var(--glass-overlay)' : 'transparent' }}>
                                 <td style={{ padding: '1rem 0.5rem', color: 'var(--text-secondary)' }}>
                                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', fontSize: '0.8rem' }}>
                                     <span><strong>Order:</strong> {m.orderDate}</span>
@@ -107,14 +107,15 @@ export default function MaterialsTab({
                                 <td style={{ padding: '1rem 0.5rem', textAlign: 'right', fontWeight: 500, color: 'var(--text-primary)' }}>Rs {m.totalCost.toFixed(2)}</td>
                                 <td style={{ padding: '1rem 0.5rem', textAlign: 'center' }}>
                                   {m.receiptImage ? (
-                                    <button onClick={() => { setViewImageUrl(m.receiptImage); setIsImageViewerOpen(true); }} style={{ background: 'none', border: 'none', color: 'var(--accent-secondary)', cursor: 'pointer' }} title="View Receipt">
+                                    <button onClick={(e) => { e.stopPropagation(); setViewImageUrl(m.receiptImage); setIsImageViewerOpen(true); }} style={{ background: 'none', border: 'none', color: 'var(--accent-secondary)', cursor: 'pointer' }} title="View Receipt">
                                       <FileText size={18} />
                                     </button>
                                   ) : (
                                     <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>None</span>
                                   )}
                                 </td>
-                                <td style={{ padding: '1rem 0.5rem', textAlign: 'center', cursor: 'pointer' }} onClick={() => {
+                                <td style={{ padding: '1rem 0.5rem', textAlign: 'center', cursor: 'pointer' }} onClick={(e) => {
+                                  e.stopPropagation();
                                   if (!m.isArrived) {
                                     triggerSecurityChallenge("Mark this material as delivered?", 'MODIFY', () => {
                                       setArrivalMaterialObj(m);
@@ -129,7 +130,8 @@ export default function MaterialsTab({
                                 }}>
                                   <input type="checkbox" checked={m.isArrived} readOnly style={{ width: '18px', height: '18px', accentColor: 'var(--accent-primary)', pointerEvents: 'none' }}/>
                                 </td>
-                                <td style={{ padding: '1rem 0.5rem', textAlign: 'center', cursor: 'pointer' }} onClick={() => {
+                                <td style={{ padding: '1rem 0.5rem', textAlign: 'center', cursor: 'pointer' }} onClick={(e) => {
+                                  e.stopPropagation();
                                   if (!m.isPaid) {
                                     triggerSecurityChallenge("Mark this material as paid?", 'MODIFY', () => {
                                       setPaymentMaterialObj(m);
@@ -144,13 +146,13 @@ export default function MaterialsTab({
                                 </td>
                                 <td style={{ padding: '1rem 0.5rem', textAlign: 'center' }}>
                                   <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>
-                                    <button style={{ background: 'none', border: 'none', color: m.isUndelivered ? 'var(--danger)' : 'var(--text-secondary)', cursor: 'pointer', opacity: 0.7 }} onMouseEnter={e => e.currentTarget.style.opacity = 1} onMouseLeave={e => e.currentTarget.style.opacity = 0.7} onClick={() => { triggerSecurityChallenge(m.isUndelivered ? "Unmark this material as undelivered?" : "Mark this material as permanently undelivered?", 'MODIFY', () => handleToggleMaterial(m.id, 'isUndelivered', m.isUndelivered || false, m.createdAt)); }} title={m.isUndelivered ? "Unmark Undelivered" : "Mark Undelivered Permanently"}>
+                                    <button style={{ background: 'none', border: 'none', color: m.isUndelivered ? 'var(--danger)' : 'var(--text-secondary)', cursor: 'pointer', opacity: 0.7 }} onMouseEnter={e => e.currentTarget.style.opacity = 1} onMouseLeave={e => e.currentTarget.style.opacity = 0.7} onClick={(e) => { e.stopPropagation(); triggerSecurityChallenge(m.isUndelivered ? "Unmark this material as undelivered?" : "Mark this material as permanently undelivered?", 'MODIFY', () => handleToggleMaterial(m.id, 'isUndelivered', m.isUndelivered || false, m.createdAt)); }} title={m.isUndelivered ? "Unmark Undelivered" : "Mark Undelivered Permanently"}>
                                       <XCircle size={16} />
                                     </button>
                                     <button style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', opacity: 0.7 }} onMouseEnter={e => e.currentTarget.style.opacity = 1} onMouseLeave={e => e.currentTarget.style.opacity = 0.7} onClick={(e) => { e.stopPropagation(); openEditMaterialModal(m); }} title="Modify Order">
                                       <Edit2 size={16} />
                                     </button>
-                                    <button style={{ background: 'none', border: 'none', color: canModify ? 'var(--danger)' : 'var(--warning)', cursor: 'pointer', opacity: 0.7 }} onMouseEnter={e => e.currentTarget.style.opacity = 1} onMouseLeave={e => e.currentTarget.style.opacity = 0.7} onClick={(e) => handleDeleteMaterial(e, m)} title={canModify ? "Delete Order" : "Request Delete"}>
+                                    <button style={{ background: 'none', border: 'none', color: canModify ? 'var(--danger)' : 'var(--warning)', cursor: 'pointer', opacity: 0.7 }} onMouseEnter={e => e.currentTarget.style.opacity = 1} onMouseLeave={e => e.currentTarget.style.opacity = 0.7} onClick={(e) => { e.stopPropagation(); handleDeleteMaterial(e, m); }} title={canModify ? "Delete Order" : "Request Delete"}>
                                       <Trash2 size={16} />
                                     </button>
                                   </div>

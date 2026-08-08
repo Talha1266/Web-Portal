@@ -1,5 +1,5 @@
-import React from 'react';
-import { Briefcase, Calculator, Plus, Eye, ChevronRight, FileText, Trash2 } from 'lucide-react';
+import React, { useState } from 'react';
+import { Briefcase, Calculator, Plus, Eye, ChevronRight, FileText, Trash2, Search } from 'lucide-react';
 
 export default function SubcontractorsTab({
   allSubcontractors, activeProjectId, activeSubId, setActiveSubId,
@@ -7,13 +7,25 @@ export default function SubcontractorsTab({
   triggerSecurityChallenge, allSubcontractorLedger, handleSaveFinalValue,
   setIsSubLedgerModalOpen, setIsSubLedgerReceiptModalOpen, setSubLedgerReceiptObj, handleUpdateSubValue, setSubPayAmount, setSubPayMode, setIsSubPayModalOpen, setSubPayDate, setActiveSubPayId, handleDeleteSubPay, handleDeleteSub, setSubPayDesc, setIsSubModalOpen, allSubPayments
 }) {
+  const [searchQuery, setSearchQuery] = useState('');
+  
+  const filteredSubcontractors = allSubcontractors
+    .filter(s => s.projectId === activeProjectId)
+    .filter(s => s.name.toLowerCase().includes(searchQuery.toLowerCase()) || s.trade.toLowerCase().includes(searchQuery.toLowerCase()));
+
   return (
     <div className="glass-card animate-fade-in" style={{ padding: '2.5rem', minHeight: '500px' }}>
                 {activeSubId === null ? (
                   <>
                     <div className="flex-between" style={{ marginBottom: '2.5rem', flexWrap: 'wrap', gap: '1.5rem' }}>
                       <h3 className="heading-3" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Briefcase size={20} className="text-gradient"/> Subcontractors</h3>
-                      <button className="btn btn-primary" onClick={() => setIsSubModalOpen(true)}>+ Hire Subcontractor</button>
+                      <div style={{ display: 'flex', gap: '1rem', flex: 1, maxWidth: '400px' }}>
+                        <div className="search-container" style={{ position: 'relative', flex: 1 }}>
+                          <Search size={18} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                          <input type="text" placeholder="Search by name or trade..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="input-field" style={{ paddingLeft: '2.8rem' }} />
+                        </div>
+                        <button className="btn btn-primary" style={{ whiteSpace: 'nowrap' }} onClick={() => setIsSubModalOpen(true)}>+ Hire Subcontractor</button>
+                      </div>
                     </div>
 
                     {allSubcontractors.filter(s => s.projectId === activeProjectId).length === 0 ? (
@@ -36,7 +48,7 @@ export default function SubcontractorsTab({
                             </tr>
                           </thead>
                           <tbody>
-                            {allSubcontractors.filter(s => s.projectId === activeProjectId).map(sub => {
+                            {filteredSubcontractors.map(sub => {
                               const subPayments = allSubPayments.filter(p => p.subId === sub.id);
                               const totalPaid = subPayments.reduce((sum, p) => sum + p.amount, 0);
                               

@@ -1,11 +1,65 @@
 import { supabase } from '../supabaseClient';
+import { queueOfflineMutation, getOfflineMutations } from './offlineSync';
+
+const mergeOffline = async (table, data) => {
+  let results = [...(data || [])];
+  try {
+    const queue = await getOfflineMutations();
+    const tableQueue = queue.filter(q => q.table === table);
+    
+    // Apply inserts
+    const inserts = tableQueue.filter(q => q.action === 'INSERT').map(q => ({...q.payload, _isOffline: true}));
+    results = [...results, ...inserts];
+    
+    // Apply updates
+    const updates = tableQueue.filter(q => q.action === 'UPDATE');
+    updates.forEach(u => {
+      const idx = results.findIndex(r => r.id === u.recordId);
+      if (idx !== -1) results[idx] = { ...results[idx], ...u.payload, _isOffline: true };
+    });
+    
+    // Apply deletes
+    const deletes = tableQueue.filter(q => q.action === 'DELETE').map(q => q.recordId);
+    results = results.filter(r => !deletes.includes(r.id));
+  } catch (e) { console.error("Offline merge error:", e); }
+  return results;
+};
+
+const executeMutation = async (table, action, payload, recordId) => {
+  if (!navigator.onLine) {
+    await queueOfflineMutation(table, action, payload, recordId);
+    return;
+  }
+  try {
+    let result;
+    if (action === 'INSERT') result = await supabase.from(table).insert(payload);
+    else if (action === 'UPDATE') result = await supabase.from(table).update(payload).eq('id', recordId);
+    else if (action === 'DELETE') result = await supabase.from(table).delete().eq('id', recordId);
+    else if (action === 'UPSERT') result = await supabase.from(table).upsert(payload, { onConflict: 'id' });
+    
+    if (result.error) {
+      if (result.error.message.includes('Failed to fetch') || result.error.message.includes('fetch')) {
+        await queueOfflineMutation(table, action, payload, recordId);
+        return;
+      }
+      throw new Error(result.error.message);
+    }
+  } catch (err) {
+    if (err.message && (err.message.includes('Failed to fetch') || err.message.includes('fetch'))) {
+      await queueOfflineMutation(table, action, payload, recordId);
+      return;
+    }
+    throw err;
+  }
+};
+
 
 export const initializeDB = () => {};
 
-export const getUsers = async () => { const { data } = await supabase.from('users').select('*'); return data || []; };
-export const addUser = async (u) => {  const { error } = await supabase.from('users').insert({ ...u, id: u.id || Date.now().toString(), createdAt: new Date().toISOString() }); if (error) throw new Error(error.message); };
-export const updateUser = async (id, updates) => {  const { error } = await supabase.from('users').update(updates).eq('id', id); if (error) throw new Error(error.message); };
-export const deleteUser = async (id) => {  const { error } = await supabase.from('users').delete().eq('id', id); if (error) throw new Error(error.message); };
+export const getUsers = async () => { const { data } = await supabase.from('users').select('*'); return await mergeOffline('users', data); };
+export const addUser = async (u) => { const payload = { ...u, id: u.id || Date.now().toString(), createdAt: new Date().toISOString() }; await executeMutation('users', 'INSERT', payload, payload.id); };
+export const updateUser = async (id, updates) => { await executeMutation('users', 'UPDATE', updates, id); };
+export const deleteUser = async (id) => { await executeMutation('users', 'DELETE', null, id); };
 export const removeUser = deleteUser;
 export const updateUserPermissions = async (id, perms) => {  const { error } = await supabase.from('users').update({ permissions: perms }).eq('id', id); if (error) throw new Error(error.message); };
 
@@ -21,9 +75,9 @@ export const DEFAULT_PERMISSIONS = {
   tasks: false
 };
 
-export const getProjects = async () => { const { data } = await supabase.from('projects').select('*'); return data || []; };
-export const addProject = async (p) => {  const { error } = await supabase.from('projects').insert({ ...p, id: p.id || Date.now().toString(), progress: 0, createdAt: new Date().toISOString() }); if (error) throw new Error(error.message); };
-export const updateProject = async (id, updates) => {  const { error } = await supabase.from('projects').update(updates).eq('id', id); if (error) throw new Error(error.message); };
+export const getProjects = async () => { const { data } = await supabase.from('projects').select('*'); return await mergeOffline('projects', data); };
+export const addProject = async (p) => { const payload = { ...p, id: p.id || Date.now().toString(), progress: 0, createdAt: new Date().toISOString() }; await executeMutation('projects', 'INSERT', payload, payload.id); };
+export const updateProject = async (id, updates) => { await executeMutation('projects', 'UPDATE', updates, id); };
 export const deleteProject = async (id) => {
   // Cascading deletes to prevent orphaned data
   await Promise.all([
@@ -46,39 +100,39 @@ export const deleteProject = async (id) => {
   if (error) throw new Error(error.message);
 };
 
-export const getWorkers = async () => { const { data } = await supabase.from('workers').select('*'); return data || []; };
-export const addWorker = async (w) => {  const { error } = await supabase.from('workers').insert({ ...w, id: w.id || Date.now().toString(), createdAt: new Date().toISOString() }); if (error) throw new Error(error.message); };
-export const updateWorker = async (id, updates) => {  const { error } = await supabase.from('workers').update(updates).eq('id', id); if (error) throw new Error(error.message); };
+export const getWorkers = async () => { const { data } = await supabase.from('workers').select('*'); return await mergeOffline('workers', data); };
+export const addWorker = async (w) => { const payload = { ...w, id: w.id || Date.now().toString(), createdAt: new Date().toISOString() }; await executeMutation('workers', 'INSERT', payload, payload.id); };
+export const updateWorker = async (id, updates) => { await executeMutation('workers', 'UPDATE', updates, id); };
 export const deleteWorker = async (id) => {  const { error } = await supabase.from('workers').update({ isDeleted: true }).eq('id', id); if (error) throw new Error(error.message); };
 
-export const getAttendance = async () => { const { data } = await supabase.from('attendance').select('*'); return data || []; };
+export const getAttendance = async () => { const { data } = await supabase.from('attendance').select('*'); return await mergeOffline('attendance', data); };
 export const addAttendanceRecord = async (r) => {  const { error } = await supabase.from('attendance').insert({ ...r, id: r.id || Date.now().toString(), createdAt: new Date().toISOString() }); if (error) throw new Error(error.message); };
 export const updateAttendanceRecord = async (id, updates) => {  const { error } = await supabase.from('attendance').update(updates).eq('id', id); if (error) throw new Error(error.message); };
 export const deleteAttendanceRecords = async (workerId) => {  const { error } = await supabase.from('attendance').delete().eq('workerId', workerId); if (error) throw new Error(error.message); };
 
-export const getSubcontractors = async () => { const { data } = await supabase.from('subcontractors').select('*'); return data || []; };
-export const addSubcontractor = async (s) => {  const { error } = await supabase.from('subcontractors').insert({ ...s, id: s.id || Date.now().toString(), createdAt: new Date().toISOString() }); if (error) throw new Error(error.message); };
-export const updateSubcontractor = async (id, updates) => {  const { error } = await supabase.from('subcontractors').update(updates).eq('id', id); if (error) throw new Error(error.message); };
+export const getSubcontractors = async () => { const { data } = await supabase.from('subcontractors').select('*'); return await mergeOffline('subcontractors', data); };
+export const addSubcontractor = async (s) => { const payload = { ...s, id: s.id || Date.now().toString(), createdAt: new Date().toISOString() }; await executeMutation('subcontractors', 'INSERT', payload, payload.id); };
+export const updateSubcontractor = async (id, updates) => { await executeMutation('subcontractors', 'UPDATE', updates, id); };
 export const deleteSubcontractor = async (id) => { 
   await supabase.from('subcontractors').delete().eq('id', id); 
   await supabase.from('sub_payments').delete().eq('subId', id); 
 };
 
-export const getSubPayments = async () => { const { data } = await supabase.from('sub_payments').select('*'); return data || []; };
-export const addSubPayment = async (p) => {  const { error } = await supabase.from('sub_payments').insert({ ...p, id: p.id || Date.now().toString(), createdAt: new Date().toISOString() }); if (error) throw new Error(error.message); };
-export const updateSubPayment = async (id, updates) => {  const { error } = await supabase.from('sub_payments').update(updates).eq('id', id); if (error) throw new Error(error.message); };
-export const deleteSubPayment = async (id) => {  const { error } = await supabase.from('sub_payments').delete().eq('id', id); if (error) throw new Error(error.message); };
+export const getSubPayments = async () => { const { data } = await supabase.from('sub_payments').select('*'); return await mergeOffline('sub_payments', data); };
+export const addSubPayment = async (p) => { const payload = { ...p, id: p.id || Date.now().toString(), createdAt: new Date().toISOString() }; await executeMutation('sub_payments', 'INSERT', payload, payload.id); };
+export const updateSubPayment = async (id, updates) => { await executeMutation('sub_payments', 'UPDATE', updates, id); };
+export const deleteSubPayment = async (id) => { await executeMutation('sub_payments', 'DELETE', null, id); };
 
-export const getChangeRequests = async () => { const { data } = await supabase.from('change_requests').select('*'); return data || []; };
+export const getChangeRequests = async () => { const { data } = await supabase.from('change_requests').select('*'); return await mergeOffline('change_requests', data); };
 export const addChangeRequest = async (r) => {  const { error } = await supabase.from('change_requests').insert({ ...r, id: r.id || Date.now().toString(), status: 'pending', createdAt: new Date().toISOString() }); if (error) throw new Error(error.message); };
 export const updateChangeRequest = async (id, updates) => {  const { error } = await supabase.from('change_requests').update(updates).eq('id', id); if (error) throw new Error(error.message); };
 
-export const getMaterials = async () => { const { data } = await supabase.from('materials').select('*'); return data || []; };
+export const getMaterials = async () => { const { data } = await supabase.from('materials').select('*'); return await mergeOffline('materials', data); };
 export const addMaterial = async (m) => {  const { error } = await supabase.from('materials').insert({ ...m, id: m.id || Date.now().toString(), status: 'Pending Approval', createdAt: new Date().toISOString() }); if (error) throw new Error(error.message); };
-export const updateMaterial = async (id, updates) => {  const { error } = await supabase.from('materials').update(updates).eq('id', id); if (error) throw new Error(error.message); };
-export const deleteMaterial = async (id) => {  const { error } = await supabase.from('materials').delete().eq('id', id); if (error) throw new Error(error.message); };
+export const updateMaterial = async (id, updates) => { await executeMutation('materials', 'UPDATE', updates, id); };
+export const deleteMaterial = async (id) => { await executeMutation('materials', 'DELETE', null, id); };
 
-export const getMaterialCategories = async () => { const { data } = await supabase.from('material_categories').select('*'); return data || []; };
+export const getMaterialCategories = async () => { const { data } = await supabase.from('material_categories').select('*'); return await mergeOffline('material_categories', data); };
 export const addMaterialCategory = async (name, projectId) => {  const { error } = await supabase.from('material_categories').insert({ id: Date.now().toString(), name, projectId }); if (error) throw new Error(error.message); };
 export const updateMaterialCategory = async (oldName, newName, projectId) => {
   // Update all materials referencing this category in this project
@@ -89,7 +143,7 @@ export const updateMaterialCategory = async (oldName, newName, projectId) => {
 };
 export const deleteMaterialCategory = async (name, projectId) => {  const { error } = await supabase.from('material_categories').delete().eq('name', name).eq('projectId', projectId); if (error) throw new Error(error.message); };
 
-export const getVendors = async () => { const { data } = await supabase.from('vendors').select('*'); return data || []; };
+export const getVendors = async () => { const { data } = await supabase.from('vendors').select('*'); return await mergeOffline('vendors', data); };
 export const addVendor = async (name, projectId, categoryName) => {  const { error } = await supabase.from('vendors').insert({ name, projectId, categoryName }); if (error) throw new Error(error.message); };
 export const updateVendor = async (id, newName, projectId) => {
   const { data: oldVendor } = await supabase.from('vendors').select('name, categoryName').eq('id', id).single();
@@ -99,33 +153,33 @@ export const updateVendor = async (id, newName, projectId) => {
 };
 export const deleteVendor = async (id, projectId) => {  const { error } = await supabase.from('vendors').delete().eq('id', id).eq('projectId', projectId); if (error) throw new Error(error.message); };
 
-export const getSiteAdvances = async () => { const { data } = await supabase.from('site_advances').select('*'); return data || []; };
-export const addSiteAdvance = async (a) => {  const { error } = await supabase.from('site_advances').insert({ ...a, id: a.id || Date.now().toString(), createdAt: new Date().toISOString() }); if (error) throw new Error(error.message); };
-export const updateSiteAdvance = async (id, updates) => {  const { error } = await supabase.from('site_advances').update(updates).eq('id', id); if (error) throw new Error(error.message); };
-export const deleteSiteAdvance = async (id) => {  const { error } = await supabase.from('site_advances').delete().eq('id', id); if (error) throw new Error(error.message); };
+export const getSiteAdvances = async () => { const { data } = await supabase.from('site_advances').select('*'); return await mergeOffline('site_advances', data); };
+export const addSiteAdvance = async (a) => { const payload = { ...a, id: a.id || Date.now().toString(), createdAt: new Date().toISOString() }; await executeMutation('site_advances', 'INSERT', payload, payload.id); };
+export const updateSiteAdvance = async (id, updates) => { await executeMutation('site_advances', 'UPDATE', updates, id); };
+export const deleteSiteAdvance = async (id) => { await executeMutation('site_advances', 'DELETE', null, id); };
 
-export const getSiteExpenses = async () => { const { data } = await supabase.from('site_expenses').select('*'); return data || []; };
-export const addSiteExpense = async (e) => {  const { error } = await supabase.from('site_expenses').insert({ ...e, id: e.id || Date.now().toString(), createdAt: new Date().toISOString() }); if (error) throw new Error(error.message); };
-export const updateSiteExpense = async (id, updates) => {  const { error } = await supabase.from('site_expenses').update(updates).eq('id', id); if (error) throw new Error(error.message); };
-export const deleteSiteExpense = async (id) => {  const { error } = await supabase.from('site_expenses').delete().eq('id', id); if (error) throw new Error(error.message); };
+export const getSiteExpenses = async () => { const { data } = await supabase.from('site_expenses').select('*'); return await mergeOffline('site_expenses', data); };
+export const addSiteExpense = async (e) => { const payload = { ...e, id: e.id || Date.now().toString(), createdAt: new Date().toISOString() }; await executeMutation('site_expenses', 'INSERT', payload, payload.id); };
+export const updateSiteExpense = async (id, updates) => { await executeMutation('site_expenses', 'UPDATE', updates, id); };
+export const deleteSiteExpense = async (id) => { await executeMutation('site_expenses', 'DELETE', null, id); };
 
-export const getAssets = async () => { const { data } = await supabase.from('assets').select('*'); return data || []; };
-export const addAsset = async (a) => {  const { error } = await supabase.from('assets').insert({ ...a, id: a.id || Date.now().toString(), createdAt: new Date().toISOString() }); if (error) throw new Error(error.message); };
-export const updateAsset = async (id, updates) => {  const { error } = await supabase.from('assets').update(updates).eq('id', id); if (error) throw new Error(error.message); };
-export const deleteAsset = async (id) => {  const { error } = await supabase.from('assets').delete().eq('id', id); if (error) throw new Error(error.message); };
+export const getAssets = async () => { const { data } = await supabase.from('assets').select('*'); return await mergeOffline('assets', data); };
+export const addAsset = async (a) => { const payload = { ...a, id: a.id || Date.now().toString(), createdAt: new Date().toISOString() }; await executeMutation('assets', 'INSERT', payload, payload.id); };
+export const updateAsset = async (id, updates) => { await executeMutation('assets', 'UPDATE', updates, id); };
+export const deleteAsset = async (id) => { await executeMutation('assets', 'DELETE', null, id); };
 
-export const getTasks = async () => { const { data } = await supabase.from('tasks').select('*'); return data || []; };
-export const addTask = async (t) => {  const { error } = await supabase.from('tasks').insert({ ...t, id: t.id || Date.now().toString(), createdAt: new Date().toISOString() }); if (error) throw new Error(error.message); };
-export const updateTask = async (id, updates) => {  const { error } = await supabase.from('tasks').update(updates).eq('id', id); if (error) throw new Error(error.message); };
-export const deleteTask = async (id) => {  const { error } = await supabase.from('tasks').delete().eq('id', id); if (error) throw new Error(error.message); };
+export const getTasks = async () => { const { data } = await supabase.from('tasks').select('*'); return await mergeOffline('tasks', data); };
+export const addTask = async (t) => { const payload = { ...t, id: t.id || Date.now().toString(), createdAt: new Date().toISOString() }; await executeMutation('tasks', 'INSERT', payload, payload.id); };
+export const updateTask = async (id, updates) => { await executeMutation('tasks', 'UPDATE', updates, id); };
+export const deleteTask = async (id) => { await executeMutation('tasks', 'DELETE', null, id); };
 
-export const getMessages = async () => { const { data } = await supabase.from('messages').select('*'); return data || []; };
-export const addMessage = async (m) => {  const { error } = await supabase.from('messages').insert({ ...m, id: m.id || Date.now().toString(), createdAt: new Date().toISOString() }); if (error) throw new Error(error.message); };
+export const getMessages = async () => { const { data } = await supabase.from('messages').select('*'); return await mergeOffline('messages', data); };
+export const addMessage = async (m) => { const payload = { ...m, id: m.id || Date.now().toString(), createdAt: new Date().toISOString() }; await executeMutation('messages', 'INSERT', payload, payload.id); };
 
-export const getDocuments = async () => { const { data } = await supabase.from('documents').select('*'); return data || []; };
-export const addDocument = async (d) => {  const { error } = await supabase.from('documents').insert({ ...d, id: d.id || Date.now().toString(), createdAt: new Date().toISOString() }); if (error) throw new Error(error.message); };
+export const getDocuments = async () => { const { data } = await supabase.from('documents').select('*'); return await mergeOffline('documents', data); };
+export const addDocument = async (d) => { const payload = { ...d, id: d.id || Date.now().toString(), createdAt: new Date().toISOString() }; await executeMutation('documents', 'INSERT', payload, payload.id); };
 export const updateDocument = async (id, updates) => {  const { error } = await supabase.from('documents').update(updates).eq('id', id); if (error) throw new Error(error.message); };
-export const deleteDocument = async (id) => {  const { error } = await supabase.from('documents').delete().eq('id', id); if (error) throw new Error(error.message); };
+export const deleteDocument = async (id) => { await executeMutation('documents', 'DELETE', null, id); };
 
 // ==========================================
 // MIGRATION SCRIPT
@@ -285,35 +339,19 @@ export const deleteFileContentFromDB = async (id) => {
   });
 };
 export const saveAttendance = async (projectId, date, records) => {
-  const { data: existing } = await supabase.from('attendance')
-    .select('id, workerId')
-    .eq('projectId', projectId)
-    .eq('date', date);
-
-  const recordsWorkerIds = records.map(r => r.workerId);
-  const toDelete = existing ? existing.filter(e => !recordsWorkerIds.includes(e.workerId)).map(e => e.id) : [];
-
-  if (toDelete.length > 0) {
-    await supabase.from('attendance').delete().in('id', toDelete);
-  }
-
-  const payload = records.map(r => {
-    const existingRec = existing ? existing.find(e => e.workerId === r.workerId) : null;
-    return {
-      id: existingRec ? existingRec.id : r.id,
-      projectId: projectId,
-      workerId: r.workerId,
-      date: date,
-      regularHours: r.regularHours,
-      overtimeHours: r.overtimeHours,
-      advance: r.advance,
-      paid: r.isPaid || false
-    };
-  });
+  const payload = records.map(r => ({
+    id: r.id,
+    projectId: projectId,
+    workerId: r.workerId,
+    date: date,
+    regularHours: r.regularHours,
+    overtimeHours: r.overtimeHours,
+    advance: r.advance,
+    paid: r.isPaid || false
+  }));
 
   if (payload.length > 0) {
-    const { error } = await supabase.from('attendance').upsert(payload, { onConflict: 'id' });
-    if (error) throw new Error(error.message);
+    await executeMutation('attendance', 'UPSERT', payload, null);
   }
 };
 

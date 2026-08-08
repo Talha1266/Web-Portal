@@ -3128,6 +3128,18 @@ const [profileName, setProfileName] = useState('');
             <div className="glass-card animate-fade-in" style={{ padding: '2.5rem', width: '100%', maxWidth: '450px', maxHeight: '90vh', overflowY: 'auto', position: 'relative' }}>
               <button onClick={() => { setIsEditMaterialModalOpen(false); setEditMaterialObj(null); }} style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}><X size={24} /></button>
               <h2 className="heading-2" style={{ marginBottom: '1.5rem' }}>Modify Material Order</h2>
+              {editMaterialObj && (
+                <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', padding: '1rem', background: 'var(--glass-darker)', borderRadius: 'var(--radius-md)' }}>
+                  <div style={{ flex: 1 }}>
+                    <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Arrival Status</p>
+                    <p style={{ margin: 0, fontWeight: 500, color: editMaterialObj.isArrived ? 'var(--success)' : 'var(--warning)' }}>{editMaterialObj.isArrived ? `Delivered on ${editMaterialObj.arrivalDate?.split('T')[0] || 'N/A'}` : 'Pending Delivery'}</p>
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Payment Status</p>
+                    <p style={{ margin: 0, fontWeight: 500, color: editMaterialObj.isPaid ? 'var(--success)' : 'var(--warning)' }}>{editMaterialObj.isPaid ? `Paid on ${editMaterialObj.paidDate?.split('T')[0] || 'N/A'}` : 'Unpaid'}</p>
+                  </div>
+                </div>
+              )}
               <form onSubmit={handleEditMaterialSubmit}>
                 <div className="input-group">
                   <label className="input-label">Order Date</label>

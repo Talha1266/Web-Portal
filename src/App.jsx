@@ -45,7 +45,7 @@ const ProtectedRoute = ({ children }) => {
   return children;
 };
 
-import { DashboardProvider } from './context/DashboardContext';
+
 
 function App() {
   return (
@@ -56,13 +56,7 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
-          <Route path="/dashboard" element={
-            <ProtectedRoute>
-              <DashboardProvider>
-                <UserDashboard />
-              </DashboardProvider>
-            </ProtectedRoute>
-          } />
+          <Route path="/dashboard" element={<ProtectedRoute><UserDashboard /></ProtectedRoute>} />
         </Routes>
       </AuthListener>
     </BrowserRouter>

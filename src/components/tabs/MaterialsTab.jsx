@@ -9,7 +9,7 @@ export default function MaterialsTab({
   setArrivalMaterialObj, setArrivalQty, setIsArrivalModalOpen, 
   handleToggleMaterial, setPaymentMaterialObj, setPaymentDate, 
   setIsPaymentModalOpen, setEditMaterialObj, setIsEditMaterialModalOpen, 
-  handleDeleteMaterial
+  handleDeleteMaterial, todayStrGlobal, setArrivalReceipt, setIsImageViewerOpen, setArrivalDate, setViewImageUrl, openEditMaterialModal
 }) {
   const projCategories = materialCategories.filter(c => c.projectId === activeProjectId);
               const projMaterials = allMaterials.filter(m => m.projectId === activeProjectId && (activeMaterialCategory === 'All' || m.category === activeMaterialCategory));

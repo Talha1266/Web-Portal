@@ -3,7 +3,7 @@ import { CheckSquare, Plus, CheckCircle, Clock, Trash2, Check } from 'lucide-rea
 
 export default function TasksTab({
   allTasks, activeProjectId, setIsTaskModalOpen, triggerSecurityChallenge,
-  handleDeleteTask, handleToggleTaskStatus
+  handleDeleteTask, handleToggleTaskStatus, draggedTaskId, handleDragOver, allUsers, handleDrop, handleDragStart
 }) {
   const projTasks = allTasks.filter(t => t.projectId === activeProjectId);
               const columns = [

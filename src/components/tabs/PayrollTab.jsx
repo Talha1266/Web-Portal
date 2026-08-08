@@ -5,7 +5,7 @@ export default function PayrollTab({
   payrollStartDate, setPayrollStartDate, payrollEndDate, setPayrollEndDate,
   allWorkers, activeProjectId, workerTotals, setSettleWorkerId, 
   setIsSettleModalOpen, handleToggleAdvancePaid, setWorkerReceiptObj,
-  setIsWorkerReceiptModalOpen, handleNav
+  setIsWorkerReceiptModalOpen, handleNav, handleRevertPaid, handleOpenWorkerAdvanceModal, handleMarkAllPaid, setSelectedLabour, setIsLabourCardModalOpen, allAttendance, handleOpenSettleModal
 }) {
   const [payrollViewMode, setPayrollViewMode] = useState('outstanding');
   const [payrollStart, setPayrollStart] = useState(payrollStartDate);

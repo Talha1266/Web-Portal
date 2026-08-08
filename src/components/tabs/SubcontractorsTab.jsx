@@ -5,7 +5,7 @@ export default function SubcontractorsTab({
   allSubcontractors, activeProjectId, activeSubId, setActiveSubId,
   setIsSubcontractorModalOpen, handleDeleteSubcontractor, canModifyEntry,
   triggerSecurityChallenge, allSubcontractorLedger, handleSaveFinalValue,
-  setIsSubLedgerModalOpen, setIsSubLedgerReceiptModalOpen, setSubLedgerReceiptObj
+  setIsSubLedgerModalOpen, setIsSubLedgerReceiptModalOpen, setSubLedgerReceiptObj, handleUpdateSubValue, setSubPayAmount, setSubPayMode, setIsSubPayModalOpen, setSubPayDate, setActiveSubPayId, handleDeleteSubPay, handleDeleteSub, setSubPayDesc, setIsSubModalOpen, allSubPayments
 }) {
   return (
     <div className="glass-card animate-fade-in" style={{ padding: '2.5rem', minHeight: '500px' }}>

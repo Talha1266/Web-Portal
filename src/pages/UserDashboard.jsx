@@ -2124,7 +2124,7 @@ const [profileName, setProfileName] = useState('');
                 allWorkers={allWorkers} handleToggleAttendance={handleToggleAttendance} 
                 triggerSecurityChallenge={triggerSecurityChallenge} handleDeleteAttendance={handleDeleteAttendance} 
                 setIsWorkerModalOpen={setIsWorkerModalOpen}
-              />
+               handleOpenEditWorker={handleOpenEditWorker} attendanceForm={attendanceForm} handleAttendanceChange={handleAttendanceChange} handleNav={handleNav} handleSaveAttendance={handleSaveAttendance} canModifyEntry={canModifyEntry} perms={perms} setAdminUnlockPast={setAdminUnlockPast}/>
             )}
 
             {projectTab === 'payroll' && (
@@ -2136,7 +2136,7 @@ const [profileName, setProfileName] = useState('');
                 setIsSettleModalOpen={setIsSettleModalOpen} handleToggleAdvancePaid={handleToggleAdvancePaid} 
                 setWorkerReceiptObj={setWorkerReceiptObj} setIsWorkerReceiptModalOpen={setIsWorkerReceiptModalOpen}
                 handleNav={handleNav}
-              />
+               handleRevertPaid={handleRevertPaid} handleOpenWorkerAdvanceModal={handleOpenWorkerAdvanceModal} handleMarkAllPaid={handleMarkAllPaid} setSelectedLabour={setSelectedLabour} setIsLabourCardModalOpen={setIsLabourCardModalOpen} allAttendance={allAttendance} handleOpenSettleModal={handleOpenSettleModal}/>
             )}
 
             {projectTab === 'subcontractors' && (
@@ -2149,7 +2149,7 @@ const [profileName, setProfileName] = useState('');
                 handleSaveFinalValue={handleSaveFinalValue} setIsSubLedgerModalOpen={setIsSubLedgerModalOpen}
                 setIsSubLedgerReceiptModalOpen={setIsSubLedgerReceiptModalOpen} 
                 setSubLedgerReceiptObj={setSubLedgerReceiptObj}
-              />
+               handleUpdateSubValue={handleUpdateSubValue} setSubPayAmount={setSubPayAmount} setSubPayMode={setSubPayMode} setIsSubPayModalOpen={setIsSubPayModalOpen} setSubPayDate={setSubPayDate} setActiveSubPayId={setActiveSubPayId} handleDeleteSubPay={handleDeleteSubPay} handleDeleteSub={handleDeleteSub} setSubPayDesc={setSubPayDesc} setIsSubModalOpen={setIsSubModalOpen} allSubPayments={allSubPayments}/>
             )}
 
             {projectTab === 'materials' && (
@@ -2166,7 +2166,7 @@ const [profileName, setProfileName] = useState('');
                 setPaymentDate={setPaymentDate} setIsPaymentModalOpen={setIsPaymentModalOpen} 
                 setEditMaterialObj={setEditMaterialObj} setIsEditMaterialModalOpen={setIsEditMaterialModalOpen} 
                 handleDeleteMaterial={handleDeleteMaterial}
-              />
+               todayStrGlobal={todayStrGlobal} setArrivalReceipt={setArrivalReceipt} setIsImageViewerOpen={setIsImageViewerOpen} setArrivalDate={setArrivalDate} setViewImageUrl={setViewImageUrl} openEditMaterialModal={openEditMaterialModal}/>
             )}
 
             {projectTab === 'site_expenses' && (
@@ -2178,7 +2178,7 @@ const [profileName, setProfileName] = useState('');
                 canModifyEntry={canModifyEntry} handleToggleExpenseStatus={handleToggleExpenseStatus}
                 handleEditExpense={handleEditExpense} setExpenseReceiptObj={setExpenseReceiptObj}
                 setIsExpenseReceiptModalOpen={setIsExpenseReceiptModalOpen}
-              />
+               allSiteAdvances={allSiteAdvances} handleDeleteAdvance={handleDeleteAdvance} allSiteExpenses={allSiteExpenses} setIsImageViewerOpen={setIsImageViewerOpen} setViewImageUrl={setViewImageUrl} setIsAdvanceModalOpen={setIsAdvanceModalOpen}/>
             )}
 
             {projectTab === 'documents' && (
@@ -2248,7 +2248,7 @@ const [profileName, setProfileName] = useState('');
                 allTasks={allTasks} activeProjectId={activeProjectId} 
                 setIsTaskModalOpen={setIsTaskModalOpen} triggerSecurityChallenge={triggerSecurityChallenge}
                 handleDeleteTask={handleDeleteTask} handleToggleTaskStatus={handleToggleTaskStatus}
-              />
+               draggedTaskId={draggedTaskId} handleDragOver={handleDragOver} allUsers={allUsers} handleDrop={handleDrop} handleDragStart={handleDragStart}/>
             )}
 
             {projectTab === 'settings' && (

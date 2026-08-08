@@ -5,7 +5,7 @@ export default function ExpensesTab({
   allExpenses, activeProjectId, expenseViewMode, setExpenseViewMode,
   setIsExpenseModalOpen, triggerSecurityChallenge, handleDeleteExpense,
   canModifyEntry, handleToggleExpenseStatus, handleEditExpense,
-  setExpenseReceiptObj, setIsExpenseReceiptModalOpen
+  setExpenseReceiptObj, setIsExpenseReceiptModalOpen, allSiteAdvances, handleDeleteAdvance, allSiteExpenses, setIsImageViewerOpen, setViewImageUrl, setIsAdvanceModalOpen
 }) {
   const projAdvances = allSiteAdvances.filter(a => a.projectId === activeProjectId);
               const projExpenses = allSiteExpenses.filter(e => e.projectId === activeProjectId);

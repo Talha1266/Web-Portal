@@ -4,7 +4,7 @@ import { ClipboardList, Users, Trash2, Edit2, ChevronLeft, ChevronRight } from '
 export default function AttendanceTab({
   attendanceDate, setAttendanceDate, allAttendance, activeProjectId, 
   allWorkers, handleToggleAttendance, triggerSecurityChallenge, 
-  handleDeleteAttendance, setIsWorkerModalOpen
+  handleDeleteAttendance, setIsWorkerModalOpen, handleOpenEditWorker, attendanceForm, handleAttendanceChange, handleNav, handleSaveAttendance, canModifyEntry, perms, setAdminUnlockPast
 }) {
   const canModify = canModifyEntry(attendanceDate);
 

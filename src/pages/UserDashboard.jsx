@@ -1077,11 +1077,20 @@ const [profileName, setProfileName] = useState('');
   };
 
   const handleDeletePayrollRecord = async (workerId) => {
-    triggerSecurityChallenge("WARNING: Permanently delete these attendance and payroll records?", "DELETE", async () => {
-      const isPaid = payrollViewMode === 'history';
-      await deleteAttendanceRecords(workerId, activeProjectId, payrollStart, payrollEnd, isPaid);
-      await loadData();
-    });
+    const canModify = canModifyEntry(payrollStart) || currentUser?.permissions?.root;
+    if (canModify) {
+      triggerSecurityChallenge("WARNING: Permanently delete these attendance and payroll records?", "DELETE", async () => {
+        const isPaid = payrollViewMode === 'history';
+        await deleteAttendanceRecords(workerId, activeProjectId, payrollStart, payrollEnd, isPaid);
+        await loadData();
+      });
+    } else {
+      triggerSecurityChallenge("These records are older than 24 hours. Request root admin to delete?", 'MODIFY', async () => {
+        const worker = allWorkers.find(w => w.id === workerId);
+        await addChangeRequest(currentUser.name, 'Delete', 'Payroll/Attendance', workerId, `Requested deletion of payroll records for ${worker?.name || workerId} from ${payrollStart} to ${payrollEnd}`);
+        alert("Deletion request sent to root admin.");
+      });
+    }
   };
 
   const handleSendMessage = async (e) => {

@@ -1,0 +1,71 @@
+import React from 'react';
+import { Truck, Plus, CheckCircle, Clock, Trash2 } from 'lucide-react';
+
+export default function AssetsTab({
+  allAssets, activeProjectId, setIsAssetModalOpen, triggerSecurityChallenge,
+  handleDeleteAsset, canModifyEntry, handleToggleAssetStatus
+}) {
+  return (
+    <div className="glass-card animate-fade-in" style={{ padding: '2.5rem', minHeight: '500px' }}>
+                <div className="flex-between" style={{ marginBottom: '2.5rem', flexWrap: 'wrap', gap: '1.5rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap' }}>
+                    <h3 className="heading-3" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Truck size={20} className="text-gradient"/> Mobilized Assets</h3>
+                  </div>
+                  <button className="btn btn-primary" onClick={() => setIsAssetModalOpen(true)}>+ Add Asset</button>
+                </div>
+                {allAssets.filter(a => a.projectId === activeProjectId).length === 0 ? (
+                  <div style={{ textAlign: 'center', padding: '5rem', color: 'var(--text-muted)', border: '2px dashed var(--border-strong)', borderRadius: 'var(--radius-md)' }}>
+                    <Truck size={48} style={{ marginBottom: '1rem', opacity: 0.3 }} />
+                    <p>No company assets currently mobilized to this project.</p>
+                  </div>
+                ) : (
+                  <div style={{ overflowX: 'auto' }}>
+                    <div className="table-wrapper">
+<table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '800px' }}>
+                      <thead>
+                        <tr style={{ borderBottom: '1px solid var(--border-strong)', color: 'var(--text-muted)' }}>
+                          <th style={{ padding: '1rem 0.5rem', fontWeight: 500 }}>Asset Name</th>
+                          <th style={{ padding: '1rem 0.5rem', fontWeight: 500 }}>Type / Category</th>
+                          <th style={{ padding: '1rem 0.5rem', fontWeight: 500, textAlign: 'center' }}>Qty</th>
+                          <th style={{ padding: '1rem 0.5rem', fontWeight: 500 }}>Date Mobilized</th>
+                          <th style={{ padding: '1rem 0.5rem', fontWeight: 500 }}>Status</th>
+                          <th style={{ padding: '1rem 0.5rem', fontWeight: 500 }}>Notes</th>
+                          <th style={{ padding: '1rem 0.5rem', fontWeight: 500, textAlign: 'center' }}>Action</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {allAssets.filter(a => a.projectId === activeProjectId).map(asset => (
+                          <tr key={asset.id} style={{ borderBottom: '1px solid var(--border-subtle)', opacity: asset.status === 'Returned' ? 0.6 : 1 }}>
+                            <td style={{ padding: '1rem 0.5rem', fontWeight: 500 }}>{asset.name}</td>
+                            <td style={{ padding: '1rem 0.5rem', color: 'var(--text-secondary)' }}>{asset.type}</td>
+                            <td style={{ padding: '1rem 0.5rem', textAlign: 'center', fontWeight: 500 }}>{asset.quantity || 1}</td>
+                            <td style={{ padding: '1rem 0.5rem', color: 'var(--text-secondary)' }}>{asset.dateMobilized}</td>
+                            <td style={{ padding: '1rem 0.5rem' }}>
+                              <span style={{ fontSize: '0.75rem', padding: '0.2rem 0.5rem', borderRadius: '4px', background: asset.status === 'Mobilized' ? 'var(--accent-light)' : 'var(--bg-tertiary)', color: asset.status === 'Mobilized' ? 'var(--accent-primary)' : 'var(--text-muted)' }}>
+                                {asset.status} {asset.status === 'Returned' && `(${asset.dateReturned})`}
+                              </span>
+                            </td>
+                            <td style={{ padding: '1rem 0.5rem', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>{asset.notes}</td>
+                            <td style={{ padding: '1rem 0.5rem', textAlign: 'center', display: 'flex', justifyContent: 'center', gap: '0.5rem' }}>
+                              <button className="btn btn-secondary" onClick={() => openEditAssetModal(asset)} style={{ padding: '0.4rem 0.75rem', fontSize: '0.75rem', background: 'transparent', border: '1px solid var(--text-secondary)' }} title="Modify Asset">
+                                <Edit2 size={14} />
+                              </button>
+                              {asset.status === 'Mobilized' && (
+                                <button className="btn btn-primary" onClick={() => handleReturnAsset(asset.id)} style={{ padding: '0.4rem 0.75rem', fontSize: '0.75rem' }} title="Mark Returned">
+                                  Return
+                                </button>
+                              )}
+                              <button className="btn btn-danger" onClick={() => handleDeleteAsset(asset.id)} style={{ padding: '0.4rem 0.75rem', fontSize: '0.75rem', background: 'transparent', border: '1px solid var(--danger)', color: 'var(--danger)' }} title="Delete Record">
+                                <Trash2 size={14} />
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+</div>
+                  </div>
+                )}
+              </div>
+  );
+}

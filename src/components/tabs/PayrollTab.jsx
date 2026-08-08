@@ -1,0 +1,164 @@
+import React, { useState } from 'react';
+import { DollarSign, FileText, CheckCircle, ChevronLeft, ChevronRight, Calculator } from 'lucide-react';
+
+export default function PayrollTab({
+  payrollStartDate, setPayrollStartDate, payrollEndDate, setPayrollEndDate,
+  allWorkers, activeProjectId, workerTotals, setSettleWorkerId, 
+  setIsSettleModalOpen, handleToggleAdvancePaid, setWorkerReceiptObj,
+  setIsWorkerReceiptModalOpen, handleNav
+}) {
+  const [payrollViewMode, setPayrollViewMode] = useState('outstanding');
+  const [payrollStart, setPayrollStart] = useState(payrollStartDate);
+  const [payrollEnd, setPayrollEnd] = useState(payrollEndDate);
+
+  return (
+    <div className="glass-card animate-fade-in" style={{ padding: '2.5rem', minHeight: '500px' }}>
+                <div className="flex-between" style={{ marginBottom: '2.5rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+                    <h3 className="heading-3" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><DollarSign size={20} className="text-gradient"/> Project Payroll</h3>
+                    
+                    <div style={{ display: 'flex', background: 'var(--glass-hover)', padding: '0.25rem', borderRadius: 'var(--radius-md)' }}>
+                      <button className={`btn ${payrollViewMode === 'outstanding' ? 'btn-primary' : ''}`} onClick={() => handleNav(() => setPayrollViewMode('outstanding'))} style={{ padding: '0.4rem 1rem', background: payrollViewMode === 'outstanding' ? 'var(--accent-primary)' : 'transparent', color: payrollViewMode === 'outstanding' ? '#fff' : 'var(--text-secondary)' }}>Outstanding</button>
+                      <button className={`btn ${payrollViewMode === 'history' ? 'btn-primary' : ''}`} onClick={() => handleNav(() => setPayrollViewMode('history'))} style={{ padding: '0.4rem 1rem', background: payrollViewMode === 'history' ? 'var(--accent-primary)' : 'transparent', color: payrollViewMode === 'history' ? '#fff' : 'var(--text-secondary)' }}>Paid History</button>
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flex: 1, minWidth: '200px' }}>
+                      <label style={{ color: 'var(--text-secondary)' }}>From:</label>
+                      <input type="date" className="input-field" value={payrollStart} onChange={e => handleNav(() => setPayrollStart(e.target.value))} style={{ padding: '0.5rem', colorScheme: 'dark' }} />
+                    </div>
+                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flex: 1, minWidth: '200px' }}>
+                      <label style={{ color: 'var(--text-secondary)' }}>To:</label>
+                      <input type="date" className="input-field" value={payrollEnd} onChange={e => handleNav(() => setPayrollEnd(e.target.value))} style={{ padding: '0.5rem', colorScheme: 'dark' }} />
+                    </div>
+                  </div>
+                </div>
+
+                {(() => {
+                   const relevantLogs = allAttendance.filter(a => 
+                     a.projectId === activeProjectId && 
+                     a.date >= payrollStart && 
+                     a.date <= payrollEnd &&
+                     (payrollViewMode === 'outstanding' ? !a.paid : a.paid)
+                   );
+                   if (relevantLogs.length === 0) {
+                     return (
+                       <div style={{ textAlign: 'center', padding: '5rem', color: 'var(--text-muted)', border: '2px dashed var(--border-strong)', borderRadius: 'var(--radius-md)' }}>
+                         <DollarSign size={48} style={{ marginBottom: '1rem', opacity: 0.3 }} />
+                         <p>No attendance records found for this timeframe.</p>
+                       </div>
+                     )
+                   }
+                   
+                   const payrollData = {};
+                   relevantLogs.forEach(log => {
+                     if (!payrollData[log.workerId]) payrollData[log.workerId] = { regHours: 0, otHours: 0, advance: 0, dates: new Set(), grossPay: 0 };
+                     
+                     const worker = allWorkers.find(w => w.id === log.workerId);
+                     const logWage = log.dailyWage !== undefined ? log.dailyWage : (worker?.dailyWage || 0);
+                     const logHourlyRate = logWage / 8;
+                     const logGross = ((log.regularHours || 0) + (log.overtimeHours || 0)) * logHourlyRate;
+                     
+                     payrollData[log.workerId].grossPay += logGross;
+                     payrollData[log.workerId].regHours += log.regularHours || 0;
+                     payrollData[log.workerId].otHours += log.overtimeHours || 0;
+                     payrollData[log.workerId].advance += log.advance || 0;
+                     payrollData[log.workerId].dates.add(log.date);
+                   });
+                   
+                   let grandTotal = 0;
+
+                   return (
+                     <div style={{ overflowX: 'auto' }}>
+                       <div className="table-wrapper">
+<table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '800px' }}>
+                         <thead>
+                           <tr style={{ borderBottom: '1px solid var(--border-strong)', color: 'var(--text-muted)' }}>
+                             <th style={{ padding: '1rem 0.5rem', fontWeight: 500 }}>Name</th>
+                             <th style={{ padding: '1rem 0.5rem', fontWeight: 500 }}>Dates Covered</th>
+                             <th style={{ padding: '1rem 0.5rem', fontWeight: 500 }}>Trade</th>
+                             <th style={{ padding: '1rem 0.5rem', fontWeight: 500, textAlign: 'center' }}>Total Hrs</th>
+                             <th style={{ padding: '1rem 0.5rem', fontWeight: 500, textAlign: 'right' }}>Gross Pay</th>
+                             <th style={{ padding: '1rem 0.5rem', fontWeight: 500, textAlign: 'right' }}>Advances</th>
+                             <th style={{ padding: '1rem 0.5rem', fontWeight: 500, textAlign: 'right' }}>{payrollViewMode === 'outstanding' ? 'Net Owed' : 'Net Paid'}</th>
+                             <th style={{ padding: '1rem 0.5rem', fontWeight: 500, textAlign: 'center', width: '100px' }}>Action</th>
+                           </tr>
+                         </thead>
+                         <tbody>
+                           {Object.keys(payrollData).map(wId => {
+                             const worker = allWorkers.find(w => w.id === wId);
+                             if (!worker) return null;
+                             const data = payrollData[wId];
+                             const totalHours = data.regHours + data.otHours;
+                             const gross = data.grossPay;
+                             const owed = gross - data.advance;
+                             grandTotal += owed;
+                             
+                             const sortedDates = Array.from(data.dates).sort();
+                             const dateStr = sortedDates.length > 2 ? `${sortedDates[0]} to ${sortedDates[sortedDates.length - 1]}` : sortedDates.join(', ');
+                             
+                             return (
+                               <tr key={wId} style={{ borderBottom: '1px solid var(--border-subtle)', opacity: worker.isDeleted ? 0.6 : 1 }}>
+                                 <td style={{ padding: '1rem 0.5rem', fontWeight: 500 }}>
+                                   <button onClick={() => { setSelectedLabour(worker); setIsLabourCardModalOpen(true); }} style={{ background: 'none', border: 'none', color: 'var(--accent-primary)', cursor: 'pointer', textDecoration: 'underline', padding: 0, font: 'inherit', fontWeight: 500, textAlign: 'left' }}>
+                                     {worker.name}
+                                   </button>
+                                   {worker.isDeleted && <span style={{ fontSize: '0.75rem', color: 'var(--danger)', marginLeft: '0.5rem', fontWeight: 'normal' }}>(Removed)</span>}
+                                 </td>
+                                 <td style={{ padding: '1rem 0.5rem', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>{dateStr}</td>
+                                 <td style={{ padding: '1rem 0.5rem', color: 'var(--text-secondary)' }}>{worker.trade}</td>
+                                 <td style={{ padding: '1rem 0.5rem', textAlign: 'center' }}>
+                                   <span style={{ fontWeight: 500 }}>{totalHours}</span> <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>({data.regHours}R + {data.otHours}OT)</span>
+                                 </td>
+                                 <td style={{ padding: '1rem 0.5rem', textAlign: 'right', color: 'var(--text-secondary)' }}>
+                                   Rs {gross.toFixed(2)}
+                                 </td>
+                                 <td style={{ padding: '1rem 0.5rem', textAlign: 'right', color: 'var(--danger)' }}>
+                                   Rs {data.advance.toFixed(2)}
+                                 </td>
+                                 <td style={{ padding: '1rem 0.5rem', textAlign: 'right', fontWeight: 'bold', color: owed >= 0 ? 'var(--text-primary)' : 'var(--danger)' }}>
+                                   Rs {owed.toFixed(2)}
+                                 </td>
+                                 {payrollViewMode === 'outstanding' ? (
+                                   <td style={{ padding: '1rem 0.5rem', textAlign: 'center', display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>
+                                     <button className={`btn ${owed > 0 ? 'btn-primary' : 'btn-secondary'}`} onClick={() => handleOpenSettleModal(wId, owed)} style={{ padding: '0.4rem 0.75rem', fontSize: '0.75rem' }} title={owed > 0 ? "Mark as Paid" : "Clear Account"}>
+                                       <CheckCircle size={14} /> {owed > 0 ? 'Settle' : 'Clear'}
+                                     </button>
+                                     <button className="btn btn-secondary" onClick={() => handleOpenWorkerAdvanceModal(wId)} style={{ padding: '0.4rem 0.75rem', fontSize: '0.75rem', background: 'transparent', border: '1px solid var(--accent-primary)', color: 'var(--accent-primary)' }} title="Issue Cash Advance">
+                                       <CreditCard size={14} /> Advance
+                                     </button>
+                                   </td>
+                                 ) : (
+                                   <td style={{ padding: '1rem 0.5rem', textAlign: 'center', display: 'flex', gap: '0.5rem', justifyContent: 'center', alignItems: 'center' }}>
+                                     <button className="btn btn-danger" onClick={() => handleRevertPaid(wId, sortedDates)} style={{ padding: '0.4rem 0.75rem', fontSize: '0.75rem', background: 'transparent', border: '1px solid var(--danger)', color: 'var(--danger)' }} title="Revert to Unpaid">
+                                       <Edit2 size={14} /> Revert
+                                     </button>
+                                   </td>
+                                 )}
+                               </tr>
+                             )
+                           })}
+                         </tbody>
+                         <tfoot>
+                           <tr style={{ borderTop: '2px solid var(--border-strong)', background: 'var(--glass-hover)' }}>
+                             <td colSpan="6" style={{ padding: '1.5rem 1rem', textAlign: 'right', color: 'var(--text-secondary)' }}>Grand Total ({payrollViewMode === 'outstanding' ? 'Owed' : 'Paid'}):</td>
+                             <td style={{ padding: '1.5rem 0.5rem', textAlign: 'right', fontWeight: 'bold', fontSize: '1.25rem', color: 'var(--accent-primary)' }}>Rs {grandTotal.toFixed(2)}</td>
+                             {payrollViewMode === 'outstanding' && (
+                               <td style={{ padding: '1.5rem 0.5rem', textAlign: 'center' }}>
+                                 {grandTotal > 0 && (
+                                   <button className="btn btn-primary" onClick={handleMarkAllPaid} style={{ padding: '0.5rem 1rem', fontSize: '0.875rem', background: 'var(--success)', borderColor: 'var(--success)' }}>
+                                     Settle All
+                                   </button>
+                                 )}
+                               </td>
+                             )}
+                           </tr>
+                         </tfoot>
+                       </table>
+</div>
+                     </div>
+                   );
+                })()}
+              </div>
+  );
+}

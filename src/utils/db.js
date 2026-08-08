@@ -395,25 +395,30 @@ export const updateChangeRequestStatus = async (id, status) => {
 export const resetDB = async () => {};
 
 export const loginUser = async (email, password) => {
+  // If explicitly offline, skip Supabase Auth and jump to local fallback
+  if (!navigator.onLine) {
+    return _localOfflineLogin(email, password);
+  }
+
   // Try Supabase Auth first
   const { data: authData, error: authError } = await supabase.auth.signInWithPassword({ email, password });
   
   if (authError) {
-    // If it's a specific auth error (like Invalid Login Credentials or Email not confirmed)
+    // If it's a network error, try offline login
+    if (authError.message.includes('fetch') || authError.message.includes('Network')) {
+      return _localOfflineLogin(email, password);
+    }
     throw new Error(authError.message);
   }
 
   if (authData?.user) {
-    // Fetch their profile from our custom users table using email to support migrated accounts
     let { data: profile } = await supabase.from('users').select('*').eq('email', authData.user.email).single();
     
-    // Auto-heal the ID mismatch for legacy test users
     if (profile && profile.id !== authData.user.id) {
        await supabase.from('users').update({ id: authData.user.id }).eq('email', authData.user.email);
        profile.id = authData.user.id;
     }
 
-    // Auto-create profile if missing completely
     if (!profile) {
       const isRoot = authData.user.email === 'admin@admin.com';
       profile = {
@@ -428,10 +433,15 @@ export const loginUser = async (email, password) => {
       if (error) console.error("Auto-create profile error:", error);
     }
     
+    // Save credentials for offline fallback
+    _cacheCredentialsLocally(email, password, profile);
     return profile;
   }
 
-  // Fallback to old behavior for local caching if Auth fails
+  throw new Error("Invalid email or password.");
+};
+
+const _localOfflineLogin = (email, password) => {
   try {
     const local = localStorage.getItem('const_manage_users');
     if (local) {
@@ -440,8 +450,19 @@ export const loginUser = async (email, password) => {
       if (matched) return matched;
     }
   } catch(e) {}
+  throw new Error("Network error. Please connect to the internet for first-time login.");
+};
 
-  throw new Error("Invalid email or password.");
+const _cacheCredentialsLocally = (email, password, profile) => {
+  try {
+    const local = localStorage.getItem('const_manage_users');
+    let users = local ? JSON.parse(local) : [];
+    const idx = users.findIndex(u => u.email === email);
+    const userToCache = { ...profile, password };
+    if (idx !== -1) users[idx] = userToCache;
+    else users.push(userToCache);
+    localStorage.setItem('const_manage_users', JSON.stringify(users));
+  } catch(e) { console.error("Failed to cache offline credentials", e); }
 };
 
 export const registerUser = async (email, password, name) => {

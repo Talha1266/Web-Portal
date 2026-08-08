@@ -2440,9 +2440,14 @@ const [profileName, setProfileName] = useState('');
                           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
                             <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px' }}>Final Measured Value</label>
                             <input 
+                              key={`final-val-${sub.id}`}
                               type="number" className="input-field" placeholder="Enter Final Value" 
-                              value={sub.finalValue !== null ? sub.finalValue : ''} 
-                              onChange={(e) => handleUpdateSubValue(sub.id, e.target.value)}
+                              defaultValue={sub.finalValue !== null ? sub.finalValue : ''} 
+                              onBlur={(e) => {
+                                const newVal = e.target.value === '' ? null : Number(e.target.value);
+                                if (newVal !== sub.finalValue) handleUpdateSubValue(sub.id, e.target.value);
+                              }}
+                              onKeyDown={(e) => { if (e.key === 'Enter') e.target.blur(); }}
                               style={{ width: '150px', textAlign: 'right', fontWeight: 'bold', fontSize: '1.1rem', color: sub.finalValue !== null ? 'var(--accent-primary)' : 'var(--text-primary)', border: '1px solid var(--glass-darker)' }} 
                             />
                           </div>

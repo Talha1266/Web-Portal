@@ -134,6 +134,10 @@ const UserDashboard = () => {
   const [arrivalDate, setArrivalDate] = useState(new Date().toISOString().split('T')[0]);
   const [arrivalReceipt, setArrivalReceipt] = useState(null);
 
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [paymentMaterialObj, setPaymentMaterialObj] = useState(null);
+  const [paymentDate, setPaymentDate] = useState(new Date().toISOString().split('T')[0]);
+
   // Modals & State - Labour Settle with Advance
   const [isSettleModalOpen, setIsSettleModalOpen] = useState(false);
   const [settleWorkerId, setSettleWorkerId] = useState(null);
@@ -1250,6 +1254,20 @@ const [profileName, setProfileName] = useState('');
       notifyAdmins(`${currentUser?.name || "A user"} marked ${receivedQty} ${arrivalMaterialObj.itemName} as ARRIVED`, "Material Arrived");
       alert("Material arrival confirmed.");
     } catch (err) {
+      alert(`Database Error: ${err.message}`);
+    }
+  };
+
+  const handleConfirmPayment = async (e) => {
+    e.preventDefault();
+    if (!paymentMaterialObj) return;
+    try {
+      await updateMaterial(paymentMaterialObj.id, { isPaid: true, paidDate: new Date(paymentDate).toISOString() });
+      setIsPaymentModalOpen(false);
+      setPaymentMaterialObj(null);
+      await loadData();
+      notifyAdmins(`${currentUser?.name || "A user"} marked ${paymentMaterialObj.quantity} ${paymentMaterialObj.itemName} as PAID`, "Material Paid");
+    } catch(err) {
       alert(`Database Error: ${err.message}`);
     }
   };
@@ -2600,7 +2618,13 @@ const [profileName, setProfileName] = useState('');
                             
                             return (
                               <tr key={m.id} style={{ borderBottom: '1px solid var(--border-subtle)', background: m.isUndelivered ? 'rgba(239, 68, 68, 0.05)' : m.isArrived ? 'var(--glass-overlay)' : 'transparent' }}>
-                                <td style={{ padding: '1rem 0.5rem', color: 'var(--text-secondary)' }}>{m.orderDate}</td>
+                                <td style={{ padding: '1rem 0.5rem', color: 'var(--text-secondary)' }}>
+                                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', fontSize: '0.8rem' }}>
+                                    <span><strong>Order:</strong> {m.orderDate}</span>
+                                    {m.isArrived && m.arrivalDate && <span><strong>Arrived:</strong> {m.arrivalDate.split('T')[0]}</span>}
+                                    {m.isPaid && m.paidDate && <span><strong>Paid:</strong> {m.paidDate.split('T')[0]}</span>}
+                                  </div>
+                                </td>
                                 <td style={{ padding: '1rem 0.5rem', fontWeight: 500, color: m.isUndelivered ? 'var(--text-muted)' : 'inherit', textDecoration: m.isUndelivered ? 'line-through' : 'none' }}>
                                   {m.itemName} {m.isUndelivered && <span style={{ fontSize: '0.65rem', padding: '0.15rem 0.4rem', marginLeft: '0.5rem', background: 'rgba(239, 68, 68, 0.1)', color: 'var(--danger)', borderRadius: 'var(--radius-sm)', textDecoration: 'none', display: 'inline-block', verticalAlign: 'middle' }}>Undelivered</span>} <br/>
                                   <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textDecoration: 'none', display: 'inline-block' }}>
@@ -2637,7 +2661,17 @@ const [profileName, setProfileName] = useState('');
                                 }}>
                                   <input type="checkbox" checked={m.isArrived} readOnly style={{ width: '18px', height: '18px', accentColor: 'var(--accent-primary)', pointerEvents: 'none' }}/>
                                 </td>
-                                <td style={{ padding: '1rem 0.5rem', textAlign: 'center', cursor: 'pointer' }} onClick={() => { triggerSecurityChallenge(m.isPaid ? "Mark this material as unpaid?" : "Mark this material as paid?", 'MODIFY', () => handleToggleMaterial(m.id, 'isPaid', m.isPaid, m.createdAt)); }}>
+                                <td style={{ padding: '1rem 0.5rem', textAlign: 'center', cursor: 'pointer' }} onClick={() => {
+                                  if (!m.isPaid) {
+                                    triggerSecurityChallenge("Mark this material as paid?", 'MODIFY', () => {
+                                      setPaymentMaterialObj(m);
+                                      setPaymentDate(new Date().toISOString().split('T')[0]);
+                                      setIsPaymentModalOpen(true);
+                                    });
+                                  } else {
+                                    triggerSecurityChallenge("Mark this material as unpaid?", 'MODIFY', () => handleToggleMaterial(m.id, 'isPaid', m.isPaid, m.createdAt));
+                                  }
+                                }}>
                                   <input type="checkbox" checked={m.isPaid} readOnly style={{ width: '18px', height: '18px', accentColor: 'var(--success)', pointerEvents: 'none' }}/>
                                 </td>
                                 <td style={{ padding: '1rem 0.5rem', textAlign: 'center' }}>
@@ -3546,7 +3580,13 @@ const [profileName, setProfileName] = useState('');
                         ) : (
                           vendorOrders.map(order => (
                             <tr key={order.id} style={{ borderBottom: '1px solid var(--border-subtle)', opacity: order.isUndelivered ? 0.5 : 1 }}>
-                              <td style={{ padding: '0.75rem 0.5rem', color: 'var(--text-primary)' }}>{order.orderDate}</td>
+                              <td style={{ padding: '0.75rem 0.5rem', color: 'var(--text-primary)' }}>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', fontSize: '0.8rem' }}>
+                                  <span><strong>Order:</strong> {order.orderDate}</span>
+                                  {order.isArrived && order.arrivalDate && <span><strong>Arrived:</strong> {order.arrivalDate.split('T')[0]}</span>}
+                                  {order.isPaid && order.paidDate && <span><strong>Paid:</strong> {order.paidDate.split('T')[0]}</span>}
+                                </div>
+                              </td>
                               <td style={{ padding: '0.75rem 0.5rem', color: 'var(--text-secondary)' }}>{order.category}</td>
                               <td style={{ padding: '0.75rem 0.5rem', fontWeight: 500, textDecoration: order.isUndelivered ? 'line-through' : 'none' }}>{order.itemName}</td>
                               <td style={{ padding: '0.75rem 0.5rem', textAlign: 'center' }}>{order.quantity}</td>
@@ -3570,7 +3610,19 @@ const [profileName, setProfileName] = useState('');
                                   )}
                                 </div>
                               </td>
-                              <td style={{ padding: '0.75rem 0.5rem', textAlign: 'center', cursor: !order.isUndelivered ? 'pointer' : 'default' }} onClick={() => { if (!order.isUndelivered) { triggerSecurityChallenge(order.isPaid ? "Mark this material as unpaid?" : "Mark this material as paid?", 'MODIFY', () => handleToggleMaterial(order.id, 'isPaid', order.isPaid, order.createdAt)); } }}>
+                              <td style={{ padding: '0.75rem 0.5rem', textAlign: 'center', cursor: !order.isUndelivered ? 'pointer' : 'default' }} onClick={() => { 
+                                if (!order.isUndelivered) { 
+                                  if (!order.isPaid) {
+                                    triggerSecurityChallenge("Mark this material as paid?", 'MODIFY', () => {
+                                      setPaymentMaterialObj(order);
+                                      setPaymentDate(new Date().toISOString().split('T')[0]);
+                                      setIsPaymentModalOpen(true);
+                                    });
+                                  } else {
+                                    triggerSecurityChallenge("Mark this material as unpaid?", 'MODIFY', () => handleToggleMaterial(order.id, 'isPaid', order.isPaid, order.createdAt)); 
+                                  }
+                                } 
+                              }}>
                                 {!order.isUndelivered && (
                                   <input type="checkbox" checked={order.isPaid} readOnly style={{ width: '18px', height: '18px', accentColor: 'var(--success)', pointerEvents: 'none' }} title={order.isPaid ? "Unmark as paid" : "Mark as paid"} />
                                 )}
@@ -3857,6 +3909,26 @@ const [profileName, setProfileName] = useState('');
                 <input type="text" className="input-field" required value={advDesc} onChange={e => setAdvDesc(e.target.value)} placeholder="e.g. Initial petty cash" />
               </div>
               <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '1rem' }}><DollarSign size={20}/> Give Advance</button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Material Payment Modal */}
+      {isPaymentModalOpen && paymentMaterialObj && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(15, 23, 42, 0.4)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}>
+          <div className="glass-card animate-fade-in" style={{ padding: '2.5rem', width: '100%', maxWidth: '400px', position: 'relative' }}>
+            <button onClick={() => { setIsPaymentModalOpen(false); setPaymentMaterialObj(null); }} style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}><X size={24} /></button>
+            <h2 className="heading-2" style={{ marginBottom: '1.5rem' }}>Confirm Material Payment</h2>
+            <p style={{ marginBottom: '1.5rem', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>Confirming payment for <strong>{paymentMaterialObj.itemName}</strong>.</p>
+            <form onSubmit={handleConfirmPayment}>
+              <div className="input-group">
+                <label className="input-label">Payment Date</label>
+                <input type="date" className="input-field" required value={paymentDate} onChange={e => setPaymentDate(e.target.value)} style={{ colorScheme: 'dark' }} />
+              </div>
+              <div style={{ display: 'flex', gap: '1rem', marginTop: '2rem' }}>
+                <button type="submit" className="btn btn-primary" style={{ flex: 1 }}>Confirm Payment</button>
+              </div>
             </form>
           </div>
         </div>

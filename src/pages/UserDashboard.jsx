@@ -3778,7 +3778,7 @@ const [profileName, setProfileName] = useState('');
                     if (!printContent) return;
                     const windowPrint = window.open('', '', 'left=0,top=0,width=800,height=900,toolbar=0,scrollbars=0,status=0');
                     const css = `
-                      body { font-family: sans-serif; padding: 2rem; color: #000; }
+                      body { font-family: 'Inter', system-ui, sans-serif; background: #fff; margin: 0; padding: 0; color: #000; }
                       table { width: 100%; border-collapse: collapse; margin-bottom: 2rem; font-size: 0.875rem; text-align: left; }
                       th, td { padding: 0.5rem; border-bottom: 1px solid #ccc; }
                       th { font-weight: bold; background: #f8f9fa; }
@@ -3787,12 +3787,114 @@ const [profileName, setProfileName] = useState('');
                       @media print {
                         button { display: none !important; }
                         input[type="checkbox"] { display: none !important; }
+                        body { padding: 0; margin: 0; background: #fff; }
+                        .letterhead-container { box-shadow: none !important; margin: 0 !important; padding-bottom: 80px !important; }
                       }
+                      .letterhead-container {
+                        position: relative;
+                        min-height: 297mm;
+                        width: 100%;
+                        max-width: 210mm;
+                        margin: 0 auto;
+                        background: white;
+                        box-sizing: border-box;
+                        padding: 40px 40px 100px 60px;
+                        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+                        font-family: 'Inter', system-ui, sans-serif;
+                        color: #000;
+                      }
+                      .letterhead-stripe {
+                        position: absolute;
+                        left: 0;
+                        top: 0;
+                        bottom: 0;
+                        width: 22px;
+                        background-color: #f5b041;
+                        z-index: 10;
+                      }
+                      .lh-header {
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: flex-end;
+                        border-bottom: 3px solid #f5b041;
+                        padding-bottom: 15px;
+                        margin-bottom: 30px;
+                      }
+                      .lh-logo-area {
+                        display: flex;
+                        align-items: center;
+                        gap: 15px;
+                      }
+                      .lh-logo-img {
+                        height: 65px;
+                        object-fit: contain;
+                      }
+                      .lh-title {
+                        color: #f5b041;
+                        font-size: 32px;
+                        font-weight: 900;
+                        margin: 0;
+                        letter-spacing: 1px;
+                        line-height: 1;
+                      }
+                      .lh-subtitle {
+                        color: #444;
+                        font-size: 16px;
+                        margin: 5px 0 0 0;
+                        font-weight: 700;
+                        letter-spacing: 0.5px;
+                      }
+                      .lh-meta {
+                        text-align: right;
+                      }
+                      .lh-footer {
+                        position: absolute;
+                        bottom: 0;
+                        left: 22px;
+                        right: 0;
+                        padding: 15px 40px;
+                        display: flex;
+                        justify-content: space-between;
+                        font-size: 13px;
+                        color: #222;
+                        border-top: 2px solid #eee;
+                        background: white;
+                      }
+                      .lh-footer strong { color: #f5b041; }
                     `;
+
+                    const headerHtml = \`
+                      <div class="letterhead-container">
+                        <div class="letterhead-stripe"></div>
+                        <div class="lh-header">
+                          <div class="lh-logo-area">
+                            <img src="/nmt-logo.jpg" alt="N.M.T Logo" class="lh-logo-img" onerror="this.style.display='none'" />
+                            <div>
+                              <h1 class="lh-title">N.M.T</h1>
+                              <h2 class="lh-subtitle">Engineers & Builders</h2>
+                            </div>
+                          </div>
+                          <div class="lh-meta">
+                            <div style="font-size: 18px; font-weight: 800; color: #0f172a; margin-bottom: 4px;">Vendor Bill</div>
+                            <div style="font-size: 14px; color: #64748b; margin-bottom: 4px;">Vendor: <strong>${vendorBillSelectedVendor}</strong></div>
+                            <div style="font-size: 12px; color: #64748b;">Date: ${new Date().toLocaleDateString('en-GB')}</div>
+                          </div>
+                        </div>
+                    \`;
+
+                    const footerHtml = \`
+                        <div class="lh-footer">
+                          <div><strong>Address:</strong> 53 Pir Muhammad Colony, University Road, Sargodha</div>
+                          <div><strong>Muhammad Naveed:</strong> 0300-9608416</div>
+                        </div>
+                      </div>
+                    \`;
+
                     windowPrint.document.write('<html><head><title>Vendor Bill - ' + vendorBillSelectedVendor + '</title>');
                     windowPrint.document.write('<style>' + css + '</style></head><body>');
-                    windowPrint.document.write('<h2 style="margin-bottom: 2rem; border-bottom: 2px solid #000; padding-bottom: 0.5rem;">Vendor Bill: ' + vendorBillSelectedVendor + '</h2>');
+                    windowPrint.document.write(headerHtml);
                     windowPrint.document.write(printContent.innerHTML);
+                    windowPrint.document.write(footerHtml);
                     windowPrint.document.write('</body></html>');
                     windowPrint.document.close();
                     windowPrint.focus();

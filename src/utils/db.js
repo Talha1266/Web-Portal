@@ -442,8 +442,8 @@ export const loginUser = async (email, password) => {
   const { data: authData, error: authError } = await supabase.auth.signInWithPassword({ email, password });
   
   if (authError) {
-    // If it's a network error, try offline login
-    if (authError.message.includes('fetch') || authError.message.includes('Network')) {
+    const msg = (authError.message || '').toLowerCase();
+    if (msg.includes('fetch') || msg.includes('network') || msg.includes('offline') || authError.name === 'AuthRetryableFetchError' || authError.status === 0) {
       return _localOfflineLogin(email, password);
     }
     throw new Error(authError.message);

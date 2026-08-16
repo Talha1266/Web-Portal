@@ -660,7 +660,8 @@ const [profileName, setProfileName] = useState('');
       const recordsToSave = [];
       Object.keys(attendanceForm).forEach(wId => {
         const data = attendanceForm[wId];
-        if (data.regularHours > 0 || data.overtimeHours > 0 || data.advance > 0) {
+        // Only skip if the worker has 0 hours/advance AND they don't already have an existing record in the DB for this date
+        if (data.regularHours > 0 || data.overtimeHours > 0 || data.advance > 0 || data.id) {
           const worker = allWorkers.find(w => w.id === wId);
           recordsToSave.push({
             id: data.id || (Date.now().toString() + Math.random()),

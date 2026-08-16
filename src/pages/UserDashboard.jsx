@@ -4525,7 +4525,7 @@ const [profileName, setProfileName] = useState('');
                   padding: 40px 40px 100px 60px;
                   box-shadow: 0 10px 25px rgba(0,0,0,0.1);
                   font-family: 'Inter', system-ui, sans-serif;
-                  color: #333;
+                  color: #000;
                 }
                 .letterhead-stripe {
                   position: absolute;
@@ -4562,10 +4562,10 @@ const [profileName, setProfileName] = useState('');
                   line-height: 1;
                 }
                 .lh-subtitle {
-                  color: #888;
+                  color: #444;
                   font-size: 16px;
                   margin: 5px 0 0 0;
-                  font-weight: 600;
+                  font-weight: 700;
                   letter-spacing: 0.5px;
                 }
                 .lh-meta {
@@ -4579,8 +4579,8 @@ const [profileName, setProfileName] = useState('');
                   padding: 15px 40px;
                   display: flex;
                   justify-content: space-between;
-                  font-size: 11px;
-                  color: #666;
+                  font-size: 13px;
+                  color: #222;
                   border-top: 2px solid #eee;
                   background: white;
                 }
@@ -4599,11 +4599,11 @@ const [profileName, setProfileName] = useState('');
                   background: #f8fafc;
                   text-align: center;
                 }
-                .summary-card h4 { margin: 0 0 8px 0; color: #64748b; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
-                .summary-card .value { font-size: 22px; font-weight: 800; margin: 0; }
-                .val-gross { color: #0f172a; }
-                .val-paid { color: #10b981; }
-                .val-pending { color: #ef4444; }
+                .summary-card h4 { margin: 0 0 8px 0; color: #333; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 700; }
+                .summary-card .value { font-size: 24px; font-weight: 900; margin: 0; }
+                .val-gross { color: #000; }
+                .val-paid { color: #065f46; }
+                .val-pending { color: #991b1b; }
                 
                 .report-section {
                   margin-bottom: 35px;
@@ -4617,37 +4617,39 @@ const [profileName, setProfileName] = useState('');
                   padding-bottom: 5px;
                   margin-bottom: 15px;
                 }
-                .section-header h3 { margin: 0; font-size: 16px; color: #0f172a; text-transform: uppercase; letter-spacing: 0.5px; }
-                .section-totals { font-size: 11px; color: #64748b; font-weight: 600; }
+                .section-header h3 { margin: 0; font-size: 18px; color: #000; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 800; }
+                .section-totals { font-size: 13px; color: #333; font-weight: 700; }
                 
                 .report-table {
                   width: 100%;
                   border-collapse: collapse;
-                  font-size: 11px;
+                  font-size: 12px;
                 }
                 .report-table th {
                   background-color: #f1f5f9;
-                  color: #334155;
-                  font-weight: 600;
+                  color: #000;
+                  font-weight: 800;
                   text-align: left;
                   padding: 8px 10px;
-                  border-bottom: 2px solid #e2e8f0;
+                  border-bottom: 2px solid #cbd5e1;
+                  font-size: 13px;
                 }
                 .report-table td {
                   padding: 8px 10px;
-                  border-bottom: 1px solid #f1f5f9;
-                  color: #475569;
+                  border-bottom: 1px solid #e2e8f0;
+                  color: #000;
+                  font-weight: 500;
                 }
                 .report-table tr:nth-child(even) td { background-color: #f8fafc; }
                 .report-table .row-totals td {
-                  font-weight: 700;
+                  font-weight: 800;
                   background-color: #f1f5f9;
                   border-top: 2px solid #cbd5e1;
-                  color: #0f172a;
+                  color: #000;
                 }
-                .badge { padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 600; }
-                .badge-paid { background: #dcfce7; color: #166534; }
-                .badge-pending { background: #fee2e2; color: #991b1b; }
+                .badge { padding: 3px 6px; border-radius: 4px; font-size: 11px; font-weight: 700; }
+                .badge-paid { background: #dcfce7; color: #14532d; }
+                .badge-pending { background: #fee2e2; color: #7f1d1d; }
               `}
             </style>
 
@@ -4663,9 +4665,9 @@ const [profileName, setProfileName] = useState('');
                   </div>
                 </div>
                 <div className="lh-meta">
-                  <div style={{ fontSize: '18px', fontWeight: '800', color: '#0f172a', marginBottom: '4px' }}>{activeProj.name}</div>
-                  <div style={{ fontSize: '12px', color: '#64748b', fontWeight: '600', textTransform: 'uppercase' }}>Financial & Operations Report</div>
-                  <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '4px' }}>Period: {reportConfig.startDate || 'Beginning'} - {reportConfig.endDate || 'Present'}</div>
+                  <div style={{ fontSize: '18px', fontWeight: '900', color: '#000', marginBottom: '4px' }}>{activeProj.name}</div>
+                  <div style={{ fontSize: '13px', color: '#333', fontWeight: '700', textTransform: 'uppercase' }}>Financial & Operations Report</div>
+                  <div style={{ fontSize: '12px', color: '#555', marginTop: '4px', fontWeight: '500' }}>Period: {reportConfig.startDate || 'Beginning'} - {reportConfig.endDate || 'Present'}</div>
                 </div>
               </div>
 
@@ -4689,13 +4691,13 @@ const [profileName, setProfileName] = useState('');
                   <div className="section-header">
                     <h3>Material Orders</h3>
                     <div className="section-totals">
-                      Value: Rs {matTotals.gross.toLocaleString()} &nbsp;|&nbsp; Paid: <span style={{color:'#10b981'}}>Rs {matTotals.paid.toLocaleString()}</span> &nbsp;|&nbsp; Pending: <span style={{color:'#ef4444'}}>Rs {matTotals.pending.toLocaleString()}</span>
+                      Value: Rs {matTotals.gross.toLocaleString()} &nbsp;|&nbsp; Paid: <span style={{color:'#065f46'}}>Rs {matTotals.paid.toLocaleString()}</span> &nbsp;|&nbsp; Pending: <span style={{color:'#991b1b'}}>Rs {matTotals.pending.toLocaleString()}</span>
                     </div>
                   </div>
                   <table className="report-table">
                     <thead>
                       <tr>
-                        <th>Date</th>
+                        <th>Dates</th>
                         <th>Item Description</th>
                         <th>Vendor</th>
                         <th>Quantity</th>
@@ -4706,14 +4708,18 @@ const [profileName, setProfileName] = useState('');
                     <tbody>
                       {repMaterials.map(m => (
                         <tr key={m.id}>
-                          <td>{m.orderDate}</td>
-                          <td><strong>{m.name}</strong> <span style={{color:'#94a3b8', fontSize:'10px'}}>({m.category})</span></td>
+                          <td>
+                            <div><strong>Ord:</strong> {m.orderDate}</div>
+                            {m.isArrived && m.arrivalDate && <div><strong>Arr:</strong> {m.arrivalDate.split('T')[0]}</div>}
+                            {m.isPaid && m.paidDate && <div><strong>Pd:</strong> {m.paidDate.split('T')[0]}</div>}
+                          </td>
+                          <td><strong>{m.name}</strong> <span style={{color:'#444', fontSize:'11px'}}>({m.category})</span></td>
                           <td>{m.vendorName || '-'}</td>
                           <td>{m.quantity} {m.unit}</td>
                           <td>
                             {m.isPaid ? <span className="badge badge-paid">Paid</span> : <span className="badge badge-pending">Unpaid</span>}
                           </td>
-                          <td style={{textAlign:'right', fontWeight: '600', color: m.isPaid ? '#0f172a' : '#ef4444'}}>Rs {Number(m.totalCost).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                          <td style={{textAlign:'right', fontWeight: '800', color: m.isPaid ? '#000' : '#b91c1c'}}>Rs {Number(m.totalCost).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
                         </tr>
                       ))}
                       {repMaterials.length === 0 && <tr><td colSpan="6" style={{textAlign:'center', padding:'20px'}}>No materials found in this period.</td></tr>}

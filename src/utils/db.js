@@ -108,7 +108,15 @@ export const deleteWorker = async (id) => {  const { error } = await supabase.fr
 export const getAttendance = async () => { const { data } = await supabase.from('attendance').select('*'); return await mergeOffline('attendance', data); };
 export const addAttendanceRecord = async (r) => {  const { error } = await supabase.from('attendance').insert({ ...r, id: r.id || Date.now().toString(), createdAt: new Date().toISOString() }); if (error) throw new Error(error.message); };
 export const updateAttendanceRecord = async (id, updates) => {  const { error } = await supabase.from('attendance').update(updates).eq('id', id); if (error) throw new Error(error.message); };
-export const deleteAttendanceRecords = async (workerId) => {  const { error } = await supabase.from('attendance').delete().eq('workerId', workerId); if (error) throw new Error(error.message); };
+export const deleteAttendanceRecords = async (workerId, projectId, startDate, endDate, isPaid) => {
+  let query = supabase.from('attendance').delete().eq('workerId', workerId);
+  if (projectId) query = query.eq('projectId', projectId);
+  if (startDate) query = query.gte('date', startDate);
+  if (endDate) query = query.lte('date', endDate);
+  if (isPaid !== undefined) query = query.eq('paid', isPaid);
+  const { error } = await query;
+  if (error) throw new Error(error.message);
+};
 
 export const getSubcontractors = async () => { const { data } = await supabase.from('subcontractors').select('*'); return await mergeOffline('subcontractors', data); };
 export const addSubcontractor = async (s) => { const payload = { ...s, id: s.id || Date.now().toString(), createdAt: new Date().toISOString() }; await executeMutation('subcontractors', 'INSERT', payload, payload.id); };

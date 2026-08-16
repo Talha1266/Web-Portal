@@ -753,6 +753,23 @@ const [profileName, setProfileName] = useState('');
     }
   };
 
+  const handleDeletePaidHistory = async (wId, sortedDates) => {
+    if (!adminUnlockPast) {
+       alert("This action requires Past Unlocked mode to be active.");
+       return;
+    }
+    triggerSecurityChallenge("Are you sure you want to PERMANENTLY DELETE these paid records? This cannot be undone.", "DELETE", async () => {
+      try {
+        await deleteAttendanceRecords(wId, activeProjectId, payrollStart, payrollEnd, true);
+        await loadData();
+        const workerName = allWorkers.find(w => w.id === wId)?.name || "a worker";
+        notifyAdmins(`${currentUser?.name || "A user"} permanently deleted paid payroll history for ${workerName}`, "Paid History Deleted");
+      } catch (err) {
+        alert("Error deleting records: " + err.message);
+      }
+    });
+  };
+
   const handleMarkAllPaid = async () => {
     triggerSecurityChallenge("Are you sure you want to mark ALL outstanding wages in this date range as paid?", "PAY_ALL", async () => {
       await markAllAttendancePaid(activeProjectId, payrollStart, payrollEnd);
@@ -2406,6 +2423,11 @@ const [profileName, setProfileName] = useState('');
                                      <button className="btn btn-danger" onClick={() => handleRevertPaid(wId, sortedDates)} style={{ padding: '0.4rem 0.75rem', fontSize: '0.75rem', background: 'transparent', border: '1px solid var(--danger)', color: 'var(--danger)' }} title="Revert to Unpaid">
                                        <Edit2 size={14} /> Revert
                                      </button>
+                                     {adminUnlockPast && (
+                                       <button className="btn btn-danger" onClick={() => handleDeletePaidHistory(wId, sortedDates)} style={{ padding: '0.4rem 0.75rem', fontSize: '0.75rem', background: 'transparent', border: '1px solid var(--danger)', color: 'var(--danger)' }} title="Delete Paid History">
+                                         <Trash2 size={14} /> Delete
+                                       </button>
+                                     )}
                                    </td>
                                  )}
                                </tr>

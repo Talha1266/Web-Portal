@@ -1,3 +1,4 @@
+import toast from 'react-hot-toast';
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LayoutDashboard, HardHat, FileText, MessageSquare, LogOut, Plus, Edit2, Trash2, PieChart, Shield, X, MapPin, Building, Calendar, Users, Folder, FolderPlus, UploadCloud, ChevronRight, ArrowLeft, CheckSquare, Settings, ClipboardList, DollarSign, CheckCircle, Briefcase, Package, CreditCard, Truck, AlertTriangle, XCircle, Menu, Unlock, Printer, Camera } from 'lucide-react';
@@ -247,24 +248,24 @@ const UserDashboard = () => {
       });
       if (!response.ok) {
         const errData = await response.json();
-        alert("Push Failed (Backend): " + (errData.error || response.statusText));
+        toast.error("Push Failed (Backend): " + (errData.error || response.statusText));
       }
     } catch (error) {
-      alert("Push Failed (Network): " + error.message);
+      toast.error("Push Failed (Network): " + error.message);
     }
   };
 
   const handleTestOS = async () => {
     try {
       const permission = window.OneSignal?.Notifications?.permission;
-      alert("Browser Permission State: " + permission);
+      toast("Browser Permission State: " + permission);
       if (window.OneSignal) {
         await window.OneSignal.Slidedown.promptPush({ force: true });
       } else {
-        alert("OneSignal script not loaded!");
+        toast("OneSignal script not loaded!");
       }
     } catch (e) {
-      alert("OS Debug Error: " + e.message);
+      toast.error("OS Debug Error: " + e.message);
     }
   };
 
@@ -480,7 +481,7 @@ const [profileName, setProfileName] = useState('');
       setOldPassword('');
       setNewPassword('');
       setConfirmPassword('');
-      alert("Password updated successfully!");
+      toast.success("Password updated successfully!");
     } catch(err) {
       setPasswordError('Error: ' + err.message);
     }
@@ -516,9 +517,9 @@ const [profileName, setProfileName] = useState('');
       setPName(''); setPDesc(''); setPLocation(''); setPClient(''); setPStartDate(''); setPAssigned([]);
       setIsCreateModalOpen(false);
       await loadData();
-      alert("Project created successfully!");
+      toast.success("Project created successfully!");
     } catch (err) {
-      alert("Error adding project: " + err.message);
+      toast.error("Error adding project: " + err.message);
     }
   };
 
@@ -546,7 +547,7 @@ const [profileName, setProfileName] = useState('');
         await loadData();
         setEditProjectForm(null);
       } catch (err) {
-        alert(err.message);
+        toast(err.message);
       }
     });
   };
@@ -585,7 +586,7 @@ const [profileName, setProfileName] = useState('');
         await loadData();
       }).catch(err => {
         console.error(err);
-        alert("Failed to save large file locally.");
+        toast.error("Failed to save large file locally.");
       });
     };
   };
@@ -603,9 +604,9 @@ const [profileName, setProfileName] = useState('');
     try {
       await addWorker({ projectId: activeProjectId, name: wName, trade: wTrade, dailyWage: Number(wWage), createdBy: currentUser.id });
       setWName(''); setWTrade(''); setWWage(''); setIsWorkerModalOpen(false); await loadData();
-      alert("Worker added successfully!");
+      toast.success("Worker added successfully!");
     } catch (err) {
-      alert("Database Schema Error: " + err.message);
+      toast.error("Database Schema Error: " + err.message);
     }
   };
 
@@ -638,7 +639,7 @@ const [profileName, setProfileName] = useState('');
       await loadData();
       notifyAdmins(`${currentUser?.name || "A user"} updated worker profile for ${ewName}`, "Worker Modified");
     } catch(err) {
-      alert("Failed to modify labourer: " + err.message);
+      toast.error("Failed to modify labourer: " + err.message);
     }
   };
 
@@ -685,7 +686,7 @@ const [profileName, setProfileName] = useState('');
         setIsAttendanceDirty(false);
         await loadData();
         notifyAdmins(`${currentUser?.name || "A user"} saved attendance for ${recordsToSave.length} workers on ${attendanceDate}`, "Attendance Marked");
-        alert('Attendance Saved Successfully');
+        toast.success('Attendance Saved Successfully');
       } else {
         await addChangeRequest({
           type: 'EDIT_ATTENDANCE',
@@ -695,10 +696,10 @@ const [profileName, setProfileName] = useState('');
         });
         setIsAttendanceDirty(false);
         await loadData();
-        alert('Attendance modification request sent to Admin.');
+        toast('Attendance modification request sent to Admin.');
       }
     } catch (err) {
-      alert("Error saving attendance: " + err.message);
+      toast.error("Error saving attendance: " + err.message);
     }
   };
 
@@ -772,14 +773,14 @@ const [profileName, setProfileName] = useState('');
           payload: { projectId: activeProjectId, workerId: wId, startDate: payrollStart, endDate: payrollEnd }
         });
         await loadData();
-        alert('Revert request sent to Admin.');
+        toast('Revert request sent to Admin.');
       }
     }
   };
 
   const handleDeletePaidHistory = async (wId, sortedDates) => {
     if (!adminUnlockPast) {
-       alert("This action requires Past Unlocked mode to be active.");
+       toast("This action requires Past Unlocked mode to be active.");
        return;
     }
     triggerSecurityChallenge("Are you sure you want to PERMANENTLY DELETE these paid records? This cannot be undone.", "DELETE", async () => {
@@ -789,7 +790,7 @@ const [profileName, setProfileName] = useState('');
         const workerName = allWorkers.find(w => w.id === wId)?.name || "a worker";
         notifyAdmins(`${currentUser?.name || "A user"} permanently deleted paid payroll history for ${workerName}`, "Paid History Deleted");
       } catch (err) {
-        alert("Error deleting records: " + err.message);
+        toast.error("Error deleting records: " + err.message);
       }
     });
   };
@@ -813,7 +814,7 @@ const [profileName, setProfileName] = useState('');
   const handleUpdateSubValue = async (subId, value) => {
     const val = value === '' ? null : Number(value);
     if (val !== null && val < 0) {
-      alert("Value cannot be negative.");
+      toast.error("Value cannot be negative.");
       return;
     }
     await updateSubcontractor(subId, { finalValue: val });
@@ -836,7 +837,7 @@ const [profileName, setProfileName] = useState('');
   const handleCreateSubPay = async (e) => {
     e.preventDefault();
     if (Number(subPayAmount) < 0) {
-      alert("Payment amount cannot be negative.");
+      toast.error("Payment amount cannot be negative.");
       return;
     }
     if (subPayMode === 'add') {
@@ -860,7 +861,7 @@ const [profileName, setProfileName] = useState('');
           payload
         });
         await loadData();
-        alert('Payment modification request sent to Admin.');
+        toast('Payment modification request sent to Admin.');
       }
     }
     setSubPayDate(new Date().toISOString().split('T')[0]); setSubPayAmount(''); setSubPayDesc(''); setIsSubPayModalOpen(false);
@@ -886,7 +887,7 @@ const [profileName, setProfileName] = useState('');
           payload: { amount: payment.amount, description: payment.description, date: payment.date }
         });
         await loadData();
-        alert('Deletion request sent to Admin.');
+        toast('Deletion request sent to Admin.');
       }
     }
   };
@@ -929,7 +930,7 @@ const [profileName, setProfileName] = useState('');
       await loadData();
       notifyAdmins(`${currentUser?.name || "A user"} created a new material category: ${newCatName.trim()}`, "Material Category Added");
     } catch(err) {
-      alert("Error: " + err.message);
+      toast.error("Error: " + err.message);
     }
   };
 
@@ -941,7 +942,7 @@ const [profileName, setProfileName] = useState('');
         await loadData();
         notifyAdmins(`${currentUser?.name || "A user"} deleted material category: ${catName}`, "Material Category Deleted");
       } catch(err) {
-        alert('Error: ' + err.message);
+        toast.error('Error: ' + err.message);
       }
     });
   };
@@ -958,7 +959,7 @@ const [profileName, setProfileName] = useState('');
         setEditingCategoryId(null);
         await loadData();
       } catch(err) {
-        alert('Error: ' + err.message);
+        toast.error('Error: ' + err.message);
       }
     });
   };
@@ -971,7 +972,7 @@ const [profileName, setProfileName] = useState('');
       setEditingVendorName('');
       await loadData();
     } catch(err) {
-      alert("Error: " + err.message);
+      toast.error("Error: " + err.message);
     }
   };
 
@@ -981,7 +982,7 @@ const [profileName, setProfileName] = useState('');
         await deleteVendor(vendorId, activeProjectId);
         await loadData();
       } catch(err) {
-        alert('Error: ' + err.message);
+        toast.error('Error: ' + err.message);
       }
     });
   };
@@ -997,7 +998,7 @@ const [profileName, setProfileName] = useState('');
         setEditingVendorId(null);
         await loadData();
       } catch(err) {
-        alert('Error: ' + err.message);
+        toast.error('Error: ' + err.message);
       }
     });
   };
@@ -1029,9 +1030,9 @@ const [profileName, setProfileName] = useState('');
           setAssetName(''); setAssetType(''); setAssetQty(1); setAssetNotes(''); setAssetDate(new Date().toISOString().split('T')[0]);
           setIsAssetModalOpen(false);
           await loadData();
-          alert("Asset modified successfully!");
+          toast.success("Asset modified successfully!");
         } catch (err) {
-          alert("Database Error: " + err.message);
+          toast.error("Database Error: " + err.message);
         }
       });
       return;
@@ -1051,9 +1052,9 @@ const [profileName, setProfileName] = useState('');
       setAssetName(''); setAssetType(''); setAssetQty(1); setAssetNotes(''); setAssetDate(new Date().toISOString().split('T')[0]);
       setIsAssetModalOpen(false);
       await loadData();
-      alert("Asset added successfully!");
+      toast.success("Asset added successfully!");
     } catch (err) {
-      alert("Database Schema Error: " + err.message);
+      toast.error("Database Schema Error: " + err.message);
     }
   };
 
@@ -1063,7 +1064,7 @@ const [profileName, setProfileName] = useState('');
     
     const qtyToReturn = parseInt(qtyToReturnStr, 10);
     if (isNaN(qtyToReturn) || qtyToReturn <= 0 || qtyToReturn > asset.quantity) {
-      alert('Invalid quantity. Please enter a valid number up to ' + asset.quantity);
+      toast.error('Invalid quantity. Please enter a valid number up to ' + asset.quantity);
       return;
     }
 
@@ -1092,7 +1093,7 @@ const [profileName, setProfileName] = useState('');
         }
         await loadData();
       } catch (err) {
-        alert("Database Error: " + err.message);
+        toast.error("Database Error: " + err.message);
       }
     });
   };
@@ -1106,7 +1107,7 @@ const [profileName, setProfileName] = useState('');
         });
         await loadData();
       } catch (err) {
-        alert("Database Error: " + err.message);
+        toast.error("Database Error: " + err.message);
       }
     });
   };
@@ -1174,7 +1175,7 @@ const [profileName, setProfileName] = useState('');
       triggerSecurityChallenge("These records are older than 24 hours. Request root admin to delete?", 'MODIFY', async () => {
         const worker = allWorkers.find(w => w.id === workerId);
         await addChangeRequest(currentUser.name, 'Delete', 'Payroll/Attendance', workerId, `Requested deletion of payroll records for ${worker?.name || workerId} from ${payrollStart} to ${payrollEnd}`);
-        alert("Deletion request sent to root admin.");
+        toast("Deletion request sent to root admin.");
       });
     }
   };
@@ -1217,7 +1218,7 @@ const [profileName, setProfileName] = useState('');
         await loadData();
         notifyAdmins(`${currentUser?.name || "A user"} modified material order for ${emName}`, "Material Order Modified");
       } catch (err) {
-        alert("Error updating material: " + err.message);
+        toast.error("Error updating material: " + err.message);
       }
     });
   };
@@ -1256,9 +1257,9 @@ const [profileName, setProfileName] = useState('');
       setIsMaterialModalOpen(false);
       await loadData();
       notifyAdmins(`${currentUser?.name || "A user"} added ${mQty} ${mName} to ${activeProj?.name || "Project"}`, "Material Ordered");
-      alert("Material added successfully!");
+      toast.success("Material added successfully!");
     } catch (err) {
-      alert("Database Schema Error: " + err.message);
+      toast.error("Database Schema Error: " + err.message);
     }
   };
 
@@ -1272,9 +1273,9 @@ const [profileName, setProfileName] = useState('');
         }
         await loadData();
           notifyAdmins(`${currentUser?.name || "A user"} paid all outstanding bills for ${vendorName}`, "Vendor Bill Paid");
-          alert("All outstanding bills marked as paid!");
+          toast.success("All outstanding bills marked as paid!");
       } catch (err) {
-        alert("Error paying bills: " + err.message);
+        toast.error("Error paying bills: " + err.message);
       }
     });
   };
@@ -1305,12 +1306,12 @@ const [profileName, setProfileName] = useState('');
     if (!arrivalMaterialObj) return;
     const receivedQty = Number(arrivalQty);
     if (isNaN(receivedQty) || receivedQty <= 0) {
-      alert('Invalid quantity entered.');
+      toast.error('Invalid quantity entered.');
       return;
     }
     const originalQuantity = Number(arrivalMaterialObj.orderedQuantity || arrivalMaterialObj.quantity);
     if (receivedQty > originalQuantity) {
-      alert(`Cannot receive more than ordered (${originalQuantity}).`);
+      toast.error(`Cannot receive more than ordered (${originalQuantity}).`);
       return;
     }
 
@@ -1348,9 +1349,9 @@ const [profileName, setProfileName] = useState('');
       setArrivalMaterialObj(null);
       await loadData();
       notifyAdmins(`${currentUser?.name || "A user"} marked ${receivedQty} ${arrivalMaterialObj.itemName} as ARRIVED`, "Material Arrived");
-      alert("Material arrival confirmed.");
+      toast.success("Material arrival confirmed.");
     } catch (err) {
-      alert(`Database Error: ${err.message}`);
+      toast.error(`Database Error: ${err.message}`);
     }
   };
 
@@ -1364,7 +1365,7 @@ const [profileName, setProfileName] = useState('');
       await loadData();
       notifyAdmins(`${currentUser?.name || "A user"} marked ${paymentMaterialObj.quantity} ${paymentMaterialObj.itemName} as PAID`, "Material Paid");
     } catch(err) {
-      alert(`Database Error: ${err.message}`);
+      toast.error(`Database Error: ${err.message}`);
     }
   };
 
@@ -1412,7 +1413,7 @@ const [profileName, setProfileName] = useState('');
         }
         await loadData();
       } catch (err) {
-        alert(`Database Error: ${err.message}\nDid you forget to run the Supabase SQL migration script?`);
+        toast.error(`Database Error: ${err.message}\nDid you forget to run the Supabase SQL migration script?`);
       }
     } else {
       await addChangeRequest({
@@ -1421,12 +1422,12 @@ const [profileName, setProfileName] = useState('');
         requestedBy: currentUser.id,
         payload
       });
-      alert('This record is locked (older than 24h). An edit request has been sent to the Administrator.');
+      toast('This record is locked (older than 24h). An edit request has been sent to the Administrator.');
       // Note: Admin change requests don't natively support multiple simultaneous operations in our current structure.
       // We will only request the edit for the arrived portion to keep it simple.
       await loadData();
       notifyAdmins(`${currentUser?.name || "A user"} submitted an Admin Edit Request`, "Admin Request");
-      alert('Modification request sent to Admin. (Note: Remaining quantity splitting must be done manually by Admin if requested late)');
+      toast('Modification request sent to Admin. (Note: Remaining quantity splitting must be done manually by Admin if requested late)');
     }
   };
 
@@ -1449,7 +1450,7 @@ const [profileName, setProfileName] = useState('');
           payload: { amount: material.totalCost, description: material.itemName, date: material.orderDate }
         });
         await loadData();
-        alert('Deletion request sent to Admin.');
+        toast('Deletion request sent to Admin.');
       }
     }
   };
@@ -1480,7 +1481,7 @@ const [profileName, setProfileName] = useState('');
   const handleCreateAdvance = async (e) => {
     e.preventDefault();
     if (Number(advAmount) < 0) {
-      alert("Advance amount cannot be negative.");
+      toast.error("Advance amount cannot be negative.");
       return;
     }
     await addSiteAdvance({
@@ -1515,7 +1516,7 @@ const [profileName, setProfileName] = useState('');
           payload: { amount: adv.amount, description: adv.description, date: adv.date }
         });
         await loadData();
-        alert('Deletion request sent to Admin.');
+        toast('Deletion request sent to Admin.');
       }
     }
   };
@@ -1544,11 +1545,11 @@ const [profileName, setProfileName] = useState('');
   const handleCreateExpense = async (e) => {
     e.preventDefault();
     if (Number(expAmount) < 0) {
-      alert("Expense amount cannot be negative.");
+      toast.error("Expense amount cannot be negative.");
       return;
     }
     if (!expReceipt) {
-      alert("Please attach a photo of the expense sheet or receipt.");
+      toast("Please attach a photo of the expense sheet or receipt.");
       return;
     }
     try {
@@ -1565,7 +1566,7 @@ const [profileName, setProfileName] = useState('');
       await loadData();
       notifyAdmins(`${currentUser?.name || "A user"} logged an expense of Rs ${expAmount}: ${expDesc}`, "Site Expense Added");
     } catch (err) {
-      alert("Error adding expense: " + err.message);
+      toast.error("Error adding expense: " + err.message);
     }
   };
 
@@ -1588,7 +1589,7 @@ const [profileName, setProfileName] = useState('');
           payload: { amount: exp.amount, description: exp.description, date: exp.date }
         });
         await loadData();
-        alert('Deletion request sent to Admin.');
+        toast('Deletion request sent to Admin.');
       }
     }
   };
@@ -2229,7 +2230,7 @@ const [profileName, setProfileName] = useState('');
                      {canModify ? (
                        <button className="btn btn-primary" onClick={handleSaveAttendance} style={{ padding: '0.4rem 1rem', fontSize: '0.8rem' }}>Save Attendance</button>
                      ) : (
-                       <button className="btn btn-primary" style={{ opacity: 0.5, cursor: 'not-allowed', padding: '0.4rem 1rem', fontSize: '0.8rem' }} onClick={() => alert("This entry is locked due to the 24-hour rule. Please ask your administrator to unlock the past to amend this entry.")}>Save (Locked)</button>
+                       <button className="btn btn-primary" style={{ opacity: 0.5, cursor: 'not-allowed', padding: '0.4rem 1rem', fontSize: '0.8rem' }} onClick={() => toast("This entry is locked due to the 24-hour rule. Please ask your administrator to unlock the past to amend this entry.")}>Save (Locked)</button>
                      )}
                   </div>
                 </div>
@@ -2842,7 +2843,7 @@ const [profileName, setProfileName] = useState('');
                                           e.stopPropagation();
                                           if (!m.isPaid) {
                                             if (!m.isArrived) {
-                                              alert("You cannot mark an order as paid until it has arrived.");
+                                              toast.error("You cannot mark an order as paid until it has arrived.");
                                               return;
                                             }
                                             triggerSecurityChallenge("Mark this material as paid?", 'MODIFY', () => {
@@ -3052,11 +3053,11 @@ const [profileName, setProfileName] = useState('');
                                 a.download = doc.name;
                                 a.click();
                               } else {
-                                alert("File content is missing.");
+                                toast.error("File content is missing.");
                               }
                             });
                           } else {
-                            alert("This is an older document that was uploaded before file saving was enabled. It has no content.");
+                            toast("This is an older document that was uploaded before file saving was enabled. It has no content.");
                           }
                         }
                      }}>
@@ -3824,7 +3825,7 @@ const [profileName, setProfileName] = useState('');
                                 if (!order.isUndelivered) { 
                                   if (!order.isPaid) {
                                     if (!order.isArrived) {
-                                      alert("You cannot mark an order as paid until it has arrived.");
+                                      toast.error("You cannot mark an order as paid until it has arrived.");
                                       return;
                                     }
                                     triggerSecurityChallenge("Mark this material as paid?", 'MODIFY', () => {

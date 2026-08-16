@@ -47,9 +47,12 @@ const ProtectedRoute = ({ children }) => {
 
 
 
+import { Toaster } from 'react-hot-toast';
+
 function App() {
   return (
     <BrowserRouter>
+      <Toaster position="bottom-right" toastOptions={{ style: { background: '#333', color: '#fff', fontSize: '14px', borderRadius: '8px' } }} />
       <AuthListener>
         <Routes>
           <Route path="/" element={<Navigate to="/login" replace />} />

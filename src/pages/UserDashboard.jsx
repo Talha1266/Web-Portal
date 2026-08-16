@@ -4610,7 +4610,7 @@ const [profileName, setProfileName] = useState('');
 
             <div style={{ paddingTop: '50px', textAlign: 'right', fontSize: '18px' }}>
               <strong>Grand Total For Period: </strong> 
-              <span style={{ borderBottom: '2px double black' }}>Rs {(matTotal + subTotal + labTotal + expTotal).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+              <span style={{ borderBottom: '2px double black' }}>Rs {((reportConfig.includeMaterials ? matTotal : 0) + (reportConfig.includeSubcontractors ? subTotal : 0) + (reportConfig.includeLabour ? labTotal : 0) + (reportConfig.includeExpenses ? expTotal : 0)).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
             </div>
 
             {reportConfig.includeExpenses && repExpenses.filter(e => e.receiptImage).map((e, index) => (

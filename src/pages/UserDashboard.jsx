@@ -4456,169 +4456,405 @@ const [profileName, setProfileName] = useState('');
           }
         });
 
-        const matTotal = repMaterials.reduce((acc, m) => acc + (m.isPaid ? Number(m.totalCost || 0) : 0), 0);
-        const subTotal = repSubs.reduce((acc, p) => acc + Number(p.amount || 0), 0);
-        const expTotal = repExpenses.reduce((acc, e) => acc + Number(e.amount || 0), 0);
-        const labTotal = Object.values(workerTotals).reduce((acc, val) => acc + val.totalPaid, 0);
+        const matTotals = repMaterials.reduce((acc, m) => {
+          const cost = Number(m.totalCost || 0);
+          acc.gross += cost;
+          if (m.isPaid) acc.paid += cost;
+          else acc.pending += cost;
+          return acc;
+        }, { gross: 0, paid: 0, pending: 0 });
+
+        const subTotals = { gross: 0, paid: 0, pending: 0 };
+        subTotals.paid = repSubs.reduce((acc, p) => acc + Number(p.amount || 0), 0);
+        let subPendingTotal = 0;
+        allSubcontractors.filter(s => s.projectId === activeProjectId).forEach(sub => {
+          const allSubsPayments = allSubPayments.filter(p => p.subId === sub.id);
+          const totalPaidEver = allSubsPayments.reduce((sum, p) => sum + p.amount, 0);
+          if (sub.finalValue !== null && sub.finalValue > totalPaidEver) {
+            subPendingTotal += (sub.finalValue - totalPaidEver);
+          }
+        });
+        subTotals.pending = subPendingTotal;
+        subTotals.gross = subTotals.paid + subTotals.pending;
+
+        const expTotals = repExpenses.reduce((acc, e) => {
+          const cost = Number(e.amount || 0);
+          acc.gross += cost;
+          acc.paid += cost;
+          return acc;
+        }, { gross: 0, paid: 0, pending: 0 });
+
+        const labTotals = Object.values(workerTotals).reduce((acc, val) => {
+          acc.gross += val.gross;
+          acc.paid += val.totalPaid;
+          acc.pending += val.pending;
+          return acc;
+        }, { gross: 0, paid: 0, pending: 0 });
+
+        const grandGross = (reportConfig.includeMaterials ? matTotals.gross : 0) + (reportConfig.includeSubcontractors ? subTotals.gross : 0) + (reportConfig.includeLabour ? labTotals.gross : 0) + (reportConfig.includeExpenses ? expTotals.gross : 0);
+        const grandPaid = (reportConfig.includeMaterials ? matTotals.paid : 0) + (reportConfig.includeSubcontractors ? subTotals.paid : 0) + (reportConfig.includeLabour ? labTotals.paid : 0) + (reportConfig.includeExpenses ? expTotals.paid : 0);
+        const grandPending = (reportConfig.includeMaterials ? matTotals.pending : 0) + (reportConfig.includeSubcontractors ? subTotals.pending : 0) + (reportConfig.includeLabour ? labTotals.pending : 0) + (reportConfig.includeExpenses ? expTotals.pending : 0);
 
         return (
-          <div className="print-view">
-            <div className="no-print" style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginBottom: '20px', padding: '20px', background: 'var(--bg-tertiary)', borderRadius: 'var(--radius-md)' }}>
-              <button className="btn btn-secondary" onClick={() => setIsReportPreviewActive(false)}>Close Preview</button>
-              <button className="btn btn-primary" onClick={() => window.print()}><Printer size={18}/> Print Hardcopy</button>
-            </div>
-            <div className="print-header" style={{ textAlign: 'center', paddingBottom: '30px' }}>
-              <h1 style={{ fontSize: '24px', paddingBottom: '10px', margin: 0 }}>{activeProj.name}</h1>
-              <h2 style={{ fontSize: '20px', paddingBottom: '5px', margin: 0 }}>Financial & Operations Report</h2>
-              <h3 style={{ fontSize: '16px', color: '#555', margin: 0 }}>{reportConfig.startDate || 'Beginning'} to {reportConfig.endDate || 'Present'}</h3>
+          <div className="print-view" style={{ backgroundColor: '#e2e8f0', minHeight: '100vh', padding: '40px 0' }}>
+            <div className="no-print" style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginBottom: '20px' }}>
+              <div style={{ display: 'flex', gap: '1rem', background: 'var(--bg-tertiary)', padding: '15px 25px', borderRadius: 'var(--radius-md)', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}>
+                <button className="btn btn-secondary" onClick={() => setIsReportPreviewActive(false)}>Close Preview</button>
+                <button className="btn btn-primary" onClick={() => window.print()}><Printer size={18}/> Print Report</button>
+              </div>
             </div>
 
-            {reportConfig.includeMaterials && (
-              <div style={{ paddingTop: '20px', paddingBottom: '40px', pageBreakInside: 'auto' }}>
-                <h3 style={{ borderBottom: '2px solid black', paddingBottom: '5px', margin: 0 }}>Material Orders</h3>
-                <table className="print-table" style={{ width: '100%', pageBreakInside: 'auto', borderCollapse: 'separate', borderSpacing: 0 }}>
-                  <thead>
-                    <tr>
-                      <th>Date</th>
-                      <th>Item</th>
-                      <th>Category</th>
-                      <th>Vendor</th>
-                      <th>Quantity</th>
-                      <th>Status</th>
-                      <th>Cost (Paid)</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {repMaterials.map(m => (
-                      <tr key={m.id}>
-                        <td>{m.orderDate}</td>
-                        <td>{m.name}</td>
-                        <td>{m.category}</td>
-                        <td>{m.vendorName || '-'}</td>
-                        <td>{m.quantity} {m.unit}</td>
-                        <td style={{ fontSize: '0.85em', color: '#555' }}>{m.isArrived ? 'Arrived' : 'Pending'} / {m.isPaid ? 'Paid' : 'Unpaid'}</td>
-                        <td>Rs {Number(m.totalCost).toLocaleString(undefined, { minimumFractionDigits: 2 })} {!m.isPaid && <span style={{fontSize: '0.8em', color: 'red'}}>(Unpaid)</span>}</td>
+            <style>
+              {`
+                @media print {
+                  @page { margin: 0; size: A4; }
+                  body { margin: 0; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; background: white !important; }
+                  .print-view { padding: 0 !important; background: white !important; }
+                  .no-print { display: none !important; }
+                  .page-break { page-break-before: always; }
+                  .letterhead-container { box-shadow: none !important; margin: 0 !important; padding-bottom: 80px !important; }
+                }
+                .letterhead-container {
+                  position: relative;
+                  min-height: 297mm;
+                  width: 100%;
+                  max-width: 210mm;
+                  margin: 0 auto;
+                  background: white;
+                  box-sizing: border-box;
+                  padding: 40px 40px 100px 60px;
+                  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+                  font-family: 'Inter', system-ui, sans-serif;
+                  color: #333;
+                }
+                .letterhead-stripe {
+                  position: absolute;
+                  left: 0;
+                  top: 0;
+                  bottom: 0;
+                  width: 22px;
+                  background-color: #f5b041;
+                  z-index: 10;
+                }
+                .lh-header {
+                  display: flex;
+                  justify-content: space-between;
+                  align-items: flex-end;
+                  border-bottom: 3px solid #f5b041;
+                  padding-bottom: 15px;
+                  margin-bottom: 30px;
+                }
+                .lh-logo-area {
+                  display: flex;
+                  align-items: center;
+                  gap: 15px;
+                }
+                .lh-logo-img {
+                  height: 65px;
+                  object-fit: contain;
+                }
+                .lh-title {
+                  color: #f5b041;
+                  font-size: 32px;
+                  font-weight: 900;
+                  margin: 0;
+                  letter-spacing: 1px;
+                  line-height: 1;
+                }
+                .lh-subtitle {
+                  color: #888;
+                  font-size: 16px;
+                  margin: 5px 0 0 0;
+                  font-weight: 600;
+                  letter-spacing: 0.5px;
+                }
+                .lh-meta {
+                  text-align: right;
+                }
+                .lh-footer {
+                  position: absolute;
+                  bottom: 0;
+                  left: 22px;
+                  right: 0;
+                  padding: 15px 40px;
+                  display: flex;
+                  justify-content: space-between;
+                  font-size: 11px;
+                  color: #666;
+                  border-top: 2px solid #eee;
+                  background: white;
+                }
+                .lh-footer strong { color: #f5b041; }
+                
+                .summary-cards {
+                  display: flex;
+                  gap: 15px;
+                  margin-bottom: 30px;
+                }
+                .summary-card {
+                  flex: 1;
+                  padding: 15px;
+                  border-radius: 6px;
+                  border: 1px solid #e2e8f0;
+                  background: #f8fafc;
+                  text-align: center;
+                }
+                .summary-card h4 { margin: 0 0 8px 0; color: #64748b; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+                .summary-card .value { font-size: 22px; font-weight: 800; margin: 0; }
+                .val-gross { color: #0f172a; }
+                .val-paid { color: #10b981; }
+                .val-pending { color: #ef4444; }
+                
+                .report-section {
+                  margin-bottom: 35px;
+                  page-break-inside: auto;
+                }
+                .section-header {
+                  display: flex;
+                  justify-content: space-between;
+                  align-items: flex-end;
+                  border-bottom: 2px solid #cbd5e1;
+                  padding-bottom: 5px;
+                  margin-bottom: 15px;
+                }
+                .section-header h3 { margin: 0; font-size: 16px; color: #0f172a; text-transform: uppercase; letter-spacing: 0.5px; }
+                .section-totals { font-size: 11px; color: #64748b; font-weight: 600; }
+                
+                .report-table {
+                  width: 100%;
+                  border-collapse: collapse;
+                  font-size: 11px;
+                }
+                .report-table th {
+                  background-color: #f1f5f9;
+                  color: #334155;
+                  font-weight: 600;
+                  text-align: left;
+                  padding: 8px 10px;
+                  border-bottom: 2px solid #e2e8f0;
+                }
+                .report-table td {
+                  padding: 8px 10px;
+                  border-bottom: 1px solid #f1f5f9;
+                  color: #475569;
+                }
+                .report-table tr:nth-child(even) td { background-color: #f8fafc; }
+                .report-table .row-totals td {
+                  font-weight: 700;
+                  background-color: #f1f5f9;
+                  border-top: 2px solid #cbd5e1;
+                  color: #0f172a;
+                }
+                .badge { padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 600; }
+                .badge-paid { background: #dcfce7; color: #166534; }
+                .badge-pending { background: #fee2e2; color: #991b1b; }
+              `}
+            </style>
+
+            <div className="letterhead-container">
+              <div className="letterhead-stripe"></div>
+              
+              <div className="lh-header">
+                <div className="lh-logo-area">
+                  <img src="/nmt-logo.jpg" alt="N.M.T Logo" className="lh-logo-img" onError={(e) => e.target.style.display='none'} />
+                  <div>
+                    <h1 className="lh-title">N.M.T</h1>
+                    <h2 className="lh-subtitle">Engineers & Builders</h2>
+                  </div>
+                </div>
+                <div className="lh-meta">
+                  <div style={{ fontSize: '18px', fontWeight: '800', color: '#0f172a', marginBottom: '4px' }}>{activeProj.name}</div>
+                  <div style={{ fontSize: '12px', color: '#64748b', fontWeight: '600', textTransform: 'uppercase' }}>Financial & Operations Report</div>
+                  <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '4px' }}>Period: {reportConfig.startDate || 'Beginning'} - {reportConfig.endDate || 'Present'}</div>
+                </div>
+              </div>
+
+              <div className="summary-cards">
+                <div className="summary-card">
+                  <h4>Total Value Incurred</h4>
+                  <p className="value val-gross">Rs {grandGross.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+                </div>
+                <div className="summary-card">
+                  <h4>Total Amount Paid</h4>
+                  <p className="value val-paid">Rs {grandPaid.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+                </div>
+                <div className="summary-card">
+                  <h4>Total Pending Balance</h4>
+                  <p className="value val-pending">Rs {grandPending.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+                </div>
+              </div>
+
+              {reportConfig.includeMaterials && (
+                <div className="report-section">
+                  <div className="section-header">
+                    <h3>Material Orders</h3>
+                    <div className="section-totals">
+                      Value: Rs {matTotals.gross.toLocaleString()} &nbsp;|&nbsp; Paid: <span style={{color:'#10b981'}}>Rs {matTotals.paid.toLocaleString()}</span> &nbsp;|&nbsp; Pending: <span style={{color:'#ef4444'}}>Rs {matTotals.pending.toLocaleString()}</span>
+                    </div>
+                  </div>
+                  <table className="report-table">
+                    <thead>
+                      <tr>
+                        <th>Date</th>
+                        <th>Item Description</th>
+                        <th>Vendor</th>
+                        <th>Quantity</th>
+                        <th>Status</th>
+                        <th style={{textAlign:'right'}}>Total Cost</th>
                       </tr>
-                    ))}
-                    <tr>
-                      <td colSpan="6" style={{ textAlign: 'right', fontWeight: 'bold' }}>Sub-Total Materials (Paid Only):</td>
-                      <td style={{ fontWeight: 'bold' }}>Rs {matTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            )}
-
-            {reportConfig.includeSubcontractors && (
-              <div style={{ paddingTop: '20px', paddingBottom: '40px', pageBreakInside: 'auto' }}>
-                <h3 style={{ borderBottom: '2px solid black', paddingBottom: '5px', margin: 0 }}>Subcontractor Payments</h3>
-                <table className="print-table" style={{ width: '100%', pageBreakInside: 'auto', borderCollapse: 'separate', borderSpacing: 0 }}>
-                  <thead>
-                    <tr>
-                      <th>Date</th>
-                      <th>Subcontractor</th>
-                      <th>Description</th>
-                      <th>Amount Paid</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {repSubs.map(p => {
-                      const sub = allSubcontractors.find(s => s.id === p.subId);
-                      return (
-                        <tr key={p.id}>
-                          <td>{p.date}</td>
-                          <td>{sub ? sub.name : 'Unknown'}</td>
-                          <td>{p.description}</td>
-                          <td>Rs {Number(p.amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                    </thead>
+                    <tbody>
+                      {repMaterials.map(m => (
+                        <tr key={m.id}>
+                          <td>{m.orderDate}</td>
+                          <td><strong>{m.name}</strong> <span style={{color:'#94a3b8', fontSize:'10px'}}>({m.category})</span></td>
+                          <td>{m.vendorName || '-'}</td>
+                          <td>{m.quantity} {m.unit}</td>
+                          <td>
+                            {m.isPaid ? <span className="badge badge-paid">Paid</span> : <span className="badge badge-pending">Unpaid</span>}
+                          </td>
+                          <td style={{textAlign:'right', fontWeight: '600', color: m.isPaid ? '#0f172a' : '#ef4444'}}>Rs {Number(m.totalCost).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
                         </tr>
-                      )
-                    })}
-                    <tr>
-                      <td colSpan="3" style={{ textAlign: 'right', fontWeight: 'bold' }}>Sub-Total Subcontractors:</td>
-                      <td style={{ fontWeight: 'bold' }}>Rs {subTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            )}
+                      ))}
+                      {repMaterials.length === 0 && <tr><td colSpan="6" style={{textAlign:'center', padding:'20px'}}>No materials found in this period.</td></tr>}
+                    </tbody>
+                  </table>
+                </div>
+              )}
 
-            {reportConfig.includeLabour && (
-              <div style={{ paddingTop: '20px', paddingBottom: '40px', pageBreakInside: 'auto' }}>
-                <h3 style={{ borderBottom: '2px solid black', paddingBottom: '5px', margin: 0 }}>Labour & Payroll</h3>
-                <table className="print-table" style={{ width: '100%', pageBreakInside: 'auto', borderCollapse: 'separate', borderSpacing: 0 }}>
-                  <thead>
-                    <tr>
-                      <th>Worker Name</th>
-                      <th>Trade</th>
-                      <th>Gross Earned</th>
-                      <th>Total Paid (Adv + Net)</th>
-                      <th>Pending Unpaid</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {Object.entries(workerTotals).map(([wId, totals]) => {
-                      if (totals.gross === 0) return null;
-                      const worker = allWorkers.find(w => w.id === wId);
-                      return (
-                        <tr key={wId}>
-                          <td>{worker ? worker.name : 'Unknown'}</td>
-                          <td>{worker ? worker.trade : ''}</td>
-                          <td>Rs {totals.gross.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
-                          <td>Rs {totals.totalPaid.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
-                          <td>Rs {totals.pending.toLocaleString(undefined, { minimumFractionDigits: 2 })} {totals.pending > 0 && <span style={{fontSize: '0.8em', color: 'red'}}>(Unpaid)</span>}</td>
-                        </tr>
-                      );
-                    })}
-                    <tr>
-                      <td colSpan="3" style={{ textAlign: 'right', fontWeight: 'bold' }}>Sub-Total Labour (Paid Only):</td>
-                      <td colSpan="2" style={{ fontWeight: 'bold' }}>Rs {labTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            )}
-
-            {reportConfig.includeExpenses && (
-              <div style={{ paddingTop: '20px', paddingBottom: '40px', pageBreakInside: 'auto' }}>
-                <h3 style={{ borderBottom: '2px solid black', paddingBottom: '5px', margin: 0 }}>Site Expenses</h3>
-                <table className="print-table" style={{ width: '100%', pageBreakInside: 'auto', borderCollapse: 'separate', borderSpacing: 0 }}>
-                  <thead>
-                    <tr>
-                      <th>Date</th>
-                      <th>Description</th>
-                      <th>Paid By</th>
-                      <th>Amount</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {repExpenses.map(e => (
-                      <tr key={e.id}>
-                        <td>{e.date}</td>
-                        <td>{e.description}</td>
-                        <td>{e.paidBy}</td>
-                        <td>Rs {Number(e.amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+              {reportConfig.includeSubcontractors && (
+                <div className="report-section">
+                  <div className="section-header">
+                    <h3>Subcontractors</h3>
+                    <div className="section-totals">
+                      Paid in Period: <span style={{color:'#10b981'}}>Rs {subTotals.paid.toLocaleString()}</span> &nbsp;|&nbsp; Project Pending Balance: <span style={{color:'#ef4444'}}>Rs {subTotals.pending.toLocaleString()}</span>
+                    </div>
+                  </div>
+                  <table className="report-table">
+                    <thead>
+                      <tr>
+                        <th>Date</th>
+                        <th>Subcontractor</th>
+                        <th>Description</th>
+                        <th style={{textAlign:'right'}}>Amount Paid</th>
                       </tr>
-                    ))}
-                    <tr>
-                      <td colSpan="3" style={{ textAlign: 'right', fontWeight: 'bold' }}>Sub-Total Expenses:</td>
-                      <td style={{ fontWeight: 'bold' }}>Rs {expTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            )}
+                    </thead>
+                    <tbody>
+                      {repSubs.map(p => {
+                        const sub = allSubcontractors.find(s => s.id === p.subId);
+                        return (
+                          <tr key={p.id}>
+                            <td>{p.date}</td>
+                            <td><strong>{sub ? sub.name : 'Unknown'}</strong></td>
+                            <td>{p.description}</td>
+                            <td style={{textAlign:'right', fontWeight:'600'}}>Rs {Number(p.amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                          </tr>
+                        )
+                      })}
+                      {repSubs.length === 0 && <tr><td colSpan="4" style={{textAlign:'center', padding:'20px'}}>No subcontractor payments found in this period.</td></tr>}
+                    </tbody>
+                  </table>
+                </div>
+              )}
 
-            <div style={{ paddingTop: '50px', textAlign: 'right', fontSize: '18px' }}>
-              <strong>Grand Total For Period: </strong> 
-              <span style={{ borderBottom: '2px double black' }}>Rs {((reportConfig.includeMaterials ? matTotal : 0) + (reportConfig.includeSubcontractors ? subTotal : 0) + (reportConfig.includeLabour ? labTotal : 0) + (reportConfig.includeExpenses ? expTotal : 0)).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+              {reportConfig.includeLabour && (
+                <div className="report-section">
+                  <div className="section-header">
+                    <h3>Labour & Payroll</h3>
+                    <div className="section-totals">
+                      Gross: Rs {labTotals.gross.toLocaleString()} &nbsp;|&nbsp; Paid: <span style={{color:'#10b981'}}>Rs {labTotals.paid.toLocaleString()}</span> &nbsp;|&nbsp; Pending: <span style={{color:'#ef4444'}}>Rs {labTotals.pending.toLocaleString()}</span>
+                    </div>
+                  </div>
+                  <table className="report-table">
+                    <thead>
+                      <tr>
+                        <th>Worker Name</th>
+                        <th>Trade</th>
+                        <th style={{textAlign:'right'}}>Gross Earned</th>
+                        <th style={{textAlign:'right'}}>Total Paid</th>
+                        <th style={{textAlign:'right'}}>Pending Unpaid</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {Object.entries(workerTotals).map(([wId, totals]) => {
+                        if (totals.gross === 0) return null;
+                        const worker = allWorkers.find(w => w.id === wId);
+                        return (
+                          <tr key={wId}>
+                            <td><strong>{worker ? worker.name : 'Unknown'}</strong></td>
+                            <td>{worker ? worker.trade : ''}</td>
+                            <td style={{textAlign:'right'}}>Rs {totals.gross.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                            <td style={{textAlign:'right', color:'#10b981'}}>Rs {totals.totalPaid.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                            <td style={{textAlign:'right', fontWeight:'600', color: totals.pending > 0 ? '#ef4444' : '#0f172a'}}>Rs {totals.pending.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                          </tr>
+                        );
+                      })}
+                      {Object.keys(workerTotals).length === 0 && <tr><td colSpan="5" style={{textAlign:'center', padding:'20px'}}>No labour records found in this period.</td></tr>}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              {reportConfig.includeExpenses && (
+                <div className="report-section">
+                  <div className="section-header">
+                    <h3>Site Expenses</h3>
+                    <div className="section-totals">
+                      Total Expenses: <span style={{color:'#0f172a'}}>Rs {expTotals.gross.toLocaleString()}</span>
+                    </div>
+                  </div>
+                  <table className="report-table">
+                    <thead>
+                      <tr>
+                        <th>Date</th>
+                        <th>Description</th>
+                        <th>Paid By</th>
+                        <th style={{textAlign:'right'}}>Amount</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {repExpenses.map(e => (
+                        <tr key={e.id}>
+                          <td>{e.date}</td>
+                          <td>{e.description}</td>
+                          <td>{e.paidBy}</td>
+                          <td style={{textAlign:'right', fontWeight:'600'}}>Rs {Number(e.amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                        </tr>
+                      ))}
+                      {repExpenses.length === 0 && <tr><td colSpan="4" style={{textAlign:'center', padding:'20px'}}>No expenses found in this period.</td></tr>}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              <div className="lh-footer">
+                <div><strong>Address:</strong> 53 Pir Muhammad Colony, University Road, Sargodha</div>
+                <div><strong>Muhammad Naveed:</strong> 0300-9608416</div>
+              </div>
             </div>
 
             {reportConfig.includeExpenses && repExpenses.filter(e => e.receiptImage).map((e, index) => (
-              <div key={`receipt-${e.id}`} style={{ pageBreakBefore: 'always', paddingTop: '20px' }}>
-                {index === 0 && <h3 style={{ borderBottom: '2px solid black', paddingBottom: '5px', marginBottom: '20px' }}>Expense Receipts & Attachments</h3>}
+              <div key={`receipt-${e.id}`} className="letterhead-container page-break" style={{ paddingTop: '60px' }}>
+                <div className="letterhead-stripe"></div>
+                <div className="lh-header">
+                  <div className="lh-logo-area">
+                    <img src="/nmt-logo.jpg" alt="N.M.T Logo" className="lh-logo-img" onError={(e) => e.target.style.display='none'} />
+                    <div>
+                      <h1 className="lh-title">N.M.T</h1>
+                      <h2 className="lh-subtitle">Engineers & Builders</h2>
+                    </div>
+                  </div>
+                  <div className="lh-meta">
+                    <div style={{ fontSize: '18px', fontWeight: '800', color: '#0f172a', marginBottom: '4px' }}>Expense Attachment</div>
+                  </div>
+                </div>
                 <div style={{ textAlign: 'center' }}>
-                  <p style={{ margin: '0 0 15px 0', fontWeight: 'bold', fontSize: '18px', textAlign: 'left' }}>{e.date} - {e.description} (Rs {Number(e.amount).toLocaleString()})</p>
-                  <img src={e.receiptImage} alt={e.description} style={{ width: '100%', height: 'auto', maxHeight: '70vh', objectFit: 'contain' }} />
+                  <p style={{ margin: '0 0 20px 0', fontWeight: 'bold', fontSize: '16px', textAlign: 'left', color: '#334155' }}>Ref: {e.date} - {e.description} (Rs {Number(e.amount).toLocaleString()})</p>
+                  <img src={e.receiptImage} alt={e.description} style={{ width: '100%', height: 'auto', maxHeight: '60vh', objectFit: 'contain', border: '1px solid #e2e8f0', padding: '10px', background: '#f8fafc', borderRadius: '4px' }} />
+                </div>
+                <div className="lh-footer">
+                  <div><strong>Address:</strong> 53 Pir Muhammad Colony, University Road, Sargodha</div>
+                  <div><strong>Muhammad Naveed:</strong> 0300-9608416</div>
                 </div>
               </div>
             ))}

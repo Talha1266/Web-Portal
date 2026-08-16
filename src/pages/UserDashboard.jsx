@@ -4496,7 +4496,7 @@ const [profileName, setProfileName] = useState('');
         const grandPending = (reportConfig.includeMaterials ? matTotals.pending : 0) + (reportConfig.includeSubcontractors ? subTotals.pending : 0) + (reportConfig.includeLabour ? labTotals.pending : 0) + (reportConfig.includeExpenses ? expTotals.pending : 0);
 
         return (
-          <div className="print-view" style={{ backgroundColor: '#e2e8f0', minHeight: '100vh', padding: '40px 0' }}>
+          <div className="print-view" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 99999, backgroundColor: '#e2e8f0', minHeight: '100vh', padding: '40px 0', overflowY: 'auto' }}>
             <div className="no-print" style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginBottom: '20px' }}>
               <div style={{ display: 'flex', gap: '1rem', background: 'var(--bg-tertiary)', padding: '15px 25px', borderRadius: 'var(--radius-md)', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}>
                 <button className="btn btn-secondary" onClick={() => setIsReportPreviewActive(false)}>Close Preview</button>
@@ -4509,7 +4509,14 @@ const [profileName, setProfileName] = useState('');
                 @media print {
                   @page { margin: 0; size: A4; }
                   body { margin: 0; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; background: white !important; }
-                  .print-view { padding: 0 !important; background: white !important; }
+                  
+                  /* Ensure ONLY the print view is visible */
+                  body > * { display: none !important; }
+                  #root, .app-layout, .main-content { display: block !important; padding: 0 !important; margin: 0 !important; overflow: visible !important; }
+                  .main-content > div:not(.print-view) { display: none !important; }
+                  .sidebar, .top-nav { display: none !important; }
+                  
+                  .print-view { padding: 0 !important; background: white !important; position: static !important; height: auto !important; overflow: visible !important; }
                   .no-print { display: none !important; }
                   .page-break { page-break-before: always; }
                   .letterhead-container { box-shadow: none !important; margin: 0 !important; padding-bottom: 80px !important; }

@@ -2794,6 +2794,10 @@ const [profileName, setProfileName] = useState('');
                                         onClick={(e) => {
                                           e.stopPropagation();
                                           if (!m.isPaid) {
+                                            if (!m.isArrived) {
+                                              alert("You cannot mark an order as paid until it has arrived.");
+                                              return;
+                                            }
                                             triggerSecurityChallenge("Mark this material as paid?", 'MODIFY', () => {
                                               setPaymentMaterialObj(m);
                                               setPaymentDate(new Date().toISOString().split('T')[0]);
@@ -3772,6 +3776,10 @@ const [profileName, setProfileName] = useState('');
                               <td style={{ padding: '0.75rem 0.5rem', textAlign: 'center', cursor: !order.isUndelivered ? 'pointer' : 'default' }} onClick={() => { 
                                 if (!order.isUndelivered) { 
                                   if (!order.isPaid) {
+                                    if (!order.isArrived) {
+                                      alert("You cannot mark an order as paid until it has arrived.");
+                                      return;
+                                    }
                                     triggerSecurityChallenge("Mark this material as paid?", 'MODIFY', () => {
                                       setPaymentMaterialObj(order);
                                       setPaymentDate(new Date().toISOString().split('T')[0]);

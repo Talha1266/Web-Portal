@@ -179,6 +179,26 @@ const UserDashboard = () => {
   const [viewImageUrl, setViewImageUrl] = useState(null);
   const [galleryIndex, setGalleryIndex] = useState(0);
 
+  // Compile all receipts for the interactive gallery
+  const gallerySlides = useMemo(() => {
+    const slides = [];
+    if (activeProjectId) {
+      allMaterials.filter(m => m.projectId === activeProjectId && m.receiptImage).forEach(m => {
+        slides.push({ src: m.receiptImage, description: `Material: ${m.name} (${m.orderDate})` });
+      });
+      allSiteExpenses.filter(e => e.projectId === activeProjectId && e.receiptImage).forEach(e => {
+        slides.push({ src: e.receiptImage, description: `Expense: ${e.description} (${e.date})` });
+      });
+    }
+    return slides;
+  }, [allMaterials, allSiteExpenses, activeProjectId]);
+
+  const openGalleryAt = (url) => {
+    const index = gallerySlides.findIndex(s => s.src === url);
+    setGalleryIndex(index !== -1 ? index : 0);
+    setIsImageViewerOpen(true);
+  };
+
   // Modals & State - Assets
   const [isAssetModalOpen, setIsAssetModalOpen] = useState(false);
   const [editingAssetId, setEditingAssetId] = useState(null);

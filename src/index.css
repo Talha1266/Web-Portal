@@ -480,7 +480,7 @@ body {
 
 /* Print Engine Styles */
 @media print {
-  @page { margin: 1cm; }
+  @page { margin: 0; size: A4; }
 
   html, body, #root, #root > div, .app-layout, .main-content, .print-view {
     display: block !important;

@@ -1056,6 +1056,20 @@ const [profileName, setProfileName] = useState('');
     });
   };
 
+  const handleUndoReturnAsset = (id) => {
+    triggerSecurityChallenge('Undo this return? The asset will be marked as Mobilized again.', 'UNDO', async () => {
+      try {
+        await updateAsset(id, {
+          status: 'Mobilized',
+          dateReturned: null
+        });
+        await loadData();
+      } catch (err) {
+        alert("Database Error: " + err.message);
+      }
+    });
+  };
+
   const handleDeleteAsset = async (id) => {
     triggerSecurityChallenge('Delete this asset record?', 'DELETE', async () => {
       await deleteAsset(id);
@@ -2985,6 +2999,11 @@ const [profileName, setProfileName] = useState('');
                               {asset.status === 'Mobilized' && (
                                 <button className="btn btn-primary" onClick={() => handleReturnAsset(asset)} style={{ padding: '0.4rem 0.75rem', fontSize: '0.75rem' }} title="Mark Returned">
                                   Return
+                                </button>
+                              )}
+                              {asset.status === 'Returned' && (
+                                <button className="btn btn-secondary" onClick={() => handleUndoReturnAsset(asset.id)} style={{ padding: '0.4rem 0.75rem', fontSize: '0.75rem', background: 'transparent', border: '1px solid var(--warning)', color: 'var(--warning)' }} title="Undo Return">
+                                  Undo
                                 </button>
                               )}
                               <button className="btn btn-danger" onClick={() => handleDeleteAsset(asset.id)} style={{ padding: '0.4rem 0.75rem', fontSize: '0.75rem', background: 'transparent', border: '1px solid var(--danger)', color: 'var(--danger)' }} title="Delete Record">

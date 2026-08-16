@@ -4434,7 +4434,14 @@ const [profileName, setProfileName] = useState('');
           if (reportConfig.endDate && d > new Date(reportConfig.endDate)) return false;
           return true;
         };
-        const repMaterials = allMaterials.filter(m => m.projectId === activeProjectId && isWithinDate(m.orderDate));
+        const repMaterials = allMaterials.filter(m => {
+          if (m.projectId !== activeProjectId) return false;
+          const arrivedUnpaid = m.isArrived && !m.isPaid;
+          const paidInPeriod = m.isPaid && isWithinDate(m.paidDate);
+          const incurredInPeriod = isWithinDate(m.orderDate);
+          return arrivedUnpaid || paidInPeriod || incurredInPeriod;
+        });
+        
         const repSubs = allSubPayments.filter(p => p.projectId === activeProjectId && isWithinDate(p.date));
         const repExpenses = allSiteExpenses.filter(e => e.projectId === activeProjectId && isWithinDate(e.date));
         const repAttendance = allAttendance.filter(a => a.projectId === activeProjectId && isWithinDate(a.date));
@@ -4456,13 +4463,15 @@ const [profileName, setProfileName] = useState('');
           }
         });
 
-        const matTotals = repMaterials.reduce((acc, m) => {
+        const matTotals = { gross: 0, paid: 0, pending: 0 };
+        repMaterials.forEach(m => {
           const cost = Number(m.totalCost || 0);
-          acc.gross += cost;
-          if (m.isPaid) acc.paid += cost;
-          else acc.pending += cost;
-          return acc;
-        }, { gross: 0, paid: 0, pending: 0 });
+          if (isWithinDate(m.orderDate)) matTotals.gross += cost;
+          if (m.isPaid && isWithinDate(m.paidDate)) matTotals.paid += cost;
+        });
+        matTotals.pending = allMaterials
+          .filter(m => m.projectId === activeProjectId && m.isArrived && !m.isPaid)
+          .reduce((acc, m) => acc + Number(m.totalCost || 0), 0);
 
         const subTotals = { gross: 0, paid: 0, pending: 0 };
         subTotals.paid = repSubs.reduce((acc, p) => acc + Number(p.amount || 0), 0);

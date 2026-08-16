@@ -4280,13 +4280,15 @@ const [profileName, setProfileName] = useState('');
         </div>
       )}
 
-      {/* Image Viewer Modal */}
-      {isImageViewerOpen && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(15, 23, 42, 0.6)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }} onClick={() => setIsImageViewerOpen(false)}>
-          <button onClick={() => setIsImageViewerOpen(false)} style={{ position: 'absolute', top: '2rem', right: '2rem', background: 'transparent', border: 'none', color: 'var(--text-primary)', cursor: 'pointer' }}><X size={32} /></button>
-          <img src={viewImageUrl} alt="Receipt" style={{ maxWidth: '90%', maxHeight: '90%', objectFit: 'contain', borderRadius: 'var(--radius-md)' }} onClick={(e) => e.stopPropagation()} />
-        </div>
-      )}
+      {/* Image Viewer Modal - Interactive Gallery */}
+      <Lightbox
+        open={isImageViewerOpen}
+        close={() => setIsImageViewerOpen(false)}
+        index={galleryIndex}
+        slides={gallerySlides}
+        plugins={[Zoom]}
+        zoom={{ maxZoomPixelRatio: 3 }}
+      />
 
       {/* Add Asset Modal */}
       {isAssetModalOpen && (

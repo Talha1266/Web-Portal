@@ -1016,13 +1016,43 @@ const [profileName, setProfileName] = useState('');
     }
   };
 
-  const handleReturnAsset = async (id) => {
-    triggerSecurityChallenge('Mark this asset as returned?', 'RETURN', async () => {
-      await updateAsset(id, {
-        status: 'Returned',
-        dateReturned: new Date().toISOString().split('T')[0]
-      });
-      await loadData();
+  const handleReturnAsset = (asset) => {
+    const qtyToReturnStr = window.prompt(`How many ${asset.name} are you returning?\n\nTotal on-site: ${asset.quantity}`);
+    if (qtyToReturnStr === null) return; // Cancelled
+    
+    const qtyToReturn = parseInt(qtyToReturnStr, 10);
+    if (isNaN(qtyToReturn) || qtyToReturn <= 0 || qtyToReturn > asset.quantity) {
+      alert('Invalid quantity. Please enter a valid number up to ' + asset.quantity);
+      return;
+    }
+
+    triggerSecurityChallenge(`Return ${qtyToReturn} of ${asset.quantity} ${asset.name}?`, 'RETURN', async () => {
+      try {
+        if (qtyToReturn === asset.quantity) {
+          await updateAsset(asset.id, {
+            status: 'Returned',
+            dateReturned: new Date().toISOString().split('T')[0]
+          });
+        } else {
+          // Partial return
+          await updateAsset(asset.id, {
+            quantity: asset.quantity - qtyToReturn
+          });
+          await addAsset({
+            projectId: activeProjectId,
+            name: asset.name,
+            type: asset.type,
+            quantity: qtyToReturn,
+            dateMobilized: asset.dateMobilized,
+            notes: asset.notes ? `${asset.notes} (Partial Return)` : 'Partial Return',
+            status: 'Returned',
+            dateReturned: new Date().toISOString().split('T')[0]
+          });
+        }
+        await loadData();
+      } catch (err) {
+        alert("Database Error: " + err.message);
+      }
     });
   };
 
@@ -2953,7 +2983,7 @@ const [profileName, setProfileName] = useState('');
                                 <Edit2 size={14} />
                               </button>
                               {asset.status === 'Mobilized' && (
-                                <button className="btn btn-primary" onClick={() => handleReturnAsset(asset.id)} style={{ padding: '0.4rem 0.75rem', fontSize: '0.75rem' }} title="Mark Returned">
+                                <button className="btn btn-primary" onClick={() => handleReturnAsset(asset)} style={{ padding: '0.4rem 0.75rem', fontSize: '0.75rem' }} title="Mark Returned">
                                   Return
                                 </button>
                               )}

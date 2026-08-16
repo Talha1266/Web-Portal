@@ -35,7 +35,8 @@ const fetchWithCache = async (table) => {
     await idbSet(`cache_${table}`, data);
     return await mergeOffline(table, data);
   } catch (err) {
-    if (!navigator.onLine || err.message.includes('fetch') || err.message === 'Offline') {
+    const msg = (err.message || err.toString() || '').toLowerCase();
+    if (!navigator.onLine || msg.includes('fetch') || msg.includes('network') || msg.includes('offline') || err instanceof TypeError || err.code === 'TypeError') {
       console.log(`Offline: Serving ${table} from IndexedDB cache...`);
       const cachedData = (await idbGet(`cache_${table}`)) || [];
       return await mergeOffline(table, cachedData);
@@ -56,15 +57,10 @@ const executeMutation = async (table, action, payload, recordId) => {
     else if (action === 'DELETE') result = await supabase.from(table).delete().eq('id', recordId);
     else if (action === 'UPSERT') result = await supabase.from(table).upsert(payload, { onConflict: 'id' });
     
-    if (result.error) {
-      if (result.error.message.includes('Failed to fetch') || result.error.message.includes('fetch')) {
-        await queueOfflineMutation(table, action, payload, recordId);
-        return;
-      }
-      throw new Error(result.error.message);
-    }
+    if (result.error) throw result.error;
   } catch (err) {
-    if (err.message && (err.message.includes('Failed to fetch') || err.message.includes('fetch'))) {
+    const msg = (err.message || err.toString() || '').toLowerCase();
+    if (!navigator.onLine || msg.includes('fetch') || msg.includes('network') || msg.includes('offline') || err instanceof TypeError || err.code === 'TypeError') {
       await queueOfflineMutation(table, action, payload, recordId);
       return;
     }
@@ -125,7 +121,7 @@ export const updateWorker = async (id, updates) => { await executeMutation('work
 export const deleteWorker = async (id) => {  const { error } = await supabase.from('workers').update({ isDeleted: true }).eq('id', id); if (error) throw new Error(error.message); };
 
 export const getAttendance = async () => fetchWithCache('attendance');
-export const addAttendanceRecord = async (r) => {  const { error } = await supabase.from('attendance').insert({ ...r, id: r.id || Date.now().toString(), createdAt: new Date().toISOString() }); if (error) throw new Error(error.message); };
+export const addAttendanceRecord = async (r) => { const payload = { ...r, id: r.id || Date.now().toString(), createdAt: new Date().toISOString() }; await executeMutation('attendance', 'INSERT', payload, payload.id); };
 export const updateAttendanceRecord = async (id, updates) => {  const { error } = await supabase.from('attendance').update(updates).eq('id', id); if (error) throw new Error(error.message); };
 export const deleteAttendanceRecords = async (workerId, projectId, startDate, endDate, isPaid) => {
   let query = supabase.from('attendance').delete().eq('workerId', workerId);
@@ -155,7 +151,7 @@ export const addChangeRequest = async (r) => {  const { error } = await supabase
 export const updateChangeRequest = async (id, updates) => {  const { error } = await supabase.from('change_requests').update(updates).eq('id', id); if (error) throw new Error(error.message); };
 
 export const getMaterials = async () => fetchWithCache('materials');
-export const addMaterial = async (m) => {  const { error } = await supabase.from('materials').insert({ ...m, id: m.id || Date.now().toString(), status: 'Pending Approval', createdAt: new Date().toISOString() }); if (error) throw new Error(error.message); };
+export const addMaterial = async (m) => { const payload = { ...m, id: m.id || Date.now().toString(), status: 'Pending Approval', createdAt: new Date().toISOString() }; await executeMutation('materials', 'INSERT', payload, payload.id); };
 export const updateMaterial = async (id, updates) => { await executeMutation('materials', 'UPDATE', updates, id); };
 export const deleteMaterial = async (id) => { await executeMutation('materials', 'DELETE', null, id); };
 

@@ -3872,8 +3872,11 @@ const [profileName, setProfileName] = useState('');
       {/* Labour Card Modal */}
       {isLabourCardModalOpen && selectedLabour && (() => {
         // Compute labour's attendance and advances
-        const labourRecords = allAttendance.filter(a => a.projectId === activeProjectId && a.workerId === selectedLabour.id)
-                                           .sort((a,b) => new Date(b.date) - new Date(a.date));
+        const labourRecords = allAttendance.filter(a => 
+            a.projectId === activeProjectId && 
+            a.workerId === selectedLabour.id &&
+            (payrollViewMode === 'outstanding' ? !a.paid : a.paid)
+          ).sort((a,b) => new Date(b.date) - new Date(a.date));
                                            
         let totalReg = 0;
         let totalOT = 0;
@@ -3897,7 +3900,9 @@ const [profileName, setProfileName] = useState('');
                 </div>
               </div>
 
-              <h3 className="heading-3" style={{ marginBottom: '1rem', fontSize: '1.1rem', color: 'var(--text-primary)' }}>Attendance & Advance Ledger</h3>
+              <h3 className="heading-3" style={{ marginBottom: '1rem', fontSize: '1.1rem', color: 'var(--text-primary)' }}>
+                {payrollViewMode === 'outstanding' ? 'Active Labour Card (Pending)' : 'Paid Labour Card (History)'}
+              </h3>
               
               <div style={{ overflowX: 'auto', marginBottom: '2rem' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.875rem' }}>

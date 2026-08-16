@@ -1,4 +1,7 @@
 import toast from 'react-hot-toast';
+import Lightbox from 'yet-another-react-lightbox';
+import 'yet-another-react-lightbox/styles.css';
+import Zoom from 'yet-another-react-lightbox/plugins/zoom';
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LayoutDashboard, HardHat, FileText, MessageSquare, LogOut, Plus, Edit2, Trash2, PieChart, Shield, X, MapPin, Building, Calendar, Users, Folder, FolderPlus, UploadCloud, ChevronRight, ArrowLeft, CheckSquare, Settings, ClipboardList, DollarSign, CheckCircle, Briefcase, Package, CreditCard, Truck, AlertTriangle, XCircle, Menu, Unlock, Printer, Camera } from 'lucide-react';
@@ -174,6 +177,7 @@ const UserDashboard = () => {
   // Modals & State - Image Viewer
   const [isImageViewerOpen, setIsImageViewerOpen] = useState(false);
   const [viewImageUrl, setViewImageUrl] = useState(null);
+  const [galleryIndex, setGalleryIndex] = useState(0);
 
   // Modals & State - Assets
   const [isAssetModalOpen, setIsAssetModalOpen] = useState(false);
@@ -2866,7 +2870,7 @@ const [profileName, setProfileName] = useState('');
                                   <td style={{ padding: '1rem 0.5rem', textAlign: 'center' }}>
                                     <div style={{ display: 'flex', gap: '0.25rem', justifyContent: 'center' }}>
                                       {m.receiptImage && (
-                                        <button onClick={(e) => { e.stopPropagation(); setViewImageUrl(m.receiptImage); setIsImageViewerOpen(true); }} style={{ background: 'none', border: 'none', color: 'var(--accent-secondary)', cursor: 'pointer', padding: '0.25rem' }} title="View Receipt">
+                                        <button onClick={(e) => { e.stopPropagation(); openGalleryAt(m.receiptImage); }} style={{ background: 'none', border: 'none', color: 'var(--accent-secondary)', cursor: 'pointer', padding: '0.25rem' }} title="View Receipt">
                                           <FileText size={16} />
                                         </button>
                                       )}
@@ -2999,7 +3003,7 @@ const [profileName, setProfileName] = useState('');
                                   <td style={{ padding: '1rem', textAlign: 'right', fontWeight: 500, color: 'var(--danger)' }}>-Rs {exp.amount}</td>
                                   <td style={{ padding: '1rem', textAlign: 'center' }}>
                                     {exp.receiptImage ? (
-                                      <button onClick={() => { setViewImageUrl(exp.receiptImage); setIsImageViewerOpen(true); }} style={{ background: 'none', border: 'none', color: 'var(--accent-secondary)', cursor: 'pointer' }} title="View Receipt">
+                                      <button onClick={(e) => { e.stopPropagation(); openGalleryAt(exp.receiptImage); }} style={{ background: 'none', border: 'none', color: 'var(--accent-secondary)', cursor: 'pointer' }} title="View Receipt">
                                         <FileText size={18} />
                                       </button>
                                     ) : <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>None</span>}

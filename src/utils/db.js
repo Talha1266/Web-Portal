@@ -439,17 +439,27 @@ export const loginUser = async (email, password) => {
   }
 
   // Try Supabase Auth first
-  const { data: authData, error: authError } = await supabase.auth.signInWithPassword({ email, password });
+  // Try Supabase Auth first
+  let authData = null;
+  let authError = null;
+  try {
+    const res = await supabase.auth.signInWithPassword({ email, password });
+    authData = res.data;
+    authError = res.error;
+  } catch (err) {
+    // Catch native JavaScript exceptions (like TypeError: Failed to fetch)
+    authError = err;
+  }
   
   if (authError) {
-    const msg = (authError.message || '').toLowerCase();
-    if (msg.includes('fetch') || msg.includes('network') || msg.includes('offline') || authError.name === 'AuthRetryableFetchError' || authError.status === 0) {
+    const msg = (authError.message || authError.toString() || '').toLowerCase();
+    if (msg.includes('fetch') || msg.includes('network') || msg.includes('offline') || authError.name === 'AuthRetryableFetchError' || authError.status === 0 || authError instanceof TypeError) {
       return _localOfflineLogin(email, password);
     }
-    throw new Error(authError.message);
+    throw new Error(authError.message || authError.toString());
   }
 
-  if (authData?.user) {
+  if (authData?.user) { {
     let { data: profile } = await supabase.from('users').select('*').eq('email', authData.user.email).single();
     
     if (profile && profile.id !== authData.user.id) {

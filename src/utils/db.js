@@ -1,5 +1,6 @@
 import { supabase } from '../supabaseClient';
 import { queueOfflineMutation, getOfflineMutations } from './offlineSync';
+import { set as idbSet, get as idbGet } from 'idb-keyval';
 
 const mergeOffline = async (table, data) => {
   let results = [...(data || [])];
@@ -23,6 +24,24 @@ const mergeOffline = async (table, data) => {
     results = results.filter(r => !deletes.includes(r.id));
   } catch (e) { console.error("Offline merge error:", e); }
   return results;
+};
+
+
+const fetchWithCache = async (table) => {
+  try {
+    if (!navigator.onLine) throw new Error("Offline");
+    const { data, error } = await supabase.from(table).select('*');
+    if (error) throw error;
+    await idbSet(`cache_${table}`, data);
+    return await mergeOffline(table, data);
+  } catch (err) {
+    if (!navigator.onLine || err.message.includes('fetch') || err.message === 'Offline') {
+      console.log(`Offline: Serving ${table} from IndexedDB cache...`);
+      const cachedData = (await idbGet(`cache_${table}`)) || [];
+      return await mergeOffline(table, cachedData);
+    }
+    throw err;
+  }
 };
 
 const executeMutation = async (table, action, payload, recordId) => {
@@ -56,7 +75,7 @@ const executeMutation = async (table, action, payload, recordId) => {
 
 export const initializeDB = () => {};
 
-export const getUsers = async () => { const { data } = await supabase.from('users').select('*'); return await mergeOffline('users', data); };
+export const getUsers = async () => fetchWithCache('users');
 export const addUser = async (u) => { const payload = { ...u, id: u.id || Date.now().toString(), createdAt: new Date().toISOString() }; await executeMutation('users', 'INSERT', payload, payload.id); };
 export const updateUser = async (id, updates) => { await executeMutation('users', 'UPDATE', updates, id); };
 export const deleteUser = async (id) => { await executeMutation('users', 'DELETE', null, id); };
@@ -75,7 +94,7 @@ export const DEFAULT_PERMISSIONS = {
   tasks: false
 };
 
-export const getProjects = async () => { const { data } = await supabase.from('projects').select('*'); return await mergeOffline('projects', data); };
+export const getProjects = async () => fetchWithCache('projects');
 export const addProject = async (p) => { const payload = { ...p, id: p.id || Date.now().toString(), progress: 0, createdAt: new Date().toISOString() }; await executeMutation('projects', 'INSERT', payload, payload.id); };
 export const updateProject = async (id, updates) => { await executeMutation('projects', 'UPDATE', updates, id); };
 export const deleteProject = async (id) => {
@@ -100,12 +119,12 @@ export const deleteProject = async (id) => {
   if (error) throw new Error(error.message);
 };
 
-export const getWorkers = async () => { const { data } = await supabase.from('workers').select('*'); return await mergeOffline('workers', data); };
+export const getWorkers = async () => fetchWithCache('workers');
 export const addWorker = async (w) => { const payload = { ...w, id: w.id || Date.now().toString(), createdAt: new Date().toISOString() }; await executeMutation('workers', 'INSERT', payload, payload.id); };
 export const updateWorker = async (id, updates) => { await executeMutation('workers', 'UPDATE', updates, id); };
 export const deleteWorker = async (id) => {  const { error } = await supabase.from('workers').update({ isDeleted: true }).eq('id', id); if (error) throw new Error(error.message); };
 
-export const getAttendance = async () => { const { data } = await supabase.from('attendance').select('*'); return await mergeOffline('attendance', data); };
+export const getAttendance = async () => fetchWithCache('attendance');
 export const addAttendanceRecord = async (r) => {  const { error } = await supabase.from('attendance').insert({ ...r, id: r.id || Date.now().toString(), createdAt: new Date().toISOString() }); if (error) throw new Error(error.message); };
 export const updateAttendanceRecord = async (id, updates) => {  const { error } = await supabase.from('attendance').update(updates).eq('id', id); if (error) throw new Error(error.message); };
 export const deleteAttendanceRecords = async (workerId, projectId, startDate, endDate, isPaid) => {
@@ -118,7 +137,7 @@ export const deleteAttendanceRecords = async (workerId, projectId, startDate, en
   if (error) throw new Error(error.message);
 };
 
-export const getSubcontractors = async () => { const { data } = await supabase.from('subcontractors').select('*'); return await mergeOffline('subcontractors', data); };
+export const getSubcontractors = async () => fetchWithCache('subcontractors');
 export const addSubcontractor = async (s) => { const payload = { ...s, id: s.id || Date.now().toString(), createdAt: new Date().toISOString() }; await executeMutation('subcontractors', 'INSERT', payload, payload.id); };
 export const updateSubcontractor = async (id, updates) => { await executeMutation('subcontractors', 'UPDATE', updates, id); };
 export const deleteSubcontractor = async (id) => { 
@@ -126,21 +145,21 @@ export const deleteSubcontractor = async (id) => {
   await supabase.from('sub_payments').delete().eq('subId', id); 
 };
 
-export const getSubPayments = async () => { const { data } = await supabase.from('sub_payments').select('*'); return await mergeOffline('sub_payments', data); };
+export const getSubPayments = async () => fetchWithCache('sub_payments');
 export const addSubPayment = async (p) => { const payload = { ...p, id: p.id || Date.now().toString(), createdAt: new Date().toISOString() }; await executeMutation('sub_payments', 'INSERT', payload, payload.id); };
 export const updateSubPayment = async (id, updates) => { await executeMutation('sub_payments', 'UPDATE', updates, id); };
 export const deleteSubPayment = async (id) => { await executeMutation('sub_payments', 'DELETE', null, id); };
 
-export const getChangeRequests = async () => { const { data } = await supabase.from('change_requests').select('*'); return await mergeOffline('change_requests', data); };
+export const getChangeRequests = async () => fetchWithCache('change_requests');
 export const addChangeRequest = async (r) => {  const { error } = await supabase.from('change_requests').insert({ ...r, id: r.id || Date.now().toString(), status: 'pending', createdAt: new Date().toISOString() }); if (error) throw new Error(error.message); };
 export const updateChangeRequest = async (id, updates) => {  const { error } = await supabase.from('change_requests').update(updates).eq('id', id); if (error) throw new Error(error.message); };
 
-export const getMaterials = async () => { const { data } = await supabase.from('materials').select('*'); return await mergeOffline('materials', data); };
+export const getMaterials = async () => fetchWithCache('materials');
 export const addMaterial = async (m) => {  const { error } = await supabase.from('materials').insert({ ...m, id: m.id || Date.now().toString(), status: 'Pending Approval', createdAt: new Date().toISOString() }); if (error) throw new Error(error.message); };
 export const updateMaterial = async (id, updates) => { await executeMutation('materials', 'UPDATE', updates, id); };
 export const deleteMaterial = async (id) => { await executeMutation('materials', 'DELETE', null, id); };
 
-export const getMaterialCategories = async () => { const { data } = await supabase.from('material_categories').select('*'); return await mergeOffline('material_categories', data); };
+export const getMaterialCategories = async () => fetchWithCache('material_categories');
 export const addMaterialCategory = async (name, projectId) => {  const { error } = await supabase.from('material_categories').insert({ id: Date.now().toString(), name, projectId }); if (error) throw new Error(error.message); };
 export const updateMaterialCategory = async (oldName, newName, projectId) => {
   // Update all materials referencing this category in this project
@@ -151,7 +170,7 @@ export const updateMaterialCategory = async (oldName, newName, projectId) => {
 };
 export const deleteMaterialCategory = async (name, projectId) => {  const { error } = await supabase.from('material_categories').delete().eq('name', name).eq('projectId', projectId); if (error) throw new Error(error.message); };
 
-export const getVendors = async () => { const { data } = await supabase.from('vendors').select('*'); return await mergeOffline('vendors', data); };
+export const getVendors = async () => fetchWithCache('vendors');
 export const addVendor = async (name, projectId, categoryName) => {  const { error } = await supabase.from('vendors').insert({ name, projectId, categoryName }); if (error) throw new Error(error.message); };
 export const updateVendor = async (id, newName, projectId) => {
   const { data: oldVendor } = await supabase.from('vendors').select('name, categoryName').eq('id', id).single();
@@ -161,30 +180,30 @@ export const updateVendor = async (id, newName, projectId) => {
 };
 export const deleteVendor = async (id, projectId) => {  const { error } = await supabase.from('vendors').delete().eq('id', id).eq('projectId', projectId); if (error) throw new Error(error.message); };
 
-export const getSiteAdvances = async () => { const { data } = await supabase.from('site_advances').select('*'); return await mergeOffline('site_advances', data); };
+export const getSiteAdvances = async () => fetchWithCache('site_advances');
 export const addSiteAdvance = async (a) => { const payload = { ...a, id: a.id || Date.now().toString(), createdAt: new Date().toISOString() }; await executeMutation('site_advances', 'INSERT', payload, payload.id); };
 export const updateSiteAdvance = async (id, updates) => { await executeMutation('site_advances', 'UPDATE', updates, id); };
 export const deleteSiteAdvance = async (id) => { await executeMutation('site_advances', 'DELETE', null, id); };
 
-export const getSiteExpenses = async () => { const { data } = await supabase.from('site_expenses').select('*'); return await mergeOffline('site_expenses', data); };
+export const getSiteExpenses = async () => fetchWithCache('site_expenses');
 export const addSiteExpense = async (e) => { const payload = { ...e, id: e.id || Date.now().toString(), createdAt: new Date().toISOString() }; await executeMutation('site_expenses', 'INSERT', payload, payload.id); };
 export const updateSiteExpense = async (id, updates) => { await executeMutation('site_expenses', 'UPDATE', updates, id); };
 export const deleteSiteExpense = async (id) => { await executeMutation('site_expenses', 'DELETE', null, id); };
 
-export const getAssets = async () => { const { data } = await supabase.from('assets').select('*'); return await mergeOffline('assets', data); };
+export const getAssets = async () => fetchWithCache('assets');
 export const addAsset = async (a) => { const payload = { ...a, id: a.id || Date.now().toString(), createdAt: new Date().toISOString() }; await executeMutation('assets', 'INSERT', payload, payload.id); };
 export const updateAsset = async (id, updates) => { await executeMutation('assets', 'UPDATE', updates, id); };
 export const deleteAsset = async (id) => { await executeMutation('assets', 'DELETE', null, id); };
 
-export const getTasks = async () => { const { data } = await supabase.from('tasks').select('*'); return await mergeOffline('tasks', data); };
+export const getTasks = async () => fetchWithCache('tasks');
 export const addTask = async (t) => { const payload = { ...t, id: t.id || Date.now().toString(), createdAt: new Date().toISOString() }; await executeMutation('tasks', 'INSERT', payload, payload.id); };
 export const updateTask = async (id, updates) => { await executeMutation('tasks', 'UPDATE', updates, id); };
 export const deleteTask = async (id) => { await executeMutation('tasks', 'DELETE', null, id); };
 
-export const getMessages = async () => { const { data } = await supabase.from('messages').select('*'); return await mergeOffline('messages', data); };
+export const getMessages = async () => fetchWithCache('messages');
 export const addMessage = async (m) => { const payload = { ...m, id: m.id || Date.now().toString(), createdAt: new Date().toISOString() }; await executeMutation('messages', 'INSERT', payload, payload.id); };
 
-export const getDocuments = async () => { const { data } = await supabase.from('documents').select('*'); return await mergeOffline('documents', data); };
+export const getDocuments = async () => fetchWithCache('documents');
 export const addDocument = async (d) => { const payload = { ...d, id: d.id || Date.now().toString(), createdAt: new Date().toISOString() }; await executeMutation('documents', 'INSERT', payload, payload.id); };
 export const updateDocument = async (id, updates) => {  const { error } = await supabase.from('documents').update(updates).eq('id', id); if (error) throw new Error(error.message); };
 export const deleteDocument = async (id) => { await executeMutation('documents', 'DELETE', null, id); };

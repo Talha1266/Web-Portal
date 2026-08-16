@@ -12,7 +12,21 @@ import InstallPWA from '../components/InstallPWA';
 
 const UserDashboard = () => {
   const navigate = useNavigate();
+
   const [currentUser, setCurrentUser] = useState(null);
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+
+  useEffect(() => {
+    const handleOnline = () => { setIsOnline(true); toast.success("Back online! Syncing offline data..."); };
+    const handleOffline = () => { setIsOnline(false); toast.error("You are offline. Changes will be saved locally."); };
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
   
   // Navigation State
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -1626,6 +1640,11 @@ const [profileName, setProfileName] = useState('');
         <div className="glass-card flex-center" style={{ flexDirection: 'column', padding: '4rem 2rem', maxWidth: '600px', width: '100%' }}>
           <Shield size={64} style={{ color: 'var(--warning)', marginBottom: '1.5rem' }} />
           <h1 className="heading-2">Pending Admin Approval</h1>
+          {!isOnline && (
+            <div style={{ marginLeft: '1rem', padding: '0.25rem 0.75rem', background: 'rgba(239, 68, 68, 0.1)', color: 'var(--danger)', borderRadius: '999px', fontSize: '0.75rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
+              <AlertTriangle size={14} /> Offline Mode
+            </div>
+          )}
           <p style={{ color: 'var(--text-secondary)', marginTop: '1rem', marginBottom: '2.5rem', lineHeight: 1.6 }}>
             Your account has been created successfully, but an Administrator must verify your identity and assign you to specific projects before you can access the dashboard.
           </p>

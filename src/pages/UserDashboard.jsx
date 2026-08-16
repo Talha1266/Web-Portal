@@ -4570,10 +4570,10 @@ const [profileName, setProfileName] = useState('');
             </div>
             <button 
               className="btn btn-danger" 
-              style={{ width: '100%', padding: '1rem', opacity: securityChallenge.inputText === securityChallenge.expectedWord ? 1 : 0.5, cursor: securityChallenge.inputText === securityChallenge.expectedWord ? 'pointer' : 'not-allowed' }}
-              disabled={securityChallenge.inputText !== securityChallenge.expectedWord}
+              style={{ width: '100%', padding: '1rem', opacity: securityChallenge.inputText?.trim().toUpperCase() === securityChallenge.expectedWord?.trim().toUpperCase() ? 1 : 0.5, cursor: securityChallenge.inputText?.trim().toUpperCase() === securityChallenge.expectedWord?.trim().toUpperCase() ? 'pointer' : 'not-allowed' }}
+              disabled={securityChallenge.inputText?.trim().toUpperCase() !== securityChallenge.expectedWord?.trim().toUpperCase()}
               onClick={async () => {
-                if (securityChallenge.inputText === securityChallenge.expectedWord) {
+                if (securityChallenge.inputText?.trim().toUpperCase() === securityChallenge.expectedWord?.trim().toUpperCase()) {
                   setSecurityChallenge({...securityChallenge, isOpen: false});
                   if (securityChallenge.onConfirm) await securityChallenge.onConfirm();
                 }

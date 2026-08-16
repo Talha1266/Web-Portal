@@ -2667,9 +2667,15 @@ const [profileName, setProfileName] = useState('');
                     <div style={{ display: 'flex', gap: '1.5rem', borderBottom: '2px solid transparent' }}>
                       <button 
                         onClick={() => setMaterialViewMode('active')} 
-                        style={{ background: 'none', border: 'none', borderBottom: materialViewMode === 'active' ? '2px solid var(--accent-primary)' : '2px solid transparent', padding: '0.5rem 0', fontWeight: materialViewMode === 'active' ? 'bold' : 'normal', color: materialViewMode === 'active' ? 'var(--text-primary)' : 'var(--text-secondary)', cursor: 'pointer' }}
+                        style={{ background: 'none', border: 'none', borderBottom: (materialViewMode === 'active' || materialViewMode === 'pending') ? '2px solid var(--accent-primary)' : '2px solid transparent', padding: '0.5rem 0', fontWeight: (materialViewMode === 'active' || materialViewMode === 'pending') ? 'bold' : 'normal', color: (materialViewMode === 'active' || materialViewMode === 'pending') ? 'var(--text-primary)' : 'var(--text-secondary)', cursor: 'pointer' }}
                       >
-                        Active Orders
+                        Pending Delivery
+                      </button>
+                      <button 
+                        onClick={() => setMaterialViewMode('arrived_unpaid')} 
+                        style={{ background: 'none', border: 'none', borderBottom: materialViewMode === 'arrived_unpaid' ? '2px solid var(--accent-primary)' : '2px solid transparent', padding: '0.5rem 0', fontWeight: materialViewMode === 'arrived_unpaid' ? 'bold' : 'normal', color: materialViewMode === 'arrived_unpaid' ? 'var(--text-primary)' : 'var(--text-secondary)', cursor: 'pointer' }}
+                      >
+                        Arrived (Unpaid)
                       </button>
                       <button 
                         onClick={() => setMaterialViewMode('history')} 
@@ -2715,7 +2721,15 @@ const [profileName, setProfileName] = useState('');
                             </tr>
                           </thead>
                           <tbody>
-                            {projMaterials.filter(m => materialViewMode === 'active' ? (!m.isPaid && !m.isUndelivered) : (m.isPaid || m.isUndelivered)).sort((a,b) => new Date(b.orderDate) - new Date(a.orderDate)).map(m => {
+                            {projMaterials.filter(m => {
+                              if (materialViewMode === 'active' || materialViewMode === 'pending') {
+                                return !m.isArrived && !m.isPaid && !m.isUndelivered;
+                              } else if (materialViewMode === 'arrived_unpaid') {
+                                return m.isArrived && !m.isPaid && !m.isUndelivered;
+                              } else {
+                                return m.isPaid || m.isUndelivered;
+                              }
+                            }).sort((a,b) => new Date(b.orderDate) - new Date(a.orderDate)).map(m => {
                               const canModify = canModifyEntry(m.createdAt);
                               
                               return (

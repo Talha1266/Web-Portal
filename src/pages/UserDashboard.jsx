@@ -687,10 +687,6 @@ const [profileName, setProfileName] = useState('');
     e.preventDefault();
     triggerSecurityChallenge(`Are you sure you want to mark these wages as paid?`, "PAY", async () => {
       const amountPaid = Number(settleAdvance);
-      if (amountPaid < 0) {
-        alert("Amount paid cannot be negative.");
-        return;
-      }
       const difference = amountPaid - settleNetOwed;
       
       await markAttendancePaid(activeProjectId, settleWorkerId, payrollStart, payrollEnd, false);
@@ -717,13 +713,15 @@ const [profileName, setProfileName] = useState('');
   
   const handleConfirmWorkerAdvance = async (e) => {
     e.preventDefault();
-    if (Number(workerAdvanceAmount) > 0) {
-      await addAdvanceOnlyRecord(activeProjectId, workerAdvanceWorkerId, Number(workerAdvanceAmount), currentUser.id);
+    const amount = Number(workerAdvanceAmount);
+    if (amount !== 0) {
+      await addAdvanceOnlyRecord(activeProjectId, workerAdvanceWorkerId, amount, currentUser.id);
       setIsWorkerAdvanceModalOpen(false);
       setWorkerAdvanceAmount('');
       await loadData();
       const workerName = allWorkers.find(w => w.id === workerAdvanceWorkerId)?.name || "a worker";
-      notifyAdmins(`${currentUser?.name || "A user"} issued an advance of Rs ${workerAdvanceAmount} to ${workerName}`, "Worker Advance Issued");
+      const actionText = amount > 0 ? "issued an advance of Rs" : "received advance payback of Rs";
+      notifyAdmins(`${currentUser?.name || "A user"} ${actionText} ${Math.abs(amount)} from/to ${workerName}`, amount > 0 ? "Worker Advance Issued" : "Advance Payback Received");
       setWorkerAdvanceWorkerId(null);
     }
   };

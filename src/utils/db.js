@@ -19,6 +19,18 @@ const mergeOffline = async (table, data) => {
       if (idx !== -1) results[idx] = { ...results[idx], ...u.payload, _isOffline: true };
     });
     
+    // Apply upserts (e.g. for Attendance)
+    const upserts = tableQueue.filter(q => q.action === 'UPSERT');
+    upserts.forEach(u => {
+      const items = Array.isArray(u.payload) ? u.payload : [u.payload];
+      items.forEach(item => {
+        const recordId = item.id || u.recordId;
+        const idx = results.findIndex(r => r.id === recordId);
+        if (idx !== -1) results[idx] = { ...results[idx], ...item, _isOffline: true };
+        else results.push({ ...item, _isOffline: true });
+      });
+    });
+
     // Apply deletes
     const deletes = tableQueue.filter(q => q.action === 'DELETE').map(q => q.recordId);
     results = results.filter(r => !deletes.includes(r.id));
@@ -32,7 +44,10 @@ const fetchWithCache = async (table) => {
     if (!navigator.onLine) throw new Error("Offline");
     const { data, error } = await supabase.from(table).select('*');
     if (error) throw error;
-    await idbSet(`cache_${table}`, data);
+    
+    // Fire and forget cache save to prevent IDB transaction limits from crashing Promise.all
+    idbSet(`cache_${table}`, data).catch(e => console.warn("Failed to cache", table, e));
+    
     return await mergeOffline(table, data);
   } catch (err) {
     const msg = (err.message || err.toString() || '').toLowerCase();

@@ -2187,113 +2187,118 @@ const [profileName, setProfileName] = useState('');
 
               return (
               <div className="glass-card animate-fade-in" style={{ padding: '2.5rem', minHeight: '500px' }}>
-                <div className="flex-between" style={{ marginBottom: '2rem', flexWrap: 'wrap', gap: '1.5rem' }}>
+                {/* HEADER ROW */}
+                <div className="flex-between" style={{ marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '1rem' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap' }}>
-                    <h3 className="heading-3" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><ClipboardList size={20} className="text-gradient"/> Daily Log</h3>
-                    <input type="date" className="input-field" value={attendanceDate} onChange={e => handleNav(() => setAttendanceDate(e.target.value))} style={{ padding: '0.5rem', colorScheme: 'dark', cursor: 'pointer' }} />
-                    {!canModify && !perms.root && <span style={{ color: 'var(--warning)', fontSize: '0.875rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Shield size={14}/> Locked (Admin Approval Req.)</span>}
-                    {!canModify && perms.root && <span style={{ color: 'var(--warning)', fontSize: '0.875rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Shield size={14}/> Historical Record (Locked)</span>}
+                    <h3 className="heading-3" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0 }}><ClipboardList size={20} className="text-gradient"/> Daily Log</h3>
+                    <input type="date" className="input-field" value={attendanceDate} onChange={e => handleNav(() => setAttendanceDate(e.target.value))} style={{ padding: '0.4rem', colorScheme: 'dark', cursor: 'pointer', fontSize: '0.875rem' }} />
+                    {!canModify && !perms.root && <span style={{ color: 'var(--warning)', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.3rem', background: 'rgba(234, 179, 8, 0.1)', padding: '0.2rem 0.5rem', borderRadius: 'var(--radius-full)' }}><Shield size={12}/> Locked</span>}
+                    {!canModify && perms.root && <span style={{ color: 'var(--warning)', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.3rem', background: 'rgba(234, 179, 8, 0.1)', padding: '0.2rem 0.5rem', borderRadius: 'var(--radius-full)' }}><Shield size={12}/> Historical Record (Locked)</span>}
                   </div>
-                  <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-                     <button className="btn btn-secondary" onClick={() => setIsWorkerModalOpen(true)}>+ Register Labourer</button>
+                  <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+                     <button className="btn btn-secondary" onClick={() => setIsWorkerModalOpen(true)} style={{ padding: '0.4rem 0.75rem', fontSize: '0.8rem' }}>+ Register Labourer</button>
                      {!canModify && (perms.root || perms.unlock_past) && (
-                       <button className="btn btn-warning" onClick={() => { if (window.confirm("You are about to edit historical attendance records. This can alter past payroll calculations. Proceed with caution?")) setAdminUnlockPast(true); }} style={{ background: 'transparent', border: '1px solid var(--warning)', color: 'var(--warning)' }}><Shield size={16} style={{ display: 'inline', verticalAlign: 'text-bottom', marginRight: '0.5rem' }}/> Unlock to Edit</button>
+                       <button className="btn btn-warning" onClick={() => { if (window.confirm("You are about to edit historical attendance records. This can alter past payroll calculations. Proceed with caution?")) setAdminUnlockPast(true); }} style={{ background: 'transparent', border: '1px solid var(--warning)', color: 'var(--warning)', padding: '0.4rem 0.75rem', fontSize: '0.8rem' }}><Shield size={14} style={{ display: 'inline', verticalAlign: 'text-bottom', marginRight: '0.3rem' }}/> Unlock</button>
                      )}
                      {canModify ? (
-                       <button className="btn btn-primary" onClick={handleSaveAttendance}>Save Attendance</button>
+                       <button className="btn btn-primary" onClick={handleSaveAttendance} style={{ padding: '0.4rem 1rem', fontSize: '0.8rem' }}>Save Attendance</button>
                      ) : (
-                       <button className="btn btn-primary" style={{ opacity: 0.5, cursor: 'not-allowed' }} onClick={() => alert("This entry is locked due to the 24-hour rule. Please ask your administrator to unlock the past to amend this entry.")}>Save Attendance (Locked)</button>
+                       <button className="btn btn-primary" style={{ opacity: 0.5, cursor: 'not-allowed', padding: '0.4rem 1rem', fontSize: '0.8rem' }} onClick={() => alert("This entry is locked due to the 24-hour rule. Please ask your administrator to unlock the past to amend this entry.")}>Save (Locked)</button>
                      )}
                   </div>
                 </div>
 
+                {/* TABLE SECTION */}
                 {allWorkers.filter(w => w.projectId === activeProjectId && !w.isDeleted).length === 0 ? (
-                   <div style={{ textAlign: 'center', padding: '5rem', color: 'var(--text-muted)', border: '2px dashed var(--border-strong)', borderRadius: 'var(--radius-md)', marginTop: '2rem' }}>
+                   <div style={{ textAlign: 'center', padding: '4rem', color: 'var(--text-muted)', background: 'var(--glass-overlay)', borderRadius: 'var(--radius-md)' }}>
                      <Users size={48} style={{ marginBottom: '1rem', opacity: 0.3 }} />
                      <p>No labourers registered on this project yet.</p>
-                     <p style={{ fontSize: '0.875rem', marginTop: '0.5rem' }}>Click "Register Labourer" to start building your workforce database.</p>
+                     <p style={{ fontSize: '0.8rem', marginTop: '0.5rem' }}>Click "Register Labourer" to start building your workforce database.</p>
                    </div>
                 ) : (
                   <div style={{ overflowX: 'auto' }}>
                     <div className="table-wrapper">
-<table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '800px' }}>
-                      <thead>
-                        <tr style={{ borderBottom: '1px solid var(--border-strong)', color: 'var(--text-muted)' }}>
-                          <th style={{ padding: '1rem 0.5rem', fontWeight: 500 }}>Name</th>
-                          <th style={{ padding: '1rem 0.5rem', fontWeight: 500 }}>Trade</th>
-                          <th style={{ padding: '1rem 0.5rem', fontWeight: 500, textAlign: 'center' }}>Present (Full Day)</th>
-                          <th style={{ padding: '1rem 0.5rem', fontWeight: 500, textAlign: 'center', width: '120px' }}>Regular Hrs</th>
-                          <th style={{ padding: '1rem 0.5rem', fontWeight: 500, textAlign: 'center', width: '120px' }}>Overtime Hrs</th>
-                          <th style={{ padding: '1rem 0.5rem', fontWeight: 500, textAlign: 'center', width: '120px' }}>Advance (Rs)</th>
-                          <th style={{ padding: '1rem 0.5rem', fontWeight: 500, textAlign: 'right' }}>Net Earned</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {allWorkers.filter(w => w.projectId === activeProjectId && !w.isDeleted).map(w => {
-                          const form = attendanceForm[w.id] || { isPresent: false, regularHours: 0, overtimeHours: 0, advance: 0, dailyWage: w.dailyWage };
-                          const regHrs = Number(form.regularHours) || 0;
-                          const otHrs = Number(form.overtimeHours) || 0;
-                          const adv = Number(form.advance) || 0;
-                          const hourlyRate = (form.dailyWage || 0) / 8;
-                          const earned = ((regHrs + otHrs) * hourlyRate) - adv;
-                          
-                          return (
-                            <tr key={w.id} style={{ borderBottom: '1px solid var(--border-subtle)', background: form.isPresent ? 'rgba(99, 102, 241, 0.05)' : 'transparent' }}>
-                              <td style={{ padding: '1rem 0.5rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                <button onClick={(e) => { e.stopPropagation(); handleOpenEditWorker(w); }} style={{ background: 'none', border: 'none', color: 'var(--accent-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', opacity: 0.7 }} onMouseEnter={e => e.currentTarget.style.opacity = 1} onMouseLeave={e => e.currentTarget.style.opacity = 0.7} title="Edit Labourer">
-                                  <Edit2 size={14} />
-                                </button>
-                                {w.name}
-                              </td>
-                              <td style={{ padding: '1rem 0.5rem', color: 'var(--text-secondary)' }}>{w.trade}</td>
-                              <td style={{ padding: '1rem 0.5rem', textAlign: 'center' }}>
-                                <input 
-                                  type="checkbox" 
-                                  checked={form.isPresent}
-                                  disabled={!canModify}
-                                  onChange={e => handleAttendanceChange(w.id, 'isPresent', e.target.checked)}
-                                  style={{ width: '20px', height: '20px', accentColor: 'var(--accent-primary)', cursor: canModify ? 'pointer' : 'not-allowed', opacity: canModify ? 1 : 0.5 }}
-                                />
-                              </td>
-                              <td style={{ padding: '1rem 0.5rem' }}>
-                                <input 
-                                  type="number" min="0" max="24" step="0.5"
-                                  className="input-field" 
-                                  value={form.regularHours}
-                                  disabled={!canModify}
-                                  onChange={e => handleAttendanceChange(w.id, 'regularHours', e.target.value)}
-                                  style={{ padding: '0.4rem', textAlign: 'center', width: '100%', borderColor: form.regularHours > 0 ? 'var(--accent-primary)' : 'var(--border-strong)', opacity: canModify ? 1 : 0.5 }}
-                                />
-                              </td>
-                              <td style={{ padding: '1rem 0.5rem' }}>
-                                <input 
-                                  type="number" min="0" max="24" step="0.5"
-                                  className="input-field" 
-                                  value={form.overtimeHours}
-                                  disabled={!canModify}
-                                  onChange={e => handleAttendanceChange(w.id, 'overtimeHours', e.target.value)}
-                                  style={{ padding: '0.4rem', textAlign: 'center', width: '100%', borderColor: form.overtimeHours > 0 ? 'var(--warning)' : 'var(--border-strong)', opacity: canModify ? 1 : 0.5 }}
-                                />
-                              </td>
-                              <td style={{ padding: '1rem 0.5rem' }}>
-                                <input 
-                                  type="number" min="0" step="1"
-                                  className="input-field" 
-                                  value={form.advance}
-                                  disabled={!canModify}
-                                  onChange={e => handleAttendanceChange(w.id, 'advance', e.target.value)}
-                                  style={{ padding: '0.4rem', textAlign: 'center', width: '100%', borderColor: form.advance > 0 ? 'var(--danger)' : 'var(--border-strong)', opacity: canModify ? 1 : 0.5 }}
-                                />
-                              </td>
-                              <td style={{ padding: '1rem 0.5rem', textAlign: 'right', fontWeight: 500, color: earned >= 0 ? 'var(--accent-primary)' : 'var(--danger)' }}>
-                                Rs {earned.toFixed(2)}
-                              </td>
-                            </tr>
-                          )
-                        })}
-                      </tbody>
-                    </table>
-</div>
+                      <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '700px' }}>
+                        <thead>
+                          <tr style={{ borderBottom: '1px solid var(--border-strong)', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+                            <th style={{ padding: '1rem 0.5rem', fontWeight: 500 }}>Labourer Info</th>
+                            <th style={{ padding: '1rem 0.5rem', fontWeight: 500, textAlign: 'center' }}>Present</th>
+                            <th style={{ padding: '1rem 0.5rem', fontWeight: 500, textAlign: 'center' }}>Reg Hrs</th>
+                            <th style={{ padding: '1rem 0.5rem', fontWeight: 500, textAlign: 'center' }}>OT Hrs</th>
+                            <th style={{ padding: '1rem 0.5rem', fontWeight: 500, textAlign: 'center' }}>Advance</th>
+                            <th style={{ padding: '1rem 0.5rem', fontWeight: 500, textAlign: 'right' }}>Net Earned</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {allWorkers.filter(w => w.projectId === activeProjectId && !w.isDeleted).map(w => {
+                            const form = attendanceForm[w.id] || { isPresent: false, regularHours: 0, overtimeHours: 0, advance: 0, dailyWage: w.dailyWage };
+                            const regHrs = Number(form.regularHours) || 0;
+                            const otHrs = Number(form.overtimeHours) || 0;
+                            const adv = Number(form.advance) || 0;
+                            const hourlyRate = (form.dailyWage || 0) / 8;
+                            const earned = ((regHrs + otHrs) * hourlyRate) - adv;
+                            
+                            return (
+                              <tr key={w.id} style={{ borderBottom: '1px solid var(--border-subtle)', background: form.isPresent ? 'rgba(99, 102, 241, 0.03)' : 'transparent' }}>
+                                <td style={{ padding: '0.75rem 0.5rem' }}>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                    <button onClick={(e) => { e.stopPropagation(); handleOpenEditWorker(w); }} style={{ background: 'none', border: 'none', color: 'var(--accent-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', opacity: 0.5 }} onMouseEnter={e => e.currentTarget.style.opacity = 1} onMouseLeave={e => e.currentTarget.style.opacity = 0.5} title="Edit Labourer">
+                                      <Edit2 size={14} />
+                                    </button>
+                                    <div>
+                                      <div style={{ fontWeight: 500, fontSize: '0.9rem' }}>{w.name}</div>
+                                      <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{w.trade}</div>
+                                    </div>
+                                  </div>
+                                </td>
+                                <td style={{ padding: '0.75rem 0.5rem', textAlign: 'center' }}>
+                                  <input 
+                                    type="checkbox" 
+                                    checked={form.isPresent}
+                                    disabled={!canModify}
+                                    onChange={e => handleAttendanceChange(w.id, 'isPresent', e.target.checked)}
+                                    style={{ width: '18px', height: '18px', accentColor: 'var(--accent-primary)', cursor: canModify ? 'pointer' : 'not-allowed', opacity: canModify ? 1 : 0.5 }}
+                                  />
+                                </td>
+                                <td style={{ padding: '0.75rem 0.5rem', textAlign: 'center' }}>
+                                  <input 
+                                    type="number" min="0" max="24" step="0.5"
+                                    className="input-field" 
+                                    value={form.regularHours}
+                                    disabled={!canModify}
+                                    onChange={e => handleAttendanceChange(w.id, 'regularHours', e.target.value)}
+                                    style={{ padding: '0.3rem', textAlign: 'center', width: '65px', fontSize: '0.85rem', borderColor: form.regularHours > 0 ? 'var(--accent-primary)' : 'var(--border-strong)', opacity: canModify ? 1 : 0.5, margin: '0 auto', display: 'block' }}
+                                  />
+                                </td>
+                                <td style={{ padding: '0.75rem 0.5rem', textAlign: 'center' }}>
+                                  <input 
+                                    type="number" min="0" max="24" step="0.5"
+                                    className="input-field" 
+                                    value={form.overtimeHours}
+                                    disabled={!canModify}
+                                    onChange={e => handleAttendanceChange(w.id, 'overtimeHours', e.target.value)}
+                                    style={{ padding: '0.3rem', textAlign: 'center', width: '65px', fontSize: '0.85rem', borderColor: form.overtimeHours > 0 ? 'var(--warning)' : 'var(--border-strong)', opacity: canModify ? 1 : 0.5, margin: '0 auto', display: 'block' }}
+                                  />
+                                </td>
+                                <td style={{ padding: '0.75rem 0.5rem', textAlign: 'center' }}>
+                                  <input 
+                                    type="number" min="0" step="1"
+                                    className="input-field" 
+                                    value={form.advance}
+                                    disabled={!canModify}
+                                    onChange={e => handleAttendanceChange(w.id, 'advance', e.target.value)}
+                                    style={{ padding: '0.3rem', textAlign: 'center', width: '80px', fontSize: '0.85rem', borderColor: form.advance > 0 ? 'var(--danger)' : 'var(--border-strong)', opacity: canModify ? 1 : 0.5, margin: '0 auto', display: 'block' }}
+                                  />
+                                </td>
+                                <td style={{ padding: '0.75rem 0.5rem', textAlign: 'right', fontWeight: 500, fontSize: '0.9rem', color: earned >= 0 ? 'var(--accent-primary)' : 'var(--danger)' }}>
+                                  Rs {earned.toFixed(2)}
+                                </td>
+                              </tr>
+                            )
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
                 )}
               </div>
@@ -2301,23 +2306,33 @@ const [profileName, setProfileName] = useState('');
 
             {projectTab === 'payroll' && (
               <div className="glass-card animate-fade-in" style={{ padding: '2.5rem', minHeight: '500px' }}>
-                <div className="flex-between" style={{ marginBottom: '2.5rem' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
-                    <h3 className="heading-3" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><DollarSign size={20} className="text-gradient"/> Project Payroll</h3>
-                    
-                    <div style={{ display: 'flex', background: 'var(--glass-hover)', padding: '0.25rem', borderRadius: 'var(--radius-md)' }}>
-                      <button className={`btn ${payrollViewMode === 'outstanding' ? 'btn-primary' : ''}`} onClick={() => handleNav(() => setPayrollViewMode('outstanding'))} style={{ padding: '0.4rem 1rem', background: payrollViewMode === 'outstanding' ? 'var(--accent-primary)' : 'transparent', color: payrollViewMode === 'outstanding' ? '#fff' : 'var(--text-secondary)' }}>Outstanding</button>
-                      <button className={`btn ${payrollViewMode === 'history' ? 'btn-primary' : ''}`} onClick={() => handleNav(() => setPayrollViewMode('history'))} style={{ padding: '0.4rem 1rem', background: payrollViewMode === 'history' ? 'var(--accent-primary)' : 'transparent', color: payrollViewMode === 'history' ? '#fff' : 'var(--text-secondary)' }}>Paid History</button>
+                {/* HEADER ROW & TABS */}
+                <div style={{ marginBottom: '1.5rem', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '1rem' }}>
+                  <div className="flex-between" style={{ flexWrap: 'wrap', gap: '1.5rem', marginBottom: '1.5rem' }}>
+                    <div style={{ display: 'flex', gap: '1.5rem' }}>
+                      <button 
+                        onClick={() => handleNav(() => setPayrollViewMode('outstanding'))} 
+                        style={{ background: 'none', border: 'none', borderBottom: payrollViewMode === 'outstanding' ? '2px solid var(--accent-primary)' : '2px solid transparent', padding: '0.5rem 0', fontWeight: payrollViewMode === 'outstanding' ? 'bold' : 'normal', color: payrollViewMode === 'outstanding' ? 'var(--text-primary)' : 'var(--text-secondary)', cursor: 'pointer', fontSize: '1rem' }}
+                      >
+                        Outstanding
+                      </button>
+                      <button 
+                        onClick={() => handleNav(() => setPayrollViewMode('history'))} 
+                        style={{ background: 'none', border: 'none', borderBottom: payrollViewMode === 'history' ? '2px solid var(--accent-primary)' : '2px solid transparent', padding: '0.5rem 0', fontWeight: payrollViewMode === 'history' ? 'bold' : 'normal', color: payrollViewMode === 'history' ? 'var(--text-primary)' : 'var(--text-secondary)', cursor: 'pointer', fontSize: '1rem' }}
+                      >
+                        Paid History
+                      </button>
                     </div>
-                  </div>
-                  <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
-                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flex: 1, minWidth: '200px' }}>
-                      <label style={{ color: 'var(--text-secondary)' }}>From:</label>
-                      <input type="date" className="input-field" value={payrollStart} onChange={e => handleNav(() => setPayrollStart(e.target.value))} style={{ padding: '0.5rem', colorScheme: 'dark' }} />
-                    </div>
-                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flex: 1, minWidth: '200px' }}>
-                      <label style={{ color: 'var(--text-secondary)' }}>To:</label>
-                      <input type="date" className="input-field" value={payrollEnd} onChange={e => handleNav(() => setPayrollEnd(e.target.value))} style={{ padding: '0.5rem', colorScheme: 'dark' }} />
+
+                    <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                        <label style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>From:</label>
+                        <input type="date" className="input-field" value={payrollStart} onChange={e => handleNav(() => setPayrollStart(e.target.value))} style={{ padding: '0.3rem', colorScheme: 'dark', fontSize: '0.85rem' }} />
+                      </div>
+                      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                        <label style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>To:</label>
+                        <input type="date" className="input-field" value={payrollEnd} onChange={e => handleNav(() => setPayrollEnd(e.target.value))} style={{ padding: '0.3rem', colorScheme: 'dark', fontSize: '0.85rem' }} />
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -2331,7 +2346,7 @@ const [profileName, setProfileName] = useState('');
                    );
                    if (relevantLogs.length === 0) {
                      return (
-                       <div style={{ textAlign: 'center', padding: '5rem', color: 'var(--text-muted)', border: '2px dashed var(--border-strong)', borderRadius: 'var(--radius-md)' }}>
+                       <div style={{ textAlign: 'center', padding: '4rem', color: 'var(--text-muted)', background: 'var(--glass-overlay)', borderRadius: 'var(--radius-md)' }}>
                          <DollarSign size={48} style={{ marginBottom: '1rem', opacity: 0.3 }} />
                          <p>No attendance records found for this timeframe.</p>
                        </div>
@@ -2359,17 +2374,16 @@ const [profileName, setProfileName] = useState('');
                    return (
                      <div style={{ overflowX: 'auto' }}>
                        <div className="table-wrapper">
-<table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '800px' }}>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '700px' }}>
                          <thead>
-                           <tr style={{ borderBottom: '1px solid var(--border-strong)', color: 'var(--text-muted)' }}>
-                             <th style={{ padding: '1rem 0.5rem', fontWeight: 500 }}>Name</th>
+                           <tr style={{ borderBottom: '1px solid var(--border-strong)', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+                             <th style={{ padding: '1rem 0.5rem', fontWeight: 500 }}>Labourer Info</th>
                              <th style={{ padding: '1rem 0.5rem', fontWeight: 500 }}>Dates Covered</th>
-                             <th style={{ padding: '1rem 0.5rem', fontWeight: 500 }}>Trade</th>
-                             <th style={{ padding: '1rem 0.5rem', fontWeight: 500, textAlign: 'center' }}>Total Hrs</th>
+                             <th style={{ padding: '1rem 0.5rem', fontWeight: 500, textAlign: 'center' }}>Hours Logged</th>
                              <th style={{ padding: '1rem 0.5rem', fontWeight: 500, textAlign: 'right' }}>Gross Pay</th>
                              <th style={{ padding: '1rem 0.5rem', fontWeight: 500, textAlign: 'right' }}>Advances</th>
                              <th style={{ padding: '1rem 0.5rem', fontWeight: 500, textAlign: 'right' }}>{payrollViewMode === 'outstanding' ? 'Net Owed' : 'Net Paid'}</th>
-                             <th style={{ padding: '1rem 0.5rem', fontWeight: 500, textAlign: 'center', width: '100px' }}>Action</th>
+                             <th style={{ padding: '1rem 0.5rem', fontWeight: 500, textAlign: 'center', width: '120px' }}>Action</th>
                            </tr>
                          </thead>
                          <tbody>
@@ -2387,43 +2401,50 @@ const [profileName, setProfileName] = useState('');
                              
                              return (
                                <tr key={wId} style={{ borderBottom: '1px solid var(--border-subtle)', opacity: worker.isDeleted ? 0.6 : 1 }}>
-                                 <td style={{ padding: '1rem 0.5rem', fontWeight: 500 }}>
-                                   <button onClick={() => { setSelectedLabour(worker); setIsLabourCardModalOpen(true); }} style={{ background: 'none', border: 'none', color: 'var(--accent-primary)', cursor: 'pointer', textDecoration: 'underline', padding: 0, font: 'inherit', fontWeight: 500, textAlign: 'left' }}>
-                                     {worker.name}
-                                   </button>
-                                   {worker.isDeleted && <span style={{ fontSize: '0.75rem', color: 'var(--danger)', marginLeft: '0.5rem', fontWeight: 'normal' }}>(Removed)</span>}
+                                 <td style={{ padding: '0.75rem 0.5rem' }}>
+                                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                     <div>
+                                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                         <button onClick={() => { setSelectedLabour(worker); setIsLabourCardModalOpen(true); }} style={{ background: 'none', border: 'none', color: 'var(--accent-primary)', cursor: 'pointer', textDecoration: 'none', padding: 0, font: 'inherit', fontWeight: 500, fontSize: '0.9rem', textAlign: 'left' }} className="hover-underline">
+                                           {worker.name}
+                                         </button>
+                                         {worker.isDeleted && <span style={{ fontSize: '0.7rem', color: 'var(--danger)', fontWeight: 'normal', background: 'rgba(239, 68, 68, 0.1)', padding: '0.1rem 0.3rem', borderRadius: 'var(--radius-full)' }}>Removed</span>}
+                                       </div>
+                                       <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{worker.trade}</div>
+                                     </div>
+                                   </div>
                                  </td>
-                                 <td style={{ padding: '1rem 0.5rem', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>{dateStr}</td>
-                                 <td style={{ padding: '1rem 0.5rem', color: 'var(--text-secondary)' }}>{worker.trade}</td>
-                                 <td style={{ padding: '1rem 0.5rem', textAlign: 'center' }}>
-                                   <span style={{ fontWeight: 500 }}>{totalHours}</span> <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>({data.regHours}R + {data.otHours}OT)</span>
+                                 <td style={{ padding: '0.75rem 0.5rem', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{dateStr}</td>
+                                 <td style={{ padding: '0.75rem 0.5rem', textAlign: 'center' }}>
+                                   <span style={{ fontWeight: 500, fontSize: '0.9rem' }}>{totalHours}h</span>
+                                   <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{data.regHours}R / {data.otHours}OT</div>
                                  </td>
-                                 <td style={{ padding: '1rem 0.5rem', textAlign: 'right', color: 'var(--text-secondary)' }}>
+                                 <td style={{ padding: '0.75rem 0.5rem', textAlign: 'right', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
                                    Rs {gross.toFixed(2)}
                                  </td>
-                                 <td style={{ padding: '1rem 0.5rem', textAlign: 'right', color: 'var(--danger)' }}>
+                                 <td style={{ padding: '0.75rem 0.5rem', textAlign: 'right', color: 'var(--danger)', fontSize: '0.9rem' }}>
                                    Rs {data.advance.toFixed(2)}
                                  </td>
-                                 <td style={{ padding: '1rem 0.5rem', textAlign: 'right', fontWeight: 'bold', color: owed >= 0 ? 'var(--text-primary)' : 'var(--danger)' }}>
+                                 <td style={{ padding: '0.75rem 0.5rem', textAlign: 'right', fontWeight: 500, fontSize: '0.95rem', color: owed >= 0 ? 'var(--text-primary)' : 'var(--danger)' }}>
                                    Rs {owed.toFixed(2)}
                                  </td>
                                  {payrollViewMode === 'outstanding' ? (
-                                   <td style={{ padding: '1rem 0.5rem', textAlign: 'center', display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>
-                                     <button className={`btn ${owed > 0 ? 'btn-primary' : 'btn-secondary'}`} onClick={() => handleOpenSettleModal(wId, owed)} style={{ padding: '0.4rem 0.75rem', fontSize: '0.75rem' }} title={owed > 0 ? "Mark as Paid" : "Clear Account"}>
-                                       <CheckCircle size={14} /> {owed > 0 ? 'Settle' : 'Clear'}
+                                   <td style={{ padding: '0.75rem 0.5rem', textAlign: 'center', display: 'flex', gap: '0.5rem', justifyContent: 'center', alignItems: 'center' }}>
+                                     <button className={`btn ${owed > 0 ? 'btn-primary' : 'btn-secondary'}`} onClick={() => handleOpenSettleModal(wId, owed)} style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', borderRadius: 'var(--radius-full)' }} title={owed > 0 ? "Mark as Paid" : "Clear Account"}>
+                                       <CheckCircle size={14} style={{ display: 'inline', marginRight: '0.2rem', verticalAlign: 'text-bottom' }} /> {owed > 0 ? 'Settle' : 'Clear'}
                                      </button>
-                                     <button className="btn btn-secondary" onClick={() => handleOpenWorkerAdvanceModal(wId)} style={{ padding: '0.4rem 0.75rem', fontSize: '0.75rem', background: 'transparent', border: '1px solid var(--accent-primary)', color: 'var(--accent-primary)' }} title="Issue Cash Advance">
-                                       <CreditCard size={14} /> Advance
+                                     <button className="btn btn-secondary" onClick={() => handleOpenWorkerAdvanceModal(wId)} style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', borderRadius: 'var(--radius-full)', background: 'transparent', border: '1px solid var(--accent-primary)', color: 'var(--accent-primary)' }} title="Issue Cash Advance">
+                                       Advance
                                      </button>
                                    </td>
                                  ) : (
-                                   <td style={{ padding: '1rem 0.5rem', textAlign: 'center', display: 'flex', gap: '0.5rem', justifyContent: 'center', alignItems: 'center' }}>
-                                     <button className="btn btn-danger" onClick={() => handleRevertPaid(wId, sortedDates)} style={{ padding: '0.4rem 0.75rem', fontSize: '0.75rem', background: 'transparent', border: '1px solid var(--danger)', color: 'var(--danger)' }} title="Revert to Unpaid">
-                                       <Edit2 size={14} /> Revert
+                                   <td style={{ padding: '0.75rem 0.5rem', textAlign: 'center', display: 'flex', gap: '0.5rem', justifyContent: 'center', alignItems: 'center' }}>
+                                     <button className="btn btn-danger" onClick={() => handleRevertPaid(wId, sortedDates)} style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', borderRadius: 'var(--radius-full)', background: 'transparent', border: '1px solid var(--danger)', color: 'var(--danger)' }} title="Revert to Unpaid">
+                                       <Edit2 size={12} style={{ display: 'inline', marginRight: '0.2rem', verticalAlign: 'text-bottom' }} /> Revert
                                      </button>
                                      {adminUnlockPast && (
-                                       <button className="btn btn-danger" onClick={() => handleDeletePaidHistory(wId, sortedDates)} style={{ padding: '0.4rem 0.75rem', fontSize: '0.75rem', background: 'transparent', border: '1px solid var(--danger)', color: 'var(--danger)' }} title="Delete Paid History">
-                                         <Trash2 size={14} /> Delete
+                                       <button className="btn btn-danger" onClick={() => handleDeletePaidHistory(wId, sortedDates)} style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', borderRadius: 'var(--radius-full)', background: 'transparent', border: '1px solid var(--danger)', color: 'var(--danger)' }} title="Delete Paid History">
+                                         <Trash2 size={12} />
                                        </button>
                                      )}
                                    </td>
@@ -2433,13 +2454,13 @@ const [profileName, setProfileName] = useState('');
                            })}
                          </tbody>
                          <tfoot>
-                           <tr style={{ borderTop: '2px solid var(--border-strong)', background: 'var(--glass-hover)' }}>
-                             <td colSpan="6" style={{ padding: '1.5rem 1rem', textAlign: 'right', color: 'var(--text-secondary)' }}>Grand Total ({payrollViewMode === 'outstanding' ? 'Owed' : 'Paid'}):</td>
-                             <td style={{ padding: '1.5rem 0.5rem', textAlign: 'right', fontWeight: 'bold', fontSize: '1.25rem', color: 'var(--accent-primary)' }}>Rs {grandTotal.toFixed(2)}</td>
+                           <tr style={{ borderTop: '1px solid var(--border-strong)', background: 'var(--glass-hover)' }}>
+                             <td colSpan="5" style={{ padding: '1rem', textAlign: 'right', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Grand Total ({payrollViewMode === 'outstanding' ? 'Owed' : 'Paid'}):</td>
+                             <td style={{ padding: '1rem 0.5rem', textAlign: 'right', fontWeight: 'bold', fontSize: '1.1rem', color: 'var(--accent-primary)' }}>Rs {grandTotal.toFixed(2)}</td>
                              {payrollViewMode === 'outstanding' && (
-                               <td style={{ padding: '1.5rem 0.5rem', textAlign: 'center' }}>
+                               <td style={{ padding: '1rem 0.5rem', textAlign: 'center' }}>
                                  {grandTotal > 0 && (
-                                   <button className="btn btn-primary" onClick={handleMarkAllPaid} style={{ padding: '0.5rem 1rem', fontSize: '0.875rem', background: 'var(--success)', borderColor: 'var(--success)' }}>
+                                   <button className="btn btn-primary" onClick={handleMarkAllPaid} style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', borderRadius: 'var(--radius-full)', background: 'var(--success)', borderColor: 'var(--success)' }}>
                                      Settle All
                                    </button>
                                  )}
@@ -2448,7 +2469,7 @@ const [profileName, setProfileName] = useState('');
                            </tr>
                          </tfoot>
                        </table>
-</div>
+                      </div>
                      </div>
                    );
                 })()}

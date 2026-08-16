@@ -341,6 +341,31 @@ const UserDashboard = () => {
 
   useEffect(() => {
     loadData();
+    
+    let timeoutId;
+    const channel = supabase.channel('schema-db-changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public' },
+        (payload) => {
+          console.log('Realtime DB change received:', payload);
+          clearTimeout(timeoutId);
+          // Debounce the reload to prevent excessive fetching if many rows change at once
+          timeoutId = setTimeout(() => {
+            loadData();
+          }, 1000);
+        }
+      )
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          console.log('Successfully subscribed to Supabase Realtime!');
+        }
+      });
+
+    return () => {
+      clearTimeout(timeoutId);
+      supabase.removeChannel(channel);
+    };
   }, [navigate]);
 
   // Auto-relock when navigating between major tabs or changing projects

@@ -459,7 +459,7 @@ export const loginUser = async (email, password) => {
     throw new Error(authError.message || authError.toString());
   }
 
-  if (authData?.user) { {
+  if (authData?.user) {
     let { data: profile } = await supabase.from('users').select('*').eq('email', authData.user.email).single();
     
     if (profile && profile.id !== authData.user.id) {

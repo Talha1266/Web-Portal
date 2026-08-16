@@ -3863,7 +3863,7 @@ const [profileName, setProfileName] = useState('');
                       .lh-footer strong { color: #f5b041; }
                     `;
 
-                    const headerHtml = \`
+                    const headerHtml = `
                       <div class="letterhead-container">
                         <div class="letterhead-stripe"></div>
                         <div class="lh-header">
@@ -3880,15 +3880,15 @@ const [profileName, setProfileName] = useState('');
                             <div style="font-size: 12px; color: #64748b;">Date: ${new Date().toLocaleDateString('en-GB')}</div>
                           </div>
                         </div>
-                    \`;
+                    `;
 
-                    const footerHtml = \`
+                    const footerHtml = `
                         <div class="lh-footer">
                           <div><strong>Address:</strong> 53 Pir Muhammad Colony, University Road, Sargodha</div>
                           <div><strong>Muhammad Naveed:</strong> 0300-9608416</div>
                         </div>
                       </div>
-                    \`;
+                    `;
 
                     windowPrint.document.write('<html><head><title>Vendor Bill - ' + vendorBillSelectedVendor + '</title>');
                     windowPrint.document.write('<style>' + css + '</style></head><body>');

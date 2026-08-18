@@ -703,7 +703,7 @@ const [profileName, setProfileName] = useState('');
         if (data.regularHours > 0 || data.overtimeHours > 0 || data.advance > 0 || data.id) {
           const worker = allWorkers.find(w => w.id === wId);
           recordsToSave.push({
-            id: data.id || (Date.now().toString() + Math.random()),
+            id: `att_${activeProjectId}_${wId}_${attendanceDate}`,
             projectId: activeProjectId,
             date: attendanceDate,
             workerId: wId,

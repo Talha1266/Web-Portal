@@ -426,6 +426,13 @@ export const addAdvanceOnlyRecord = async (projectId, workerId, amount, userId) 
    if (error) throw new Error(error.message);
 };
 
+export const addClearanceRecord = async (projectId, workerId, amount, userId) => {
+   const { error } = await supabase.from('attendance').insert({
+    projectId, workerId, date: new Date().toISOString().split('T')[0], regularHours: -999, overtimeHours: 0, advance: amount, paid: true, id: Date.now().toString()
+   });
+   if (error) throw new Error(error.message);
+};
+
 export const updateChangeRequestStatus = async (id, status) => {
    const { error } = await supabase.from('change_requests').update({ status }).eq('id', id); if (error) throw new Error(error.message);
 };

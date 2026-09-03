@@ -5,7 +5,7 @@ import Zoom from 'yet-another-react-lightbox/plugins/zoom';
 import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LayoutDashboard, HardHat, FileText, MessageSquare, LogOut, Plus, Edit2, Trash2, PieChart, Shield, X, MapPin, Building, Calendar, Users, Folder, FolderPlus, UploadCloud, ChevronRight, ArrowLeft, CheckSquare, Settings, ClipboardList, DollarSign, CheckCircle, Briefcase, Package, CreditCard, Truck, AlertTriangle, XCircle, Menu, Unlock, Printer, Camera } from 'lucide-react';
-import { getUsers, getProjects, addProject, updateProject, deleteProject, getDocuments, addDocument, deleteDocument, getWorkers, addWorker, updateWorker, deleteWorker, getAttendance, saveAttendance, markAttendancePaid, markAllAttendancePaid, deleteAttendanceRecords, getSubcontractors, addSubcontractor, updateSubcontractor, deleteSubcontractor, getSubPayments, addSubPayment, deleteSubPayment, updateSubPayment, getChangeRequests, addChangeRequest, updateChangeRequestStatus, getMaterials, addMaterial, updateMaterial, deleteMaterial, getMaterialCategories, addMaterialCategory, updateMaterialCategory, deleteMaterialCategory, getVendors, addVendor, updateVendor, deleteVendor, getSiteAdvances, addSiteAdvance, updateSiteAdvance, deleteSiteAdvance, getSiteExpenses, addSiteExpense, updateSiteExpense, deleteSiteExpense, addAdvanceOnlyRecord, revertAttendancePaid, getAssets, addAsset, updateAsset, deleteAsset, saveFileContentToDB, getFileContentFromDB, deleteFileContentFromDB, getTasks, addTask, updateTask, deleteTask, getMessages, addMessage, updateUserProfile, addActivityLog } from '../utils/db';
+import { getUsers, getProjects, addProject, updateProject, deleteProject, getDocuments, addDocument, deleteDocument, getWorkers, addWorker, updateWorker, deleteWorker, getAttendance, saveAttendance, markAttendancePaid, markAllAttendancePaid, deleteAttendanceRecords, getSubcontractors, addSubcontractor, updateSubcontractor, deleteSubcontractor, getSubPayments, addSubPayment, deleteSubPayment, updateSubPayment, getChangeRequests, addChangeRequest, updateChangeRequestStatus, getMaterials, addMaterial, updateMaterial, deleteMaterial, getMaterialCategories, addMaterialCategory, updateMaterialCategory, deleteMaterialCategory, getVendors, addVendor, updateVendor, deleteVendor, getSiteAdvances, addSiteAdvance, updateSiteAdvance, deleteSiteAdvance, getSiteExpenses, addSiteExpense, updateSiteExpense, deleteSiteExpense, addAdvanceOnlyRecord, addClearanceRecord, revertAttendancePaid, getAssets, addAsset, updateAsset, deleteAsset, saveFileContentToDB, getFileContentFromDB, deleteFileContentFromDB, getTasks, addTask, updateTask, deleteTask, getMessages, addMessage, updateUserProfile, addActivityLog } from '../utils/db';
 import { supabase } from '../supabaseClient';
 import { PieChart as RechartsPieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import InstallPWA from '../components/InstallPWA';
@@ -755,12 +755,18 @@ const [profileName, setProfileName] = useState('');
     e.preventDefault();
     triggerSecurityChallenge(`Are you sure you want to mark these wages as paid?`, "PAY", async () => {
       const amountPaid = Number(settleAdvance);
-      const difference = amountPaid - settleNetOwed;
+      const worker = allWorkers.find(w => w.id === settleWorkerId);
       
-      await markAttendancePaid(activeProjectId, settleWorkerId, payrollStart, payrollEnd, false);
-      
-      if (difference !== 0) {
-         await addAdvanceOnlyRecord(activeProjectId, settleWorkerId, difference, currentUser.id);
+      if (worker && worker.paymentType && worker.paymentType !== 'daily') {
+        // Salaried worker clearance logic
+        await addClearanceRecord(activeProjectId, settleWorkerId, amountPaid, currentUser.id);
+      } else {
+        // Daily worker settlement logic
+        await markAttendancePaid(activeProjectId, settleWorkerId, payrollStart, payrollEnd, false);
+        
+        if (difference !== 0) {
+           await addAdvanceOnlyRecord(activeProjectId, settleWorkerId, difference, currentUser.id);
+        }
       }
       
       setIsSettleModalOpen(false);

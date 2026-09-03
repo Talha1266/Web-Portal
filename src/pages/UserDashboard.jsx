@@ -4868,24 +4868,15 @@ const [profileName, setProfileName] = useState('');
         const projWorkers = allWorkers.filter(w => w.projectId === activeProjectId && !w.isDeleted);
         
         projWorkers.forEach(w => {
-          if (!workerTotals[w.id]) workerTotals[w.id] = { gross: 0, advance: 0, net: 0, totalPaid: 0, pending: 0 };
+          if (!workerTotals[w.id]) workerTotals[w.id] = { gross: 0, advance: 0, net: 0, totalPaid: 0, pending: 0, isSalaried: false, hasAdvance: false, hasClearance: false };
           if (w.paymentType && w.paymentType !== 'daily') {
-             const s = (reportConfig.startDate ? new Date(reportConfig.startDate) : new Date(w.createdAt));
-             const e = (reportConfig.endDate ? new Date(reportConfig.endDate) : new Date());
-             const diffTime = e.getTime() - s.getTime();
-             let days = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
-             if (days < 0) days = 0;
-             let dailyRate = w.dailyWage || 0;
-             if (w.paymentType === 'monthly') dailyRate /= 30;
-             if (w.paymentType === 'bi-weekly') dailyRate /= 14;
-             if (w.paymentType === 'weekly') dailyRate /= 7;
-             workerTotals[w.id].gross = dailyRate * days;
-             workerTotals[w.id].pending = dailyRate * days;
+             workerTotals[w.id].isSalaried = true;
+             // No daily pro-rating. Salaried totals are purely cash-flow based.
           }
         });
 
         repAttendance.forEach(a => {
-          if (!workerTotals[a.workerId]) workerTotals[a.workerId] = { gross: 0, advance: 0, net: 0, totalPaid: 0, pending: 0 };
+          if (!workerTotals[a.workerId]) workerTotals[a.workerId] = { gross: 0, advance: 0, net: 0, totalPaid: 0, pending: 0, isSalaried: false, hasAdvance: false, hasClearance: false };
           const w = allWorkers.find(wk => wk.id === a.workerId);
           if (w) {
             const adv = Number(a.advance || 0);
@@ -4894,16 +4885,29 @@ const [profileName, setProfileName] = useState('');
               const gross = ((Number(a.regularHours) + Number(a.overtimeHours)) * hrRate);
               const netSettled = a.isPaid ? (gross - adv) : 0;
               const pending = a.isPaid ? 0 : (gross - adv);
-              workerTotals[a.workerId].gross += gross;
-              workerTotals[a.workerId].advance += adv;
-              workerTotals[a.workerId].net += (gross - adv);
-              workerTotals[a.workerId].totalPaid += (adv + netSettled);
-              workerTotals[a.workerId].pending += pending;
+              
+              const t = workerTotals[a.workerId];
+              t.gross += gross;
+              t.advance += adv;
+              t.net += (gross - adv);
+              t.totalPaid += (adv + netSettled);
+              t.pending += pending;
             } else {
-              workerTotals[a.workerId].advance += adv;
-              workerTotals[a.workerId].totalPaid += adv;
-              workerTotals[a.workerId].pending -= adv;
-              workerTotals[a.workerId].net = workerTotals[a.workerId].gross - workerTotals[a.workerId].advance;
+              // Salaried Logic (Cash-flow based)
+              if (adv > 0) {
+                const t = workerTotals[a.workerId];
+                if (a.regularHours === -999) {
+                  // Salary Clearance
+                  t.hasClearance = true;
+                  t.gross += adv;
+                  t.totalPaid += adv;
+                } else {
+                  // Advance Payment
+                  t.hasAdvance = true;
+                  t.gross += adv;
+                  t.totalPaid += adv;
+                }
+              }
             }
           }
         });
@@ -5244,12 +5248,21 @@ const [profileName, setProfileName] = useState('');
                     </thead>
                     <tbody>
                       {Object.entries(workerTotals).map(([wId, totals]) => {
-                        if (totals.gross === 0) return null;
+                        if (totals.gross === 0 && !totals.isSalaried) return null;
+                        if (totals.isSalaried && totals.gross === 0) return null; // Even salaried should have > 0 gross (advances) to appear
                         const worker = allWorkers.find(w => w.id === wId);
                         return (
                           <tr key={wId}>
                             <td><strong>{worker ? worker.name : 'Unknown'}</strong></td>
-                            <td>{worker ? worker.trade : ''}</td>
+                            <td>
+                              {worker ? (
+                                totals.isSalaried ? (
+                                  <span style={{color: 'var(--accent-primary)'}}>
+                                    Salaried {totals.hasClearance && totals.hasAdvance ? '(Advance & Cleared)' : totals.hasClearance ? '(Cleared)' : totals.hasAdvance ? '(Advance)' : ''}
+                                  </span>
+                                ) : worker.trade
+                              ) : ''}
+                            </td>
                             <td style={{textAlign:'right'}}>Rs {totals.gross.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
                             <td style={{textAlign:'right', color:'#10b981'}}>Rs {totals.totalPaid.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
                             <td style={{textAlign:'right', fontWeight:'600', color: totals.pending > 0 ? '#ef4444' : '#0f172a'}}>Rs {totals.pending.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>

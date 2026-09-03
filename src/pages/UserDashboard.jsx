@@ -2289,7 +2289,10 @@ const [profileName, setProfileName] = useState('');
                      <p style={{ fontSize: '0.8rem', marginTop: '0.5rem' }}>Click "Register Labourer" to start building your workforce database.</p>
                    </div>
                 ) : (
-                  <div style={{ overflowX: 'auto' }}>
+                  
+                  <>
+                  <div style={{ overflowX: "auto", marginBottom: "2rem" }}>
+                    <h3 className="heading-3" style={{ marginBottom: '1rem', color: 'var(--text-primary)' }}>Daily Wage Workers</h3>
                     <div className="table-wrapper">
                       <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '700px' }}>
                         <thead>
@@ -2303,14 +2306,13 @@ const [profileName, setProfileName] = useState('');
                           </tr>
                         </thead>
                         <tbody>
-                          {allWorkers.filter(w => w.projectId === activeProjectId && !w.isDeleted).map(w => {
+                          {allWorkers.filter(w => w.projectId === activeProjectId && !w.isDeleted && (!w.paymentType || w.paymentType === 'daily')).map(w => {
                             const form = attendanceForm[w.id] || { isPresent: false, regularHours: 0, overtimeHours: 0, advance: 0, dailyWage: w.dailyWage };
-                            const isSalaried = w.paymentType && w.paymentType !== 'daily';
                             const regHrs = Number(form.regularHours) || 0;
                             const otHrs = Number(form.overtimeHours) || 0;
                             const adv = Number(form.advance) || 0;
                             const hourlyRate = (form.dailyWage || 0) / 8;
-                            const earned = isSalaried ? -adv : (((regHrs + otHrs) * hourlyRate) - adv);
+                            const earned = (((regHrs + otHrs) * hourlyRate) - adv);
                             
                             return (
                               <tr key={w.id} style={{ borderBottom: '1px solid var(--border-subtle)', background: form.isPresent ? 'rgba(99, 102, 241, 0.03)' : 'transparent' }}>
@@ -2328,39 +2330,31 @@ const [profileName, setProfileName] = useState('');
                                 <td style={{ padding: '0.75rem 0.5rem', textAlign: 'center' }}>
                                   <input 
                                     type="checkbox" 
-                                    checked={isSalaried ? false : form.isPresent}
-                                    disabled={!canModify || isSalaried}
+                                    checked={form.isPresent}
+                                    disabled={!canModify}
                                     onChange={e => handleAttendanceChange(w.id, 'isPresent', e.target.checked)}
-                                    style={{ width: '18px', height: '18px', accentColor: 'var(--accent-primary)', cursor: (!canModify || isSalaried) ? 'not-allowed' : 'pointer', opacity: (!canModify || isSalaried) ? 0.5 : 1 }}
+                                    style={{ width: '18px', height: '18px', accentColor: 'var(--accent-primary)', cursor: canModify ? 'pointer' : 'not-allowed', opacity: canModify ? 1 : 0.5 }}
                                   />
                                 </td>
                                 <td style={{ padding: '0.75rem 0.5rem', textAlign: 'center' }}>
-                                  {isSalaried ? (
-                                    <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', background: 'var(--glass-overlay)', padding: '0.25rem 0.5rem', borderRadius: '4px', display: 'inline-block' }}>Salaried ({w.paymentType})</span>
-                                  ) : (
-                                    <input 
-                                      type="number" min="0" max="24" step="0.5"
-                                      className="input-field" 
-                                      value={form.regularHours}
-                                      disabled={!canModify}
-                                      onChange={e => handleAttendanceChange(w.id, 'regularHours', e.target.value)}
-                                      style={{ padding: '0.3rem', textAlign: 'center', width: '65px', fontSize: '0.85rem', borderColor: form.regularHours > 0 ? 'var(--accent-primary)' : 'var(--border-strong)', opacity: canModify ? 1 : 0.5, margin: '0 auto', display: 'block' }}
-                                    />
-                                  )}
+                                  <input 
+                                    type="number" min="0" max="24" step="0.5"
+                                    className="input-field" 
+                                    value={form.regularHours}
+                                    disabled={!canModify}
+                                    onChange={e => handleAttendanceChange(w.id, 'regularHours', e.target.value)}
+                                    style={{ padding: '0.3rem', textAlign: 'center', width: '65px', fontSize: '0.85rem', borderColor: form.regularHours > 0 ? 'var(--accent-primary)' : 'var(--border-strong)', opacity: canModify ? 1 : 0.5, margin: '0 auto', display: 'block' }}
+                                  />
                                 </td>
                                 <td style={{ padding: '0.75rem 0.5rem', textAlign: 'center' }}>
-                                  {isSalaried ? (
-                                    <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>Rs {Number(w.dailyWage || 0).toLocaleString()} / {w.paymentType === 'monthly' ? 'mo' : w.paymentType === 'bi-weekly' ? 'bi-wk' : 'wk'}</span>
-                                  ) : (
-                                    <input 
-                                      type="number" min="0" max="24" step="0.5"
-                                      className="input-field" 
-                                      value={form.overtimeHours}
-                                      disabled={!canModify}
-                                      onChange={e => handleAttendanceChange(w.id, 'overtimeHours', e.target.value)}
-                                      style={{ padding: '0.3rem', textAlign: 'center', width: '65px', fontSize: '0.85rem', borderColor: form.overtimeHours > 0 ? 'var(--warning)' : 'var(--border-strong)', opacity: canModify ? 1 : 0.5, margin: '0 auto', display: 'block' }}
-                                    />
-                                  )}
+                                  <input 
+                                    type="number" min="0" max="24" step="0.5"
+                                    className="input-field" 
+                                    value={form.overtimeHours}
+                                    disabled={!canModify}
+                                    onChange={e => handleAttendanceChange(w.id, 'overtimeHours', e.target.value)}
+                                    style={{ padding: '0.3rem', textAlign: 'center', width: '65px', fontSize: '0.85rem', borderColor: form.overtimeHours > 0 ? 'var(--warning)' : 'var(--border-strong)', opacity: canModify ? 1 : 0.5, margin: '0 auto', display: 'block' }}
+                                  />
                                 </td>
                                 <td style={{ padding: '0.75rem 0.5rem', textAlign: 'center' }}>
                                   <input 
@@ -2378,10 +2372,80 @@ const [profileName, setProfileName] = useState('');
                               </tr>
                             )
                           })}
+                          {allWorkers.filter(w => w.projectId === activeProjectId && !w.isDeleted && (!w.paymentType || w.paymentType === 'daily')).length === 0 && (
+                            <tr><td colSpan="6" style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>No daily workers found.</td></tr>
+                          )}
                         </tbody>
                       </table>
                     </div>
                   </div>
+
+                  <div style={{ overflowX: 'auto' }}>
+                    <h3 className="heading-3" style={{ marginBottom: '1rem', color: 'var(--text-primary)' }}>Salaried Staff</h3>
+                    <div className="table-wrapper">
+                      <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '700px' }}>
+                        <thead>
+                          <tr style={{ borderBottom: '1px solid var(--border-strong)', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+                            <th style={{ padding: '1rem 0.5rem', fontWeight: 500 }}>Staff Info</th>
+                            <th style={{ padding: '1rem 0.5rem', fontWeight: 500, textAlign: 'center' }}>Schedule</th>
+                            <th style={{ padding: '1rem 0.5rem', fontWeight: 500, textAlign: 'center' }}>Salary</th>
+                            <th style={{ padding: '1rem 0.5rem', fontWeight: 500, textAlign: 'center' }}>Advance</th>
+                            <th style={{ padding: '1rem 0.5rem', fontWeight: 500, textAlign: 'right' }}>Deduction</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {allWorkers.filter(w => w.projectId === activeProjectId && !w.isDeleted && (w.paymentType && w.paymentType !== 'daily')).map(w => {
+                            const form = attendanceForm[w.id] || { advance: 0 };
+                            const adv = Number(form.advance) || 0;
+                            
+                            return (
+                              <tr key={w.id} style={{ borderBottom: '1px solid var(--border-subtle)', background: 'transparent' }}>
+                                <td style={{ padding: '0.75rem 0.5rem' }}>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                    <button onClick={(e) => { e.stopPropagation(); handleOpenEditWorker(w); }} style={{ background: 'none', border: 'none', color: 'var(--accent-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', opacity: 0.5 }} onMouseEnter={e => e.currentTarget.style.opacity = 1} onMouseLeave={e => e.currentTarget.style.opacity = 0.5} title="Edit Staff">
+                                      <Edit2 size={14} />
+                                    </button>
+                                    <div>
+                                      <div style={{ fontWeight: 500, fontSize: '0.9rem' }}>{w.name}</div>
+                                      <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{w.trade}</div>
+                                    </div>
+                                  </div>
+                                </td>
+                                <td style={{ padding: '0.75rem 0.5rem', textAlign: 'center' }}>
+                                  <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', background: 'var(--glass-overlay)', padding: '0.25rem 0.5rem', borderRadius: '4px', display: 'inline-block', textTransform: 'capitalize' }}>
+                                    {w.paymentType}
+                                  </span>
+                                </td>
+                                <td style={{ padding: '0.75rem 0.5rem', textAlign: 'center' }}>
+                                  <span style={{ fontSize: '0.85rem', color: 'var(--text-primary)' }}>
+                                    Rs {Number(w.dailyWage || 0).toLocaleString()}
+                                  </span>
+                                </td>
+                                <td style={{ padding: '0.75rem 0.5rem', textAlign: 'center' }}>
+                                  <input 
+                                    type="number" min="0" step="1"
+                                    className="input-field" 
+                                    value={form.advance}
+                                    disabled={!canModify}
+                                    onChange={e => handleAttendanceChange(w.id, 'advance', e.target.value)}
+                                    style={{ padding: '0.3rem', textAlign: 'center', width: '80px', fontSize: '0.85rem', borderColor: form.advance > 0 ? 'var(--danger)' : 'var(--border-strong)', opacity: canModify ? 1 : 0.5, margin: '0 auto', display: 'block' }}
+                                  />
+                                </td>
+                                <td style={{ padding: '0.75rem 0.5rem', textAlign: 'right', fontWeight: 500, fontSize: '0.9rem', color: adv > 0 ? 'var(--danger)' : 'var(--text-muted)' }}>
+                                  {adv > 0 ? `- Rs ${adv.toFixed(2)}` : '0.00'}
+                                </td>
+                              </tr>
+                            )
+                          })}
+                          {allWorkers.filter(w => w.projectId === activeProjectId && !w.isDeleted && (w.paymentType && w.paymentType !== 'daily')).length === 0 && (
+                            <tr><td colSpan="5" style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>No salaried staff found.</td></tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                  </>
+
                 )}
               </div>
             )})()}

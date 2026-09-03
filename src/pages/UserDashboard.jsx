@@ -2279,7 +2279,7 @@ const [profileName, setProfileName] = useState('');
                 </div>
 
                 {/* TABLE SECTION */}
-                {allWorkers.filter(w => w.projectId === activeProjectId && !w.isDeleted).length === 0 ? (
+                {allWorkers.filter(w => w.projectId === activeProjectId && !w.isDeleted && (!w.paymentType || w.paymentType === 'daily')).length === 0 ? (
                    <div style={{ textAlign: 'center', padding: '4rem', color: 'var(--text-muted)', background: 'var(--glass-overlay)', borderRadius: 'var(--radius-md)' }}>
                      <Users size={48} style={{ marginBottom: '1rem', opacity: 0.3 }} />
                      <p>No labourers registered on this project yet.</p>
@@ -2300,7 +2300,7 @@ const [profileName, setProfileName] = useState('');
                           </tr>
                         </thead>
                         <tbody>
-                          {allWorkers.filter(w => w.projectId === activeProjectId && !w.isDeleted).map(w => {
+                          {allWorkers.filter(w => w.projectId === activeProjectId && !w.isDeleted && (!w.paymentType || w.paymentType === 'daily')).map(w => {
                             const form = attendanceForm[w.id] || { isPresent: false, regularHours: 0, overtimeHours: 0, advance: 0, dailyWage: w.dailyWage };
                             const regHrs = Number(form.regularHours) || 0;
                             const otHrs = Number(form.overtimeHours) || 0;
@@ -3549,8 +3549,17 @@ const [profileName, setProfileName] = useState('');
                 <input type="text" className="input-field" required value={wTrade} onChange={e => setWTrade(e.target.value)} placeholder="e.g. Electrician, Carpenter" />
               </div>
               <div className="input-group">
-                <label className="input-label">Daily Wage (Rs) - 8 Hour Shift</label>
-                <input type="number" className="input-field" required min="0" step="1" value={wWage} onChange={e => setWWage(e.target.value)} placeholder="e.g. 1500" />
+                <label className="input-label">Payment Frequency</label>
+                <select className="input-field" value={wPaymentType} onChange={e => setWPaymentType(e.target.value)}>
+                  <option value="daily">Daily Wage (8 Hour Shift)</option>
+                  <option value="weekly">Weekly Salary</option>
+                  <option value="bi-weekly">Bi-Weekly Salary</option>
+                  <option value="monthly">Monthly Salary</option>
+                </select>
+              </div>
+              <div className="input-group">
+                <label className="input-label">{wPaymentType === 'daily' ? 'Daily Wage (Rs)' : 'Salary Amount (Rs)'}</label>
+                <input type="number" className="input-field" required min="0" step="1" value={wWage} onChange={e => setWWage(e.target.value)} placeholder={wPaymentType === 'daily' ? "e.g. 1500" : "e.g. 30000"} />
               </div>
               <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '1rem' }}><Plus size={20}/> Register Worker</button>
             </form>
@@ -3574,9 +3583,18 @@ const [profileName, setProfileName] = useState('');
                 <input type="text" className="input-field" value={ewTrade} onChange={e => setEwTrade(e.target.value)} />
               </div>
               <div className="input-group">
-                <label className="input-label">Daily Wage (Rs) - 8 Hours</label>
+                <label className="input-label">Payment Frequency</label>
+                <select className="input-field" value={ewPaymentType} onChange={e => setEwPaymentType(e.target.value)}>
+                  <option value="daily">Daily Wage (8 Hour Shift)</option>
+                  <option value="weekly">Weekly Salary</option>
+                  <option value="bi-weekly">Bi-Weekly Salary</option>
+                  <option value="monthly">Monthly Salary</option>
+                </select>
+              </div>
+              <div className="input-group">
+                <label className="input-label">{ewPaymentType === 'daily' ? 'Daily Wage (Rs)' : 'Salary Amount (Rs)'}</label>
                 <input type="number" className="input-field" step="1" value={ewWage} onChange={e => setEwWage(e.target.value)} />
-                <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.5rem' }}>Note: Changing the daily wage only affects future attendance. Past attendance will use the historical wage at the time of logging.</p>
+                <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.5rem' }}>Note: Changing the payment type or amount only affects future attendance.</p>
               </div>
               <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '1rem' }}><Edit2 size={20}/> Save Changes</button>
             </form>
@@ -4159,7 +4177,11 @@ const [profileName, setProfileName] = useState('');
         let totalAdvance = 0;
         let totalGross = 0;
         
-        const hourlyRate = (selectedLabour.dailyWage || 0) / 8;
+        let dailyRate = selectedLabour.dailyWage || 0;
+        if (selectedLabour.paymentType === 'monthly') dailyRate = dailyRate / 30;
+        else if (selectedLabour.paymentType === 'bi-weekly') dailyRate = dailyRate / 14;
+        else if (selectedLabour.paymentType === 'weekly') dailyRate = dailyRate / 7;
+        const hourlyRate = dailyRate / 8;
 
         return (
           <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(9, 9, 11, 0.5)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}>
@@ -4620,24 +4642,48 @@ const [profileName, setProfileName] = useState('');
         const repExpenses = allSiteExpenses.filter(e => e.projectId === activeProjectId && isWithinDate(e.date));
         const repAttendance = allAttendance.filter(a => a.projectId === activeProjectId && isWithinDate(a.date));
         const workerTotals = {};
+        const projWorkers = allWorkers.filter(w => w.projectId === activeProjectId && !w.isDeleted);
+        
+        projWorkers.forEach(w => {
+          if (!workerTotals[w.id]) workerTotals[w.id] = { gross: 0, advance: 0, net: 0, totalPaid: 0, pending: 0 };
+          if (w.paymentType && w.paymentType !== 'daily') {
+             const s = (reportConfig.startDate ? new Date(reportConfig.startDate) : new Date(w.createdAt));
+             const e = (reportConfig.endDate ? new Date(reportConfig.endDate) : new Date());
+             const diffTime = e.getTime() - s.getTime();
+             let days = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+             if (days < 0) days = 0;
+             let dailyRate = w.dailyWage || 0;
+             if (w.paymentType === 'monthly') dailyRate /= 30;
+             if (w.paymentType === 'bi-weekly') dailyRate /= 14;
+             if (w.paymentType === 'weekly') dailyRate /= 7;
+             workerTotals[w.id].gross = dailyRate * days;
+             workerTotals[w.id].pending = dailyRate * days;
+          }
+        });
+
         repAttendance.forEach(a => {
           if (!workerTotals[a.workerId]) workerTotals[a.workerId] = { gross: 0, advance: 0, net: 0, totalPaid: 0, pending: 0 };
           const w = allWorkers.find(wk => wk.id === a.workerId);
           if (w) {
-            const hrRate = (w.dailyWage || 0) / 8;
-            const gross = ((Number(a.regularHours) + Number(a.overtimeHours)) * hrRate);
             const adv = Number(a.advance || 0);
-            const netSettled = a.isPaid ? (gross - adv) : 0;
-            const pending = a.isPaid ? 0 : (gross - adv);
-            workerTotals[a.workerId].gross += gross;
-            workerTotals[a.workerId].advance += adv;
-            workerTotals[a.workerId].net += (gross - adv);
-            workerTotals[a.workerId].totalPaid += (adv + netSettled);
-            workerTotals[a.workerId].pending += pending;
+            if (!w.paymentType || w.paymentType === 'daily') {
+              const hrRate = (a.dailyWage !== undefined && a.dailyWage !== null ? Number(a.dailyWage) : (w.dailyWage || 0)) / 8;
+              const gross = ((Number(a.regularHours) + Number(a.overtimeHours)) * hrRate);
+              const netSettled = a.isPaid ? (gross - adv) : 0;
+              const pending = a.isPaid ? 0 : (gross - adv);
+              workerTotals[a.workerId].gross += gross;
+              workerTotals[a.workerId].advance += adv;
+              workerTotals[a.workerId].net += (gross - adv);
+              workerTotals[a.workerId].totalPaid += (adv + netSettled);
+              workerTotals[a.workerId].pending += pending;
+            } else {
+              workerTotals[a.workerId].advance += adv;
+              workerTotals[a.workerId].totalPaid += adv;
+              workerTotals[a.workerId].pending -= adv;
+              workerTotals[a.workerId].net = workerTotals[a.workerId].gross - workerTotals[a.workerId].advance;
+            }
           }
-        });
-
-        const matTotals = { gross: 0, paid: 0, pending: 0 };
+        });\n\n        const matTotals = { gross: 0, paid: 0, pending: 0 };
         repMaterials.forEach(m => {
           const cost = Number(m.totalCost || 0);
           if (isWithinDate(m.orderDate)) matTotals.gross += cost;

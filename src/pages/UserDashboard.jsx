@@ -642,7 +642,7 @@ const [profileName, setProfileName] = useState('');
   const handleCreateWorker = async (e) => {
     e.preventDefault();
     try {
-      await addWorker({ projectId: activeProjectId, name: wName, trade: wTrade, dailyWage: Number(wWage), createdBy: currentUser.id });
+      await addWorker({ projectId: activeProjectId, name: wName, trade: wTrade, dailyWage: Number(wWage), paymentType: wPaymentType, createdBy: currentUser.id });
       setWName(''); setWTrade(''); setWWage(''); setIsWorkerModalOpen(false); await loadData();
       toast.success("Worker added successfully!");
     } catch (err) {
@@ -672,7 +672,8 @@ const [profileName, setProfileName] = useState('');
       await updateWorker(editWorkerObj.id, {
         name: ewName,
         trade: ewTrade,
-        dailyWage: Number(ewWage)
+        dailyWage: Number(ewWage),
+        paymentType: ewPaymentType
       });
       setIsEditWorkerModalOpen(false);
       setEditWorkerObj(null);

@@ -82,6 +82,7 @@ const UserDashboard = () => {
   const [wName, setWName] = useState('');
   const [wTrade, setWTrade] = useState('');
   const [wWage, setWWage] = useState(''); // Daily Wage
+  const [wPaymentType, setWPaymentType] = useState('daily');
   
   const [payrollStart, setPayrollStart] = useState(() => { const d = new Date(); d.setDate(d.getDate() - 7); return d.toISOString().split('T')[0]; });
   const [payrollEnd, setPayrollEnd] = useState(new Date().toISOString().split('T')[0]);
@@ -173,6 +174,7 @@ const UserDashboard = () => {
   const [ewName, setEwName] = useState('');
   const [ewTrade, setEwTrade] = useState('');
   const [ewWage, setEwWage] = useState('');
+  const [ewPaymentType, setEwPaymentType] = useState('daily');
   const [adminUnlockPast, setAdminUnlockPast] = useState(false);
 
   // Time Lock Utility: Returns true if the entry is from today or if admin has unlocked the past

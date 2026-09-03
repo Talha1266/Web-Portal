@@ -106,7 +106,7 @@ export const DEFAULT_PERMISSIONS = {
 };
 
 export const getProjects = async () => fetchWithCache('projects');
-export const addProject = async (p) => { const payload = { ...p, id: p.id || Date.now().toString(), progress: 0, createdAt: new Date().toISOString() }; await executeMutation('projects', 'INSERT', payload, payload.id); };
+export const addProject = async (p) => { const payload = { ...p, id: p.id || Date.now().toString(), progress: 0, status: 'ACTIVE', createdAt: new Date().toISOString() }; await executeMutation('projects', 'INSERT', payload, payload.id); };
 export const updateProject = async (id, updates) => { await executeMutation('projects', 'UPDATE', updates, id); };
 export const deleteProject = async (id) => {
   // Cascading deletes to prevent orphaned data

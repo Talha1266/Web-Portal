@@ -4,7 +4,7 @@ import 'yet-another-react-lightbox/styles.css';
 import Zoom from 'yet-another-react-lightbox/plugins/zoom';
 import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LayoutDashboard, HardHat, FileText, MessageSquare, LogOut, Plus, Edit2, Trash2, PieChart, Shield, X, MapPin, Building, Calendar, Users, Folder, FolderPlus, UploadCloud, ChevronRight, ArrowLeft, CheckSquare, Settings, ClipboardList, DollarSign, CheckCircle, Briefcase, Package, CreditCard, Truck, AlertTriangle, XCircle, Menu, Unlock, Printer, Camera } from 'lucide-react';
+import { LayoutDashboard, HardHat, FileText, MessageSquare, LogOut, Plus, Edit2, Trash2, PieChart, Shield, X, MapPin, Building, Calendar, Users, Folder, FolderPlus, UploadCloud, ChevronRight, ArrowLeft, CheckSquare, Settings, ClipboardList, DollarSign, CheckCircle, Briefcase, Package, CreditCard, Truck, AlertTriangle, XCircle, Menu, Unlock, Printer, Camera, RefreshCw } from 'lucide-react';
 import { getUsers, getProjects, addProject, updateProject, deleteProject, getDocuments, addDocument, deleteDocument, getWorkers, addWorker, updateWorker, deleteWorker, getAttendance, saveAttendance, markAttendancePaid, markAllAttendancePaid, deleteAttendanceRecords, getSubcontractors, addSubcontractor, updateSubcontractor, deleteSubcontractor, getSubPayments, addSubPayment, deleteSubPayment, updateSubPayment, getChangeRequests, addChangeRequest, updateChangeRequestStatus, getMaterials, addMaterial, updateMaterial, deleteMaterial, getMaterialCategories, addMaterialCategory, updateMaterialCategory, deleteMaterialCategory, getVendors, addVendor, updateVendor, deleteVendor, getSiteAdvances, addSiteAdvance, updateSiteAdvance, deleteSiteAdvance, getSiteExpenses, addSiteExpense, updateSiteExpense, deleteSiteExpense, addAdvanceOnlyRecord, addClearanceRecord, revertAttendancePaid, getAssets, addAsset, updateAsset, deleteAsset, saveFileContentToDB, getFileContentFromDB, deleteFileContentFromDB, getTasks, addTask, updateTask, deleteTask, getMessages, addMessage, updateUserProfile, addActivityLog } from '../utils/db';
 import { supabase } from '../supabaseClient';
 import { PieChart as RechartsPieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
@@ -32,6 +32,7 @@ const UserDashboard = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('overview'); 
   const [activeProjectId, setActiveProjectId] = useState(null); 
+  const [projectFilter, setProjectFilter] = useState('ACTIVE');
   const [projectTab, setProjectTab] = useState('overview'); // overview, documents, attendance, payroll, tasks, settings
   
   // Data State
@@ -564,6 +565,23 @@ const [profileName, setProfileName] = useState('');
   };
 
   const toggleAssignUser = (id) => setPAssigned(prev => prev.includes(id) ? prev.filter(uid => uid !== id) : [...prev, id]);
+  const handleToggleProjectStatus = async (id, currentStatus) => {
+    try {
+      const newStatus = currentStatus === 'COMPLETED' ? 'ACTIVE' : 'COMPLETED';
+      await updateProject(id, { status: newStatus });
+      
+      // If we archived it, let's close the project view and go back to overview
+      if (newStatus === 'COMPLETED') {
+        setActiveProjectId(null);
+        setActiveTab('projects');
+      }
+      
+      await loadData();
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
   const handleDeleteProject = async (e, id) => { 
     e.stopPropagation(); 
     triggerSecurityChallenge("Are you sure you want to delete this project? This action cannot be undone and will orphan all associated data.", "DELETE", async () => {
@@ -1818,27 +1836,41 @@ const [profileName, setProfileName] = useState('');
 
             {activeTab === 'projects' && (
               <div className="animate-fade-in">
-                <header className="flex-between" style={{ marginBottom: '3rem' }}>
+                <header className="flex-between" style={{ marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
                   <div>
-                    <h1 className="heading-1">Active Projects</h1>
+                    <h1 className="heading-1">Projects</h1>
                     <p style={{ color: 'var(--text-secondary)' }}>Select a project to open its dedicated dashboard.</p>
                   </div>
-                  {perms.add_projects && (
-                    <button className="btn btn-primary" onClick={() => setIsCreateModalOpen(true)}>
-                      <Plus size={20}/> Create Project
-                    </button>
-                  )}
+                  <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', background: 'var(--glass-darker)', borderRadius: 'var(--radius-full)', padding: '0.25rem' }}>
+                      <button 
+                        onClick={() => setProjectFilter('ACTIVE')}
+                        style={{ padding: '0.5rem 1.5rem', borderRadius: 'var(--radius-full)', background: projectFilter === 'ACTIVE' ? 'var(--accent-primary)' : 'transparent', color: projectFilter === 'ACTIVE' ? '#fff' : 'var(--text-secondary)', border: 'none', cursor: 'pointer', transition: 'var(--transition)', fontWeight: 500 }}
+                      >Active</button>
+                      <button 
+                        onClick={() => setProjectFilter('ARCHIVED')}
+                        style={{ padding: '0.5rem 1.5rem', borderRadius: 'var(--radius-full)', background: projectFilter === 'ARCHIVED' ? 'var(--surface-color)' : 'transparent', color: projectFilter === 'ARCHIVED' ? 'var(--text-primary)' : 'var(--text-secondary)', border: 'none', cursor: 'pointer', transition: 'var(--transition)', fontWeight: 500 }}
+                      >Archived</button>
+                    </div>
+                    {perms.add_projects && (
+                      <button className="btn btn-primary" onClick={() => setIsCreateModalOpen(true)}>
+                        <Plus size={20}/> Create Project
+                      </button>
+                    )}
+                  </div>
                 </header>
 
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 350px), 1fr))', gap: '2rem' }}>
-                  {projects.length === 0 ? (
-                    <div className="glass-card flex-center" style={{ padding: '4rem', gridColumn: '1 / -1', flexDirection: 'column', color: 'var(--text-muted)' }}>
-                      <HardHat size={64} style={{ marginBottom: '1.5rem', opacity: 0.5, color: 'var(--accent-secondary)' }} />
-                      <h3 className="heading-3">No Active Projects</h3>
-                      <p style={{ marginTop: '0.5rem' }}>{perms.add_projects ? "Click 'Create Project' above to start your first build!" : "You have not been assigned to any projects yet."}</p>
-                    </div>
-                  ) : (
-                    projects.map((project, idx) => (
+                  {(() => {
+                    const visibleProjects = projects.filter(p => projectFilter === 'ACTIVE' ? p.status !== 'COMPLETED' : p.status === 'COMPLETED');
+                    if (visibleProjects.length === 0) return (
+                      <div className="glass-card flex-center" style={{ padding: '4rem', gridColumn: '1 / -1', flexDirection: 'column', color: 'var(--text-muted)' }}>
+                        <HardHat size={64} style={{ marginBottom: '1.5rem', opacity: 0.5, color: 'var(--accent-secondary)' }} />
+                        <h3 className="heading-3">No {projectFilter === 'ACTIVE' ? 'Active' : 'Archived'} Projects</h3>
+                        <p style={{ marginTop: '0.5rem' }}>{projectFilter === 'ACTIVE' && perms.add_projects ? "Click 'Create Project' above to start your first build!" : "You have no projects in this view."}</p>
+                      </div>
+                    );
+                    return visibleProjects.map((project, idx) => (
                       <div key={project.id} className="glass-card" onClick={() => handleNav(() => handleOpenProject(project.id))}
                         style={{ padding: '2rem', display: 'flex', flexDirection: 'column', animation: `fadeIn 0.5s ease-out ${idx * 0.1}s forwards`, opacity: 0, cursor: 'pointer', transition: 'transform 0.2s, box-shadow 0.2s', border: '1px solid transparent' }}
                         onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-4px)'; e.currentTarget.style.boxShadow = '0 10px 30px -10px rgba(99, 102, 241, 0.3)'; e.currentTarget.style.borderColor = 'rgba(99, 102, 241, 0.3)'; }}
@@ -1872,8 +1904,8 @@ const [profileName, setProfileName] = useState('');
                           </div>
                         </div>
                       </div>
-                    ))
-                  )}
+                    ));
+                  })()}
                 </div>
               </div>
             )}
@@ -2083,9 +2115,9 @@ const [profileName, setProfileName] = useState('');
         {/* ========================================================= */}
         {activeProjectId !== null && activeProj && (
           <div className="animate-fade-in">
-            <header className="flex-between" style={{ marginBottom: '2.5rem', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '2.5rem' }}>
+            <header className="flex-between" style={{ marginBottom: '2.5rem', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '2.5rem', flexWrap: 'wrap', gap: '1.5rem' }}>
               <div>
-                <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><HardHat size={14}/> Active Project</p>
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><HardHat size={14}/> {activeProj.status === 'COMPLETED' ? 'Archived Project' : 'Active Project'}</p>
                 <h1 className="heading-1">{activeProj.name}</h1>
                 <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem', alignItems: 'center' }}>
                   <span style={{ fontSize: '0.75rem', padding: '0.2rem 0.6rem', background: 'var(--accent-glow)', color: 'var(--accent-primary)', borderRadius: 'var(--radius-full)' }}>{activeProj.status}</span>
@@ -2100,6 +2132,19 @@ const [profileName, setProfileName] = useState('');
                     </button>
                   )}
                 </div>
+              </div>
+              
+              <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                {(perms.root || perms.add_projects) && (
+                  <button 
+                    className={`btn ${activeProj.status === 'COMPLETED' ? 'btn-secondary' : 'btn-primary'}`}
+                    onClick={() => handleToggleProjectStatus(activeProj.id, activeProj.status)}
+                    style={{ background: activeProj.status === 'COMPLETED' ? 'transparent' : 'var(--success)', borderColor: activeProj.status === 'COMPLETED' ? 'var(--border-strong)' : 'var(--success)', color: activeProj.status === 'COMPLETED' ? 'var(--text-primary)' : '#fff', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                  >
+                    {activeProj.status === 'COMPLETED' ? <RefreshCw size={18}/> : <CheckCircle size={18}/>}
+                    {activeProj.status === 'COMPLETED' ? 'Reopen Project' : 'Mark as Completed'}
+                  </button>
+                )}
               </div>
             </header>
 

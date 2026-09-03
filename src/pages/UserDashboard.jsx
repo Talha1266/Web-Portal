@@ -4683,7 +4683,9 @@ const [profileName, setProfileName] = useState('');
               workerTotals[a.workerId].net = workerTotals[a.workerId].gross - workerTotals[a.workerId].advance;
             }
           }
-        });\n\n        const matTotals = { gross: 0, paid: 0, pending: 0 };
+        });
+
+        const matTotals = { gross: 0, paid: 0, pending: 0 };
         repMaterials.forEach(m => {
           const cost = Number(m.totalCost || 0);
           if (isWithinDate(m.orderDate)) matTotals.gross += cost;

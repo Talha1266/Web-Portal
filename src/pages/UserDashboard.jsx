@@ -5260,7 +5260,11 @@ const [profileName, setProfileName] = useState('');
                                   <span style={{color: 'var(--accent-primary)'}}>
                                     Salaried {totals.hasClearance && totals.hasAdvance ? '(Advance & Cleared)' : totals.hasClearance ? '(Cleared)' : totals.hasAdvance ? '(Advance)' : ''}
                                   </span>
-                                ) : worker.trade
+                                ) : (
+                                  <span>
+                                    {worker.trade} {totals.pending === 0 && totals.totalPaid > 0 ? <span style={{color: '#10b981', fontWeight: 500}}> (Paid)</span> : ''}
+                                  </span>
+                                )
                               ) : ''}
                             </td>
                             <td style={{textAlign:'right'}}>Rs {totals.gross.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>

@@ -714,7 +714,7 @@ const [profileName, setProfileName] = useState('');
             overtimeHours: Number(data.overtimeHours) || 0,
             advance: Number(data.advance) || 0,
             dailyWage: data.dailyWage !== undefined ? data.dailyWage : (worker ? worker.dailyWage : 0),
-            isPaid: data.isPaid || false,
+            isPaid: data.paid || false,
             loggedBy: currentUser.id
           });
         }
@@ -4883,8 +4883,8 @@ const [profileName, setProfileName] = useState('');
             if (!w.paymentType || w.paymentType === 'daily') {
               const hrRate = (a.dailyWage !== undefined && a.dailyWage !== null ? Number(a.dailyWage) : (w.dailyWage || 0)) / 8;
               const gross = ((Number(a.regularHours) + Number(a.overtimeHours)) * hrRate);
-              const netSettled = a.isPaid ? (gross - adv) : 0;
-              const pending = a.isPaid ? 0 : (gross - adv);
+              const netSettled = a.paid ? (gross - adv) : 0;
+              const pending = a.paid ? 0 : (gross - adv);
               
               const t = workerTotals[a.workerId];
               t.gross += gross;

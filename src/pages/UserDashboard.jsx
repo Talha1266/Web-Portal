@@ -2281,7 +2281,7 @@ const [profileName, setProfileName] = useState('');
                 </div>
 
                 {/* TABLE SECTION */}
-                {allWorkers.filter(w => w.projectId === activeProjectId && !w.isDeleted && (!w.paymentType || w.paymentType === 'daily')).length === 0 ? (
+                {allWorkers.filter(w => w.projectId === activeProjectId && !w.isDeleted).length === 0 ? (
                    <div style={{ textAlign: 'center', padding: '4rem', color: 'var(--text-muted)', background: 'var(--glass-overlay)', borderRadius: 'var(--radius-md)' }}>
                      <Users size={48} style={{ marginBottom: '1rem', opacity: 0.3 }} />
                      <p>No labourers registered on this project yet.</p>
@@ -2302,13 +2302,14 @@ const [profileName, setProfileName] = useState('');
                           </tr>
                         </thead>
                         <tbody>
-                          {allWorkers.filter(w => w.projectId === activeProjectId && !w.isDeleted && (!w.paymentType || w.paymentType === 'daily')).map(w => {
+                          {allWorkers.filter(w => w.projectId === activeProjectId && !w.isDeleted).map(w => {
                             const form = attendanceForm[w.id] || { isPresent: false, regularHours: 0, overtimeHours: 0, advance: 0, dailyWage: w.dailyWage };
+                            const isSalaried = w.paymentType && w.paymentType !== 'daily';
                             const regHrs = Number(form.regularHours) || 0;
                             const otHrs = Number(form.overtimeHours) || 0;
                             const adv = Number(form.advance) || 0;
                             const hourlyRate = (form.dailyWage || 0) / 8;
-                            const earned = ((regHrs + otHrs) * hourlyRate) - adv;
+                            const earned = isSalaried ? -adv : (((regHrs + otHrs) * hourlyRate) - adv);
                             
                             return (
                               <tr key={w.id} style={{ borderBottom: '1px solid var(--border-subtle)', background: form.isPresent ? 'rgba(99, 102, 241, 0.03)' : 'transparent' }}>
@@ -2326,31 +2327,39 @@ const [profileName, setProfileName] = useState('');
                                 <td style={{ padding: '0.75rem 0.5rem', textAlign: 'center' }}>
                                   <input 
                                     type="checkbox" 
-                                    checked={form.isPresent}
-                                    disabled={!canModify}
+                                    checked={isSalaried ? false : form.isPresent}
+                                    disabled={!canModify || isSalaried}
                                     onChange={e => handleAttendanceChange(w.id, 'isPresent', e.target.checked)}
-                                    style={{ width: '18px', height: '18px', accentColor: 'var(--accent-primary)', cursor: canModify ? 'pointer' : 'not-allowed', opacity: canModify ? 1 : 0.5 }}
+                                    style={{ width: '18px', height: '18px', accentColor: 'var(--accent-primary)', cursor: (!canModify || isSalaried) ? 'not-allowed' : 'pointer', opacity: (!canModify || isSalaried) ? 0.5 : 1 }}
                                   />
                                 </td>
                                 <td style={{ padding: '0.75rem 0.5rem', textAlign: 'center' }}>
-                                  <input 
-                                    type="number" min="0" max="24" step="0.5"
-                                    className="input-field" 
-                                    value={form.regularHours}
-                                    disabled={!canModify}
-                                    onChange={e => handleAttendanceChange(w.id, 'regularHours', e.target.value)}
-                                    style={{ padding: '0.3rem', textAlign: 'center', width: '65px', fontSize: '0.85rem', borderColor: form.regularHours > 0 ? 'var(--accent-primary)' : 'var(--border-strong)', opacity: canModify ? 1 : 0.5, margin: '0 auto', display: 'block' }}
-                                  />
+                                  {isSalaried ? (
+                                    <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', background: 'var(--glass-overlay)', padding: '0.25rem 0.5rem', borderRadius: '4px', display: 'inline-block' }}>Salaried ({w.paymentType})</span>
+                                  ) : (
+                                    <input 
+                                      type="number" min="0" max="24" step="0.5"
+                                      className="input-field" 
+                                      value={form.regularHours}
+                                      disabled={!canModify}
+                                      onChange={e => handleAttendanceChange(w.id, 'regularHours', e.target.value)}
+                                      style={{ padding: '0.3rem', textAlign: 'center', width: '65px', fontSize: '0.85rem', borderColor: form.regularHours > 0 ? 'var(--accent-primary)' : 'var(--border-strong)', opacity: canModify ? 1 : 0.5, margin: '0 auto', display: 'block' }}
+                                    />
+                                  )}
                                 </td>
                                 <td style={{ padding: '0.75rem 0.5rem', textAlign: 'center' }}>
-                                  <input 
-                                    type="number" min="0" max="24" step="0.5"
-                                    className="input-field" 
-                                    value={form.overtimeHours}
-                                    disabled={!canModify}
-                                    onChange={e => handleAttendanceChange(w.id, 'overtimeHours', e.target.value)}
-                                    style={{ padding: '0.3rem', textAlign: 'center', width: '65px', fontSize: '0.85rem', borderColor: form.overtimeHours > 0 ? 'var(--warning)' : 'var(--border-strong)', opacity: canModify ? 1 : 0.5, margin: '0 auto', display: 'block' }}
-                                  />
+                                  {isSalaried ? (
+                                    <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>Rs {Number(w.dailyWage || 0).toLocaleString()} / {w.paymentType === 'monthly' ? 'mo' : w.paymentType === 'bi-weekly' ? 'bi-wk' : 'wk'}</span>
+                                  ) : (
+                                    <input 
+                                      type="number" min="0" max="24" step="0.5"
+                                      className="input-field" 
+                                      value={form.overtimeHours}
+                                      disabled={!canModify}
+                                      onChange={e => handleAttendanceChange(w.id, 'overtimeHours', e.target.value)}
+                                      style={{ padding: '0.3rem', textAlign: 'center', width: '65px', fontSize: '0.85rem', borderColor: form.overtimeHours > 0 ? 'var(--warning)' : 'var(--border-strong)', opacity: canModify ? 1 : 0.5, margin: '0 auto', display: 'block' }}
+                                    />
+                                  )}
                                 </td>
                                 <td style={{ padding: '0.75rem 0.5rem', textAlign: 'center' }}>
                                   <input 

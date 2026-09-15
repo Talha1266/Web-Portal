@@ -2173,7 +2173,7 @@ const [profileName, setProfileName] = useState('');
                 totalManHours += hours;
                 const cost = hours * hourly;
                 totalLabour += cost;
-                if (!a.paid) outstandingPayroll += cost;
+                if (!a.paid) outstandingPayroll += (cost - (a.advance || 0));
               });
 
               const totalSubs = allSubPayments.filter(p => p.projectId === activeProj.id).reduce((acc, p) => acc + (p.amount || 0), 0);

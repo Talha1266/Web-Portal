@@ -4443,41 +4443,6 @@ const [profileName, setProfileName] = useState('');
         let totalAdvance = 0;
         let totalGross = 0;
         
-        let previousBalanceReg = 0;
-        let previousBalanceOT = 0;
-        let previousBalanceAdvance = 0;
-        let hasPreviousBalance = false;
-
-        if (payrollViewMode === 'outstanding' && !showFullLabourHistory && labourRecords.length > 5) {
-          // Find the most recent advance
-          const mostRecentAdvanceIdx = labourRecords.findIndex(r => r.advance > 0);
-          if (mostRecentAdvanceIdx !== -1) {
-            // We want to show records from the advance onwards (which are indexes 0 to mostRecentAdvanceIdx)
-            // Everything older (indexes > mostRecentAdvanceIdx) gets rolled up!
-            const olderRecords = labourRecords.slice(mostRecentAdvanceIdx + 1);
-            if (olderRecords.length > 0) {
-              hasPreviousBalance = true;
-              olderRecords.forEach(r => {
-                previousBalanceReg += (r.regularHours || 0);
-                previousBalanceOT += (r.overtimeHours || 0);
-                previousBalanceAdvance += (r.advance || 0);
-              });
-              // Keep only the recent records
-              labourRecords = labourRecords.slice(0, mostRecentAdvanceIdx + 1);
-            }
-          } else if (labourRecords.length > 14) {
-             // If no advance, but just a really long list of unpaid days, keep last 14
-             const olderRecords = labourRecords.slice(14);
-             hasPreviousBalance = true;
-             olderRecords.forEach(r => {
-                previousBalanceReg += (r.regularHours || 0);
-                previousBalanceOT += (r.overtimeHours || 0);
-                previousBalanceAdvance += (r.advance || 0);
-             });
-             labourRecords = labourRecords.slice(0, 14);
-          }
-        }
-        
         let dailyRate = selectedLabour.dailyWage || 0;
         if (selectedLabour.paymentType === 'monthly') dailyRate = dailyRate / 30;
         else if (selectedLabour.paymentType === 'bi-weekly') dailyRate = dailyRate / 14;
@@ -4499,20 +4464,9 @@ const [profileName, setProfileName] = useState('');
                 </div>
               </div>
 
-              <div className="flex-between" style={{ marginBottom: '1rem' }}>
-                <h3 className="heading-3" style={{ fontSize: '1.1rem', color: 'var(--text-primary)' }}>
-                  {payrollViewMode === 'outstanding' ? 'Active Labour Card (Pending)' : 'Paid Labour Card (History)'}
-                </h3>
-                {payrollViewMode === 'outstanding' && (
-                  <button 
-                    onClick={() => setShowFullLabourHistory(!showFullLabourHistory)}
-                    style={{ background: 'transparent', border: '1px solid var(--border-strong)', color: 'var(--text-secondary)', fontSize: '0.75rem', padding: '0.4rem 0.8rem', borderRadius: 'var(--radius-full)', cursor: 'pointer', transition: 'var(--transition)' }}
-                    className="hover-bg-tertiary"
-                  >
-                    {showFullLabourHistory ? 'Show Compact View' : 'Show Full History'}
-                  </button>
-                )}
-              </div>
+              <h3 className="heading-3" style={{ marginBottom: '1rem', fontSize: '1.1rem', color: 'var(--text-primary)' }}>
+                {payrollViewMode === 'outstanding' ? 'Active Labour Card (Pending)' : 'Paid Labour Card (History)'}
+              </h3>
               
               <div style={{ overflowX: 'auto', marginBottom: '2rem' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.875rem' }}>
@@ -4526,16 +4480,7 @@ const [profileName, setProfileName] = useState('');
                     </tr>
                   </thead>
                   <tbody>
-                    {hasPreviousBalance && (
-                      <tr style={{ background: 'var(--bg-tertiary)', color: 'var(--text-secondary)', fontSize: '0.8rem' }}>
-                        <td style={{ padding: '0.75rem 0.5rem', fontStyle: 'italic' }}>Older Pending Records (Rolled Up)</td>
-                        <td style={{ padding: '0.75rem 0.5rem', textAlign: 'center' }}>{previousBalanceReg || '-'}</td>
-                        <td style={{ padding: '0.75rem 0.5rem', textAlign: 'center' }}>{previousBalanceOT || '-'}</td>
-                        <td style={{ padding: '0.75rem 0.5rem', textAlign: 'right' }}>{previousBalanceAdvance ? `Rs ${previousBalanceAdvance.toFixed(2)}` : '-'}</td>
-                        <td style={{ padding: '0.75rem 0.5rem', textAlign: 'center' }}>-</td>
-                      </tr>
-                    )}
-                    {labourRecords.length === 0 && !hasPreviousBalance ? (
+                    {labourRecords.length === 0 ? (
                       <tr><td colSpan="5" style={{ padding: '1.5rem', textAlign: 'center', color: 'var(--text-muted)' }}>No records found for this labour on the current project.</td></tr>
                     ) : (
                       labourRecords.map(rec => {
@@ -4567,9 +4512,9 @@ const [profileName, setProfileName] = useState('');
                     <tfoot>
                       <tr style={{ borderTop: '2px solid var(--border-strong)', fontWeight: 'bold' }}>
                         <td style={{ padding: '1rem 0.5rem' }}>Totals</td>
-                        <td style={{ padding: '1rem 0.5rem', textAlign: 'center' }}>{totalReg + previousBalanceReg}</td>
-                        <td style={{ padding: '1rem 0.5rem', textAlign: 'center' }}>{totalOT + previousBalanceOT}</td>
-                        <td style={{ padding: '1rem 0.5rem', textAlign: 'right', color: 'var(--danger)' }}>Rs {(totalAdvance + previousBalanceAdvance).toFixed(2)}</td>
+                        <td style={{ padding: '1rem 0.5rem', textAlign: 'center' }}>{totalReg}</td>
+                        <td style={{ padding: '1rem 0.5rem', textAlign: 'center' }}>{totalOT}</td>
+                        <td style={{ padding: '1rem 0.5rem', textAlign: 'right', color: 'var(--danger)' }}>Rs {totalAdvance.toFixed(2)}</td>
                         <td></td>
                       </tr>
                     </tfoot>

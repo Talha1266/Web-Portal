@@ -1925,12 +1925,15 @@ const [profileName, setProfileName] = useState('');
 
               allAttendance.forEach(a => {
                 const w = allWorkers.find(worker => worker.id === a.workerId);
-                const hourly = (a.dailyWage !== undefined ? a.dailyWage : (w?.dailyWage || 0)) / 8;
                 const hours = (a.regularHours || 0) + (a.overtimeHours || 0);
                 totalManHours += hours;
-                const cost = hours * hourly;
-                totalLabour += cost;
-                if (!a.paid) outstandingPayroll += cost;
+                
+                if (w && w.paymentType === 'daily') {
+                  const hourly = (a.dailyWage !== undefined ? a.dailyWage : (w.dailyWage || 0)) / 8;
+                  const cost = hours * hourly;
+                  totalLabour += cost;
+                  if (!a.paid) outstandingPayroll += (cost - (a.advance || 0));
+                }
               });
 
               totalSubs = allSubPayments.reduce((acc, p) => acc + (p.amount || 0), 0);
@@ -2168,12 +2171,15 @@ const [profileName, setProfileName] = useState('');
 
               allAttendance.filter(a => a.projectId === activeProj.id).forEach(a => {
                 const w = allWorkers.find(worker => worker.id === a.workerId);
-                const hourly = (a.dailyWage !== undefined ? a.dailyWage : (w?.dailyWage || 0)) / 8;
                 const hours = (a.regularHours || 0) + (a.overtimeHours || 0);
                 totalManHours += hours;
-                const cost = hours * hourly;
-                totalLabour += cost;
-                if (!a.paid) outstandingPayroll += (cost - (a.advance || 0));
+                
+                if (w && w.paymentType === 'daily') {
+                  const hourly = (a.dailyWage !== undefined ? a.dailyWage : (w.dailyWage || 0)) / 8;
+                  const cost = hours * hourly;
+                  totalLabour += cost;
+                  if (!a.paid) outstandingPayroll += (cost - (a.advance || 0));
+                }
               });
 
               const totalSubs = allSubPayments.filter(p => p.projectId === activeProj.id).reduce((acc, p) => acc + (p.amount || 0), 0);

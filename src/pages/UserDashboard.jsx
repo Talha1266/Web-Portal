@@ -1781,7 +1781,7 @@ const [profileName, setProfileName] = useState('');
                       <div style={{ padding: '1rem', background: 'var(--bg-tertiary)', borderRadius: 'var(--radius-md)' }}><HardHat size={24} color="var(--accent-primary)" /></div>
                       <h3 className="heading-3">My Projects</h3>
                     </div>
-                    <p className="text-gradient heading-1">{projects.filter(p => p.status !== 'Completed').length}</p>
+                    <p className="text-gradient heading-1">{projects.filter(p => p.status !== 'COMPLETED').length}</p>
                     <p style={{ color: 'var(--text-secondary)', marginTop: '0.5rem' }}>Active construction sites</p>
                   </div>
                   

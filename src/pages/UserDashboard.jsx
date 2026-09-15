@@ -1928,7 +1928,7 @@ const [profileName, setProfileName] = useState('');
                 const hours = (a.regularHours || 0) + (a.overtimeHours || 0);
                 totalManHours += hours;
                 
-                if (w && w.paymentType === 'daily') {
+                if (w && (!w.paymentType || w.paymentType === 'daily')) {
                   const hourly = (a.dailyWage !== undefined ? a.dailyWage : (w.dailyWage || 0)) / 8;
                   const cost = hours * hourly;
                   totalLabour += cost;
@@ -2174,7 +2174,7 @@ const [profileName, setProfileName] = useState('');
                 const hours = (a.regularHours || 0) + (a.overtimeHours || 0);
                 totalManHours += hours;
                 
-                if (w && w.paymentType === 'daily') {
+                if (w && (!w.paymentType || w.paymentType === 'daily')) {
                   const hourly = (a.dailyWage !== undefined ? a.dailyWage : (w.dailyWage || 0)) / 8;
                   const cost = hours * hourly;
                   totalLabour += cost;
@@ -4499,7 +4499,14 @@ const [profileName, setProfileName] = useState('');
                         totalReg += (rec.regularHours || 0);
                         totalOT += (rec.overtimeHours || 0);
                         totalAdvance += (rec.advance || 0);
-                        const grossForDay = ((rec.regularHours || 0) + (rec.overtimeHours || 0)) * hourlyRate;
+                        
+                        let recDailyRate = rec.dailyWage !== undefined ? rec.dailyWage : (selectedLabour.dailyWage || 0);
+                        if (selectedLabour.paymentType === 'monthly') recDailyRate = recDailyRate / 30;
+                        else if (selectedLabour.paymentType === 'bi-weekly') recDailyRate = recDailyRate / 14;
+                        else if (selectedLabour.paymentType === 'weekly') recDailyRate = recDailyRate / 7;
+                        
+                        const recHourlyRate = recDailyRate / 8;
+                        const grossForDay = ((rec.regularHours || 0) + (rec.overtimeHours || 0)) * recHourlyRate;
                         totalGross += grossForDay;
                         
                         return (

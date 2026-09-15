@@ -79,7 +79,6 @@ const UserDashboard = () => {
   const [isAttendanceDirty, setIsAttendanceDirty] = useState(false);
   const [isWorkerModalOpen, setIsWorkerModalOpen] = useState(false);
   const [isLabourCardModalOpen, setIsLabourCardModalOpen] = useState(false);
-  const [showFullLabourHistory, setShowFullLabourHistory] = useState(false);
   const [selectedLabour, setSelectedLabour] = useState(null);
   const [wName, setWName] = useState('');
   const [wTrade, setWTrade] = useState('');
@@ -4488,7 +4487,7 @@ const [profileName, setProfileName] = useState('');
         return (
           <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(9, 9, 11, 0.5)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}>
             <div className="glass-card animate-fade-in" style={{ padding: '2.5rem', width: '100%', maxWidth: '700px', maxHeight: '90vh', overflowY: 'auto', position: 'relative' }}>
-              <button onClick={() => { setIsLabourCardModalOpen(false); setSelectedLabour(null); setShowFullLabourHistory(false); }} style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}><X size={24} /></button>
+              <button onClick={() => { setIsLabourCardModalOpen(false); setSelectedLabour(null); }} style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}><X size={24} /></button>
               
               <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2rem' }}>
                 <div style={{ padding: '1rem', background: 'var(--bg-tertiary)', borderRadius: 'var(--radius-full)' }}>

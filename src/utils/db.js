@@ -585,3 +585,50 @@ export const addActivityLog = async (logData) => {
   });
   if (error) throw new Error(error.message);
 };
+
+
+export const processDailyWorkerFifoSettlement = async (projectId, workerId, amountPaid, hourlyRate, userId) => {
+  const { data: unpaidRecords, error: fetchErr } = await supabase.from('attendance')
+    .select('*')
+    .eq('projectId', projectId)
+    .eq('workerId', workerId)
+    .eq('paid', false)
+    .order('date', { ascending: true });
+    
+  if (fetchErr) throw new Error(fetchErr.message);
+  
+  let remainingPayment = amountPaid;
+  const recordsToUpdate = [];
+  
+  for (const record of unpaidRecords) {
+    if (remainingPayment <= 0) break;
+    
+    const gross = ((record.regularHours || 0) + (record.overtimeHours || 0)) * hourlyRate;
+    const existingAdvance = record.advance || 0;
+    const netOwedForDay = gross - existingAdvance;
+    
+    if (netOwedForDay <= 0) {
+      recordsToUpdate.push({ ...record, paid: true });
+      continue;
+    }
+    
+    if (remainingPayment >= netOwedForDay) {
+      remainingPayment -= netOwedForDay;
+      recordsToUpdate.push({ ...record, paid: true });
+    } else {
+      recordsToUpdate.push({ ...record, advance: existingAdvance + remainingPayment });
+      remainingPayment = 0;
+      break;
+    }
+  }
+  
+  if (recordsToUpdate.length > 0) {
+    const { error: updateErr } = await supabase.from('attendance').upsert(recordsToUpdate);
+    if (updateErr) throw new Error(updateErr.message);
+  }
+  
+  if (remainingPayment > 0) {
+    await addAdvanceOnlyRecord(projectId, workerId, remainingPayment, userId);
+  }
+};
+

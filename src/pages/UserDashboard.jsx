@@ -566,6 +566,12 @@ const [profileName, setProfileName] = useState('');
 
   const toggleAssignUser = (id) => setPAssigned(prev => prev.includes(id) ? prev.filter(uid => uid !== id) : [...prev, id]);
   const handleToggleProjectStatus = async (id, currentStatus) => {
+    const isCompleting = currentStatus !== 'COMPLETED';
+    const msg = isCompleting 
+      ? "Are you sure you want to mark this project as completed? It will be moved to the archive." 
+      : "Are you sure you want to reopen this archived project?";
+    if (!window.confirm(msg)) return;
+
     try {
       const newStatus = currentStatus === 'COMPLETED' ? 'ACTIVE' : 'COMPLETED';
       await updateProject(id, { status: newStatus });

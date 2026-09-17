@@ -2585,51 +2585,62 @@ const [profileName, setProfileName] = useState('');
                      const workerLogs = allAttendance.filter(a => a.workerId === worker.id);
                      
                      if (payrollViewMode === 'outstanding') {
-                       // Calculate fixed calendar cycle start date
-                       let cycleStartDate = '1970-01-01';
-                       const endDateObj = new Date(payrollEnd || new Date());
-                       const y = endDateObj.getFullYear();
-                       const m = endDateObj.getMonth();
-                       const d = endDateObj.getDate();
+                       // Find the last clearance date to determine the start of the current cycle
+                       const targetEnd = payrollEnd || new Date().toISOString().split('T')[0];
+                       const clearances = workerLogs.filter(a => a.regularHours === -999 && a.date <= targetEnd).sort((a,b) => new Date(b.date) - new Date(a.date));
                        
-                       if (worker.paymentType === 'monthly') {
-                         cycleStartDate = new Date(y, m, 1).toISOString().split('T')[0];
-                       } else if (worker.paymentType === 'bi-weekly') {
-                         if (d < 16) {
-                           cycleStartDate = new Date(y, m, 1).toISOString().split('T')[0];
-                         } else {
-                           cycleStartDate = new Date(y, m, 16).toISOString().split('T')[0];
-                         }
-                       } else {
-                         // Fallback for weekly or other
-                         const clearances = workerLogs.filter(a => a.regularHours === -999 && a.date <= (payrollEnd || new Date().toISOString().split('T')[0])).sort((a,b) => new Date(b.date) - new Date(a.date));
-                         cycleStartDate = clearances.length > 0 ? clearances[0].date : '1970-01-01';
+                       let cycleStartDateStr = clearances.length > 0 ? clearances[0].date : null;
+                       if (!cycleStartDateStr) {
+                         if (worker.createdAt) cycleStartDateStr = worker.createdAt.split('T')[0];
+                         else if (workerLogs.length > 0) cycleStartDateStr = workerLogs.sort((a,b) => new Date(a.date) - new Date(b.date))[0].date;
+                         else cycleStartDateStr = targetEnd; // fallback to today
                        }
                        
-                       // Sum advances in the current cycle
-                       const currentAdvances = workerLogs.filter(a => a.date >= cycleStartDate && a.date <= (payrollEnd || new Date().toISOString().split('T')[0]) && (a.advance > 0) && a.regularHours !== -999);
+                       // Sum ALL unpaid advances up to the target date. This guarantees no balance is ever lost if unpaid.
+                       const unpaidAdvances = workerLogs.filter(a => a.date <= targetEnd && (a.advance > 0) && a.regularHours !== -999 && !a.paid);
                        let totalAdvance = 0;
-                       currentAdvances.forEach(a => totalAdvance += Number(a.advance));
+                       unpaidAdvances.forEach(a => totalAdvance += Number(a.advance));
+
+                       // Calculate accrued gross pay based on elapsed days since the cycle started
+                       const d1 = new Date(cycleStartDateStr);
+                       const d2 = new Date(targetEnd);
+                       const diffTime = Math.abs(d2 - d1);
+                       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                       
+                       let cycleLength = 30; // default monthly
+                       if (worker.paymentType === 'bi-weekly') cycleLength = 14;
+                       else if (worker.paymentType === 'weekly') cycleLength = 7;
+                       
+                       // Floor the cycles. A worker gets their full salary unlocked ON the cycle end date.
+                       const cycles = Math.floor(diffDays / cycleLength);
+                       const accruedGross = (worker.dailyWage || 0) * cycles;
                        
                        payrollData[worker.id] = { 
                          isSalaried: true,
                          regHours: 0, otHours: 0, 
                          advance: totalAdvance, 
-                         dates: new Set([cycleStartDate !== '1970-01-01' ? `Since ${cycleStartDate}` : 'Current Cycle']), 
-                         grossPay: worker.dailyWage || 0 // Full salary is the gross pay
+                         dates: new Set([`Since ${cycleStartDateStr}`]), 
+                         grossPay: accruedGross 
                        };
                      } else {
-                       // History mode: Show clearances that happened between Start and End
-                       const cycleClearances = workerLogs.filter(a => a.regularHours === -999 && a.date >= payrollStart && a.date <= payrollEnd);
-                       if (cycleClearances.length > 0) {
+                       // History mode: Show all cash outlays (Advances + Clearances) that happened between Start and End
+                       const periodAdvances = workerLogs.filter(a => a.advance > 0 && a.regularHours !== -999 && a.date >= payrollStart && a.date <= payrollEnd);
+                       const periodClearances = workerLogs.filter(a => a.regularHours === -999 && a.date >= payrollStart && a.date <= payrollEnd);
+                       
+                       if (periodAdvances.length > 0 || periodClearances.length > 0) {
+                         let totalAdv = 0;
                          let totalCleared = 0;
-                         cycleClearances.forEach(c => totalCleared += Number(c.advance));
+                         const dates = new Set();
+                         
+                         periodAdvances.forEach(a => { totalAdv += Number(a.advance); dates.add(a.date); });
+                         periodClearances.forEach(c => { totalCleared += Number(c.advance); dates.add(c.date); });
+                         
                          payrollData[worker.id] = {
                            isSalaried: true,
                            regHours: 0, otHours: 0,
-                           advance: 0, 
-                           dates: new Set(cycleClearances.map(c => c.date)),
-                           grossPay: totalCleared 
+                           advance: totalAdv, 
+                           dates: dates,
+                           grossPay: totalCleared + totalAdv // In history, Gross reflects the total cash paid out for salaried workers so Net = totalCleared
                          };
                        }
                      }

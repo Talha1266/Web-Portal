@@ -4927,22 +4927,23 @@ const [profileName, setProfileName] = useState('');
         const repExpenses = allSiteExpenses.filter(e => e.projectId === activeProjectId && isWithinDate(e.date));
         const repAttendance = allAttendance.filter(a => a.projectId === activeProjectId && isWithinDate(a.date));
         const workerTotals = {};
+        const salariedTotals = {};
         const projWorkers = allWorkers.filter(w => w.projectId === activeProjectId && !w.isDeleted);
         
         projWorkers.forEach(w => {
-          if (!workerTotals[w.id]) workerTotals[w.id] = { gross: 0, advance: 0, net: 0, totalPaid: 0, pending: 0, isSalaried: false, hasAdvance: false, hasClearance: false };
-          if (w.paymentType && w.paymentType !== 'daily') {
-             workerTotals[w.id].isSalaried = true;
-             // No daily pro-rating. Salaried totals are purely cash-flow based.
+          if (!w.paymentType || w.paymentType === 'daily') {
+            workerTotals[w.id] = { gross: 0, advance: 0, net: 0, totalPaid: 0, pending: 0 };
+          } else {
+            salariedTotals[w.id] = { salary: w.dailyWage || 0, schedule: w.paymentType, advancePaid: 0, clearancePaid: 0 };
           }
         });
 
         repAttendance.forEach(a => {
-          if (!workerTotals[a.workerId]) workerTotals[a.workerId] = { gross: 0, advance: 0, net: 0, totalPaid: 0, pending: 0, isSalaried: false, hasAdvance: false, hasClearance: false };
           const w = allWorkers.find(wk => wk.id === a.workerId);
           if (w) {
             const adv = Number(a.advance || 0);
             if (!w.paymentType || w.paymentType === 'daily') {
+              if (!workerTotals[a.workerId]) workerTotals[a.workerId] = { gross: 0, advance: 0, net: 0, totalPaid: 0, pending: 0 };
               const hrRate = (a.dailyWage !== undefined && a.dailyWage !== null ? Number(a.dailyWage) : (w.dailyWage || 0)) / 8;
               const gross = ((Number(a.regularHours) + Number(a.overtimeHours)) * hrRate);
               const netSettled = a.paid ? (gross - adv) : 0;
@@ -4955,19 +4956,16 @@ const [profileName, setProfileName] = useState('');
               t.totalPaid += (adv + netSettled);
               t.pending += pending;
             } else {
-              // Salaried Logic (Cash-flow based)
+              // Salaried Logic (Cash-flow based strictly for tracking cash exiting the business)
               if (adv > 0) {
-                const t = workerTotals[a.workerId];
+                if (!salariedTotals[a.workerId]) salariedTotals[a.workerId] = { salary: w.dailyWage || 0, schedule: w.paymentType, advancePaid: 0, clearancePaid: 0 };
+                const t = salariedTotals[a.workerId];
                 if (a.regularHours === -999) {
                   // Salary Clearance
-                  t.hasClearance = true;
-                  t.gross += adv;
-                  t.totalPaid += adv;
+                  t.clearancePaid += adv;
                 } else {
                   // Advance Payment
-                  t.hasAdvance = true;
-                  t.gross += adv;
-                  t.totalPaid += adv;
+                  t.advancePaid += adv;
                 }
               }
             }
@@ -5011,8 +5009,14 @@ const [profileName, setProfileName] = useState('');
           return acc;
         }, { gross: 0, paid: 0, pending: 0 });
 
-        const grandGross = (reportConfig.includeMaterials ? matTotals.gross : 0) + (reportConfig.includeSubcontractors ? subTotals.gross : 0) + (reportConfig.includeLabour ? labTotals.gross : 0) + (reportConfig.includeExpenses ? expTotals.gross : 0);
-        const grandPaid = (reportConfig.includeMaterials ? matTotals.paid : 0) + (reportConfig.includeSubcontractors ? subTotals.paid : 0) + (reportConfig.includeLabour ? labTotals.paid : 0) + (reportConfig.includeExpenses ? expTotals.paid : 0);
+        const salTotals = Object.values(salariedTotals).reduce((acc, val) => {
+          const cashPaid = val.advancePaid + val.clearancePaid;
+          acc.paid += cashPaid;
+          return acc;
+        }, { paid: 0 });
+
+        const grandGross = (reportConfig.includeMaterials ? matTotals.gross : 0) + (reportConfig.includeSubcontractors ? subTotals.gross : 0) + (reportConfig.includeLabour ? (labTotals.gross + salTotals.paid) : 0) + (reportConfig.includeExpenses ? expTotals.gross : 0);
+        const grandPaid = (reportConfig.includeMaterials ? matTotals.paid : 0) + (reportConfig.includeSubcontractors ? subTotals.paid : 0) + (reportConfig.includeLabour ? (labTotals.paid + salTotals.paid) : 0) + (reportConfig.includeExpenses ? expTotals.paid : 0);
         const grandPending = (reportConfig.includeMaterials ? matTotals.pending : 0) + (reportConfig.includeSubcontractors ? subTotals.pending : 0) + (reportConfig.includeLabour ? labTotals.pending : 0) + (reportConfig.includeExpenses ? expTotals.pending : 0);
 
         return (
@@ -5310,23 +5314,16 @@ const [profileName, setProfileName] = useState('');
                     </thead>
                     <tbody>
                       {Object.entries(workerTotals).map(([wId, totals]) => {
-                        if (totals.gross === 0 && !totals.isSalaried) return null;
-                        if (totals.isSalaried && totals.gross === 0) return null; // Even salaried should have > 0 gross (advances) to appear
+                        if (totals.gross === 0) return null;
                         const worker = allWorkers.find(w => w.id === wId);
                         return (
                           <tr key={wId}>
                             <td><strong>{worker ? worker.name : 'Unknown'}</strong></td>
                             <td>
                               {worker ? (
-                                totals.isSalaried ? (
-                                  <span style={{color: 'var(--accent-primary)'}}>
-                                    Salaried {totals.hasClearance && totals.hasAdvance ? '(Advance & Cleared)' : totals.hasClearance ? '(Cleared)' : totals.hasAdvance ? '(Advance)' : ''}
-                                  </span>
-                                ) : (
-                                  <span>
-                                    {worker.trade} {totals.pending === 0 && totals.totalPaid > 0 ? <span style={{color: '#10b981', fontWeight: 500}}> (Paid)</span> : ''}
-                                  </span>
-                                )
+                                <span>
+                                  {worker.trade} {totals.pending === 0 && totals.totalPaid > 0 ? <span style={{color: '#10b981', fontWeight: 500}}> (Paid)</span> : ''}
+                                </span>
                               ) : ''}
                             </td>
                             <td style={{textAlign:'right'}}>Rs {totals.gross.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
@@ -5335,7 +5332,46 @@ const [profileName, setProfileName] = useState('');
                           </tr>
                         );
                       })}
-                      {Object.keys(workerTotals).length === 0 && <tr><td colSpan="5" style={{textAlign:'center', padding:'20px'}}>No labour records found in this period.</td></tr>}
+                      {Object.keys(workerTotals).length === 0 && <tr><td colSpan="5" style={{textAlign:'center', padding:'20px'}}>No daily labour records found in this period.</td></tr>}
+                    </tbody>
+                  </table>
+
+                  <div className="section-header" style={{ marginTop: '2rem' }}>
+                    <h3 style={{ color: 'var(--text-primary)' }}>Salaried Staff</h3>
+                    <div className="section-totals">
+                      Total Cash Outlay: <span style={{color:'#10b981'}}>Rs {salTotals.paid.toLocaleString()}</span>
+                    </div>
+                  </div>
+                  <table className="report-table">
+                    <thead>
+                      <tr>
+                        <th>Staff Name</th>
+                        <th style={{textAlign:'center'}}>Schedule</th>
+                        <th style={{textAlign:'right'}}>Fixed Salary</th>
+                        <th style={{textAlign:'right'}}>Advance (Period)</th>
+                        <th style={{textAlign:'right'}}>Clearance (Period)</th>
+                        <th style={{textAlign:'right'}}>Total Paid</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {Object.entries(salariedTotals).map(([wId, totals]) => {
+                        if (totals.advancePaid === 0 && totals.clearancePaid === 0) return null;
+                        const worker = allWorkers.find(w => w.id === wId);
+                        const totalPaid = totals.advancePaid + totals.clearancePaid;
+                        return (
+                          <tr key={wId}>
+                            <td><strong>{worker ? worker.name : 'Unknown'}</strong><br/><span style={{fontSize: '0.75rem', color: 'var(--text-secondary)'}}>{worker ? worker.trade : ''}</span></td>
+                            <td style={{textAlign:'center', textTransform: 'capitalize'}}>{totals.schedule}</td>
+                            <td style={{textAlign:'right'}}>Rs {totals.salary.toLocaleString()}</td>
+                            <td style={{textAlign:'right', color: totals.advancePaid > 0 ? '#ef4444' : 'inherit'}}>Rs {totals.advancePaid.toLocaleString()}</td>
+                            <td style={{textAlign:'right', color: totals.clearancePaid > 0 ? '#10b981' : 'inherit'}}>Rs {totals.clearancePaid.toLocaleString()}</td>
+                            <td style={{textAlign:'right', fontWeight:'600'}}>Rs {totalPaid.toLocaleString()}</td>
+                          </tr>
+                        );
+                      })}
+                      {Object.keys(salariedTotals).filter(wId => (salariedTotals[wId].advancePaid > 0 || salariedTotals[wId].clearancePaid > 0)).length === 0 && (
+                        <tr><td colSpan="6" style={{textAlign:'center', padding:'20px'}}>No salaried staff payments found in this period.</td></tr>
+                      )}
                     </tbody>
                   </table>
                 </div>

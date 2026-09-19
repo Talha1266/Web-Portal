@@ -1729,6 +1729,7 @@ const [profileName, setProfileName] = useState('');
             {(perms.root || perms.overview) && <button className={projectTab === 'overview' ? "btn btn-primary" : "btn btn-secondary"} onClick={() => handleNav(() => setProjectTab('overview'))} style={{ justifyContent: 'flex-start' }}><LayoutDashboard size={20}/> Overview</button>}
             {(perms.root || perms.attendance) && <button className={projectTab === 'attendance' ? "btn btn-primary" : "btn btn-secondary"} onClick={() => handleNav(() => setProjectTab('attendance'))} style={{ justifyContent: 'flex-start' }}><ClipboardList size={20}/> Attendance</button>}
             {(perms.root || perms.payroll) && <button className={projectTab === 'payroll' ? "btn btn-primary" : "btn btn-secondary"} onClick={() => handleNav(() => setProjectTab('payroll'))} style={{ justifyContent: 'flex-start' }}><DollarSign size={20}/> Payroll & Wages</button>}
+            {(perms.root || perms.attendance || perms.payroll) && <button className={projectTab === 'salaried' ? "btn btn-primary" : "btn btn-secondary"} onClick={() => handleNav(() => setProjectTab('salaried'))} style={{ justifyContent: 'flex-start' }}><Users size={20}/> Salaried Staff</button>}
             {(perms.root || perms.subcontractors) && <button className={projectTab === 'subcontractors' ? "btn btn-primary" : "btn btn-secondary"} onClick={() => handleNav(() => { setProjectTab('subcontractors'); setActiveSubId(null); })} style={{ justifyContent: 'flex-start' }}><Briefcase size={20}/> Subcontractors</button>}
             {(perms.root || perms.materials) && <button className={projectTab === 'materials' ? "btn btn-primary" : "btn btn-secondary"} onClick={() => handleNav(() => { setProjectTab('materials'); setActiveMaterialCategory('All'); })} style={{ justifyContent: 'flex-start' }}><Package size={20}/> Materials</button>}
             {(perms.root || perms.site_expenses) && <button className={projectTab === 'site_expenses' ? "btn btn-primary" : "btn btn-secondary"} onClick={() => handleNav(() => setProjectTab('site_expenses'))} style={{ justifyContent: 'flex-start' }}><CreditCard size={20}/> Site Expenses</button>}
@@ -2441,70 +2442,7 @@ const [profileName, setProfileName] = useState('');
                     </div>
                   </div>
 
-                  <div style={{ overflowX: 'auto' }}>
-                    <h3 className="heading-3" style={{ marginBottom: '1rem', color: 'var(--text-primary)' }}>Salaried Staff</h3>
-                    <div className="table-wrapper">
-                      <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '700px' }}>
-                        <thead>
-                          <tr style={{ borderBottom: '1px solid var(--border-strong)', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
-                            <th style={{ padding: '1rem 0.5rem', fontWeight: 500 }}>Staff Info</th>
-                            <th style={{ padding: '1rem 0.5rem', fontWeight: 500, textAlign: 'center' }}>Schedule</th>
-                            <th style={{ padding: '1rem 0.5rem', fontWeight: 500, textAlign: 'center' }}>Salary</th>
-                            <th style={{ padding: '1rem 0.5rem', fontWeight: 500, textAlign: 'center' }}>Advance</th>
-                            <th style={{ padding: '1rem 0.5rem', fontWeight: 500, textAlign: 'right' }}>Deduction</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {allWorkers.filter(w => w.projectId === activeProjectId && !w.isDeleted && (w.paymentType && w.paymentType !== 'daily')).map(w => {
-                            const form = attendanceForm[w.id] || { advance: 0 };
-                            const adv = Number(form.advance) || 0;
-                            
-                            return (
-                              <tr key={w.id} style={{ borderBottom: '1px solid var(--border-subtle)', background: 'transparent' }}>
-                                <td style={{ padding: '0.75rem 0.5rem' }}>
-                                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                                    <button onClick={(e) => { e.stopPropagation(); handleOpenEditWorker(w); }} style={{ background: 'none', border: 'none', color: 'var(--accent-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', opacity: 0.5 }} onMouseEnter={e => e.currentTarget.style.opacity = 1} onMouseLeave={e => e.currentTarget.style.opacity = 0.5} title="Edit Staff">
-                                      <Edit2 size={14} />
-                                    </button>
-                                    <div>
-                                      <div style={{ fontWeight: 500, fontSize: '0.9rem' }}>{w.name}</div>
-                                      <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{w.trade}</div>
-                                    </div>
-                                  </div>
-                                </td>
-                                <td style={{ padding: '0.75rem 0.5rem', textAlign: 'center' }}>
-                                  <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', background: 'var(--glass-overlay)', padding: '0.25rem 0.5rem', borderRadius: '4px', display: 'inline-block', textTransform: 'capitalize' }}>
-                                    {w.paymentType}
-                                  </span>
-                                </td>
-                                <td style={{ padding: '0.75rem 0.5rem', textAlign: 'center' }}>
-                                  <span style={{ fontSize: '0.85rem', color: 'var(--text-primary)' }}>
-                                    Rs {Number(w.dailyWage || 0).toLocaleString()}
-                                  </span>
-                                </td>
-                                <td style={{ padding: '0.75rem 0.5rem', textAlign: 'center' }}>
-                                  <input 
-                                    type="number" min="0" step="1"
-                                    className="input-field" 
-                                    value={form.advance}
-                                    disabled={!canModify}
-                                    onChange={e => handleAttendanceChange(w.id, 'advance', e.target.value)}
-                                    style={{ padding: '0.3rem', textAlign: 'center', width: '80px', fontSize: '0.85rem', borderColor: form.advance > 0 ? 'var(--danger)' : 'var(--border-strong)', opacity: canModify ? 1 : 0.5, margin: '0 auto', display: 'block' }}
-                                  />
-                                </td>
-                                <td style={{ padding: '0.75rem 0.5rem', textAlign: 'right', fontWeight: 500, fontSize: '0.9rem', color: adv > 0 ? 'var(--danger)' : 'var(--text-muted)' }}>
-                                  {adv > 0 ? `- Rs ${adv.toFixed(2)}` : '0.00'}
-                                </td>
-                              </tr>
-                            )
-                          })}
-                          {allWorkers.filter(w => w.projectId === activeProjectId && !w.isDeleted && (w.paymentType && w.paymentType !== 'daily')).length === 0 && (
-                            <tr><td colSpan="5" style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>No salaried staff found.</td></tr>
-                          )}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
+
                   </>
 
                 )}
@@ -2580,72 +2518,7 @@ const [profileName, setProfileName] = useState('');
                      payrollData[log.workerId].dates.add(log.date);
                    });
 
-                   // 2. Process Salaried Workers
-                   allWorkers.filter(w => w.projectId === activeProjectId && !w.isDeleted && w.paymentType && w.paymentType !== 'daily').forEach(worker => {
-                     const workerLogs = allAttendance.filter(a => a.workerId === worker.id);
-                     
-                     if (payrollViewMode === 'outstanding') {
-                       // Find the last clearance date to determine the start of the current cycle
-                       const targetEnd = payrollEnd || new Date().toISOString().split('T')[0];
-                       const clearances = workerLogs.filter(a => a.regularHours === -999 && a.date <= targetEnd).sort((a,b) => new Date(b.date) - new Date(a.date));
-                       
-                       let cycleStartDateStr = clearances.length > 0 ? clearances[0].date : null;
-                       if (!cycleStartDateStr) {
-                         if (worker.createdAt) cycleStartDateStr = worker.createdAt.split('T')[0];
-                         else if (workerLogs.length > 0) cycleStartDateStr = workerLogs.sort((a,b) => new Date(a.date) - new Date(b.date))[0].date;
-                         else cycleStartDateStr = targetEnd; // fallback to today
-                       }
-                       
-                       // Sum ALL unpaid advances up to the target date. This guarantees no balance is ever lost if unpaid.
-                       const unpaidAdvances = workerLogs.filter(a => a.date <= targetEnd && (a.advance > 0) && a.regularHours !== -999 && !a.paid);
-                       let totalAdvance = 0;
-                       unpaidAdvances.forEach(a => totalAdvance += Number(a.advance));
 
-                       // Calculate accrued gross pay based on elapsed days since the cycle started
-                       const d1 = new Date(cycleStartDateStr);
-                       const d2 = new Date(targetEnd);
-                       const diffTime = Math.abs(d2 - d1);
-                       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                       
-                       let cycleLength = 30; // default monthly
-                       if (worker.paymentType === 'bi-weekly') cycleLength = 14;
-                       else if (worker.paymentType === 'weekly') cycleLength = 7;
-                       
-                       // Floor the cycles. A worker gets their full salary unlocked ON the cycle end date.
-                       const cycles = Math.floor(diffDays / cycleLength);
-                       const accruedGross = (worker.dailyWage || 0) * cycles;
-                       
-                       payrollData[worker.id] = { 
-                         isSalaried: true,
-                         regHours: 0, otHours: 0, 
-                         advance: totalAdvance, 
-                         dates: new Set([`Since ${cycleStartDateStr}`]), 
-                         grossPay: accruedGross 
-                       };
-                     } else {
-                       // History mode: Show all cash outlays (Advances + Clearances) that happened between Start and End
-                       const periodAdvances = workerLogs.filter(a => a.advance > 0 && a.regularHours !== -999 && a.date >= payrollStart && a.date <= payrollEnd);
-                       const periodClearances = workerLogs.filter(a => a.regularHours === -999 && a.date >= payrollStart && a.date <= payrollEnd);
-                       
-                       if (periodAdvances.length > 0 || periodClearances.length > 0) {
-                         let totalAdv = 0;
-                         let totalCleared = 0;
-                         const dates = new Set();
-                         
-                         periodAdvances.forEach(a => { totalAdv += Number(a.advance); dates.add(a.date); });
-                         periodClearances.forEach(c => { totalCleared += Number(c.advance); dates.add(c.date); });
-                         
-                         payrollData[worker.id] = {
-                           isSalaried: true,
-                           regHours: 0, otHours: 0,
-                           advance: totalAdv, 
-                           dates: dates,
-                           grossPay: totalCleared + totalAdv // In history, Gross reflects the total cash paid out for salaried workers so Net = totalCleared
-                         };
-                       }
-                     }
-                   });
-                   
                    let grandTotal = 0;
 
                    return (
@@ -2739,82 +2612,7 @@ const [profileName, setProfileName] = useState('');
                         </div>
                        </div>
 
-                       <div style={{ overflowX: 'auto', marginBottom: '2rem' }}>
-                         <h3 className="heading-3" style={{ marginBottom: '1rem', color: 'var(--text-primary)' }}>Salaried Staff</h3>
-                         <div className="table-wrapper">
-                          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '700px' }}>
-                           <thead>
-                             <tr style={{ borderBottom: '1px solid var(--border-strong)', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
-                               <th style={{ padding: '1rem 0.5rem', fontWeight: 500 }}>Staff Info</th>
-                               <th style={{ padding: '1rem 0.5rem', fontWeight: 500 }}>Cycle</th>
-                               <th style={{ padding: '1rem 0.5rem', fontWeight: 500, textAlign: 'center' }}>Salary</th>
-                               <th style={{ padding: '1rem 0.5rem', fontWeight: 500, textAlign: 'right' }}>Advances Taken</th>
-                               <th style={{ padding: '1rem 0.5rem', fontWeight: 500, textAlign: 'right' }}>{payrollViewMode === 'outstanding' ? 'Net Owed' : 'Cleared Amount'}</th>
-                               <th style={{ padding: '1rem 0.5rem', fontWeight: 500, textAlign: 'center', width: '120px' }}>Action</th>
-                             </tr>
-                           </thead>
-                           <tbody>
-                             {Object.keys(payrollData).filter(wId => payrollData[wId].isSalaried).map(wId => {
-                               const worker = allWorkers.find(w => w.id === wId);
-                               if (!worker) return null;
-                               const data = payrollData[wId];
-                               const gross = data.grossPay;
-                               const owed = gross - data.advance;
-                               
-                               const sortedDates = Array.from(data.dates).sort();
-                               const dateStr = sortedDates.length > 2 ? `${sortedDates[0]} to ${sortedDates[sortedDates.length - 1]}` : sortedDates.join(', ');
-                               
-                               return (
-                                 <tr key={wId} style={{ borderBottom: '1px solid var(--border-subtle)', opacity: worker.isDeleted ? 0.6 : 1 }}>
-                                   <td style={{ padding: '0.75rem 0.5rem' }}>
-                                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                                       <div>
-                                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                           <button onClick={() => { setSelectedLabour(worker); setIsLabourCardModalOpen(true); }} style={{ background: 'none', border: 'none', color: 'var(--accent-primary)', cursor: 'pointer', textDecoration: 'none', padding: 0, font: 'inherit', fontWeight: 500, fontSize: '0.9rem', textAlign: 'left' }} className="hover-underline">
-                                             {worker.name}
-                                           </button>
-                                           {worker.isDeleted && <span style={{ fontSize: '0.7rem', color: 'var(--danger)', fontWeight: 'normal', background: 'rgba(239, 68, 68, 0.1)', padding: '0.1rem 0.3rem', borderRadius: 'var(--radius-full)' }}>Removed</span>}
-                                         </div>
-                                         <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'capitalize' }}>{worker.paymentType}</div>
-                                       </div>
-                                     </div>
-                                   </td>
-                                   <td style={{ padding: '0.75rem 0.5rem', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{dateStr}</td>
-                                   <td style={{ padding: '0.75rem 0.5rem', textAlign: 'center', color: 'var(--text-primary)', fontSize: '0.9rem' }}>
-                                     Rs {gross.toFixed(2)}
-                                   </td>
-                                   <td style={{ padding: '0.75rem 0.5rem', textAlign: 'right', color: 'var(--danger)', fontSize: '0.9rem' }}>
-                                     Rs {data.advance.toFixed(2)}
-                                   </td>
-                                   <td style={{ padding: '0.75rem 0.5rem', textAlign: 'right', fontWeight: 500, fontSize: '0.95rem', color: owed >= 0 ? 'var(--text-primary)' : 'var(--danger)' }}>
-                                     Rs {owed.toFixed(2)}
-                                   </td>
-                                   {payrollViewMode === 'outstanding' ? (
-                                     <td style={{ padding: '0.75rem 0.5rem', textAlign: 'center', display: 'flex', gap: '0.5rem', justifyContent: 'center', alignItems: 'center' }}>
-                                       <button className={`btn ${owed > 0 ? 'btn-primary' : 'btn-secondary'}`} onClick={() => handleOpenSettleModal(wId, owed)} style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', borderRadius: 'var(--radius-full)' }} title={owed > 0 ? "Clear Salary" : "Account Cleared"}>
-                                         <CheckCircle size={14} style={{ display: 'inline', marginRight: '0.2rem', verticalAlign: 'text-bottom' }} /> {owed > 0 ? 'Clear' : 'Clear'}
-                                       </button>
-                                       <button className="btn btn-secondary" onClick={() => handleOpenWorkerAdvanceModal(wId)} style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', borderRadius: 'var(--radius-full)', background: 'transparent', border: '1px solid var(--accent-primary)', color: 'var(--accent-primary)' }} title="Issue Cash Advance">
-                                         Advance
-                                       </button>
-                                     </td>
-                                   ) : (
-                                     <td style={{ padding: '0.75rem 0.5rem', textAlign: 'center', display: 'flex', gap: '0.5rem', justifyContent: 'center', alignItems: 'center' }}>
-                                       <button className="btn btn-danger" onClick={() => handleRevertPaid(wId, sortedDates)} style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', borderRadius: 'var(--radius-full)', background: 'transparent', border: '1px solid var(--danger)', color: 'var(--danger)' }} title="Revert to Unpaid">
-                                         <Edit2 size={12} style={{ display: 'inline', marginRight: '0.2rem', verticalAlign: 'text-bottom' }} /> Revert
-                                       </button>
-                                     </td>
-                                   )}
-                                 </tr>
-                               )
-                             })}
-                             {Object.keys(payrollData).filter(wId => payrollData[wId].isSalaried).length === 0 && (
-                               <tr><td colSpan="6" style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>No salaried staff found.</td></tr>
-                             )}
-                           </tbody>
-                         </table>
-                        </div>
-                       </div>
+
 
                        <div style={{ padding: '1.5rem', background: 'var(--glass-hover)', borderTop: '1px solid var(--border-strong)', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '2rem', borderRadius: 'var(--radius-md)' }}>
                          <div style={{ textAlign: 'right', color: 'var(--text-secondary)', fontSize: '1rem' }}>
@@ -2834,6 +2632,220 @@ const [profileName, setProfileName] = useState('');
                 })()}
               </div>
             )}
+
+            
+            {projectTab === 'salaried' && (
+              <div className="glass-card animate-fade-in" style={{ padding: '2.5rem', minHeight: '500px' }}>
+                <header className="flex-between" style={{ marginBottom: '2rem' }}>
+                  <h2 className="heading-2 text-gradient">Salaried Staff Management</h2>
+                  <div style={{ display: 'flex', gap: '1rem' }}>
+                    <button onClick={() => { setWPaymentType('monthly'); setIsWorkerModalOpen(true); }} className="btn btn-primary" style={{ padding: '0.6rem 1.25rem', fontSize: '0.9rem' }}>
+                      <Plus size={16} /> Add Staff
+                    </button>
+                  </div>
+                </header>
+
+                <div style={{ display: 'grid', gap: '3rem' }}>
+                  {/* Issue Advances Section */}
+                  <div>
+                    <div className="flex-between" style={{ marginBottom: '1rem', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '1rem' }}>
+                      <h3 className="heading-3">Log Salary Advances</h3>
+                      <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                        <input type="date" className="input-field" value={attendanceDate} onChange={e => handleNav(() => setAttendanceDate(e.target.value))} style={{ padding: '0.3rem', colorScheme: 'dark', fontSize: '0.85rem' }} />
+                        <button onClick={handleSaveAttendance} className="btn btn-primary" style={{ padding: '0.4rem 1rem' }}>Save Advances</button>
+                      </div>
+                    </div>
+                    <div style={{ overflowX: 'auto' }}>
+                      <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '700px' }}>
+                        <thead>
+                          <tr style={{ borderBottom: '1px solid var(--border-strong)', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+                            <th style={{ padding: '1rem 0.5rem', fontWeight: 500 }}>Staff Info</th>
+                            <th style={{ padding: '1rem 0.5rem', fontWeight: 500, textAlign: 'center' }}>Schedule</th>
+                            <th style={{ padding: '1rem 0.5rem', fontWeight: 500, textAlign: 'center' }}>Salary</th>
+                            <th style={{ padding: '1rem 0.5rem', fontWeight: 500, textAlign: 'center' }}>Advance</th>
+                            <th style={{ padding: '1rem 0.5rem', fontWeight: 500, textAlign: 'right' }}>Deduction</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {allWorkers.filter(w => w.projectId === activeProjectId && !w.isDeleted && (w.paymentType && w.paymentType !== 'daily')).map(w => {
+                            const form = attendanceForm[w.id] || { advance: 0 };
+                            const adv = Number(form.advance) || 0;
+                            
+                            return (
+                              <tr key={w.id} style={{ borderBottom: '1px solid var(--border-subtle)', background: 'transparent' }}>
+                                <td style={{ padding: '0.75rem 0.5rem' }}>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                    <button onClick={(e) => { e.stopPropagation(); handleOpenEditWorker(w); }} style={{ background: 'none', border: 'none', color: 'var(--accent-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', opacity: 0.5 }} onMouseEnter={e => e.currentTarget.style.opacity = 1} onMouseLeave={e => e.currentTarget.style.opacity = 0.5} title="Edit Staff">
+                                      <Edit2 size={14} />
+                                    </button>
+                                    <div>
+                                      <div style={{ fontWeight: 500, fontSize: '0.9rem' }}>{w.name}</div>
+                                      <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{w.trade}</div>
+                                    </div>
+                                  </div>
+                                </td>
+                                <td style={{ padding: '0.75rem 0.5rem', textAlign: 'center' }}>
+                                  <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', background: 'var(--glass-overlay)', padding: '0.25rem 0.5rem', borderRadius: '4px', display: 'inline-block', textTransform: 'capitalize' }}>
+                                    {w.paymentType}
+                                  </span>
+                                </td>
+                                <td style={{ padding: '0.75rem 0.5rem', textAlign: 'center' }}>
+                                  <span style={{ fontSize: '0.85rem', color: 'var(--text-primary)' }}>
+                                    Rs {Number(w.dailyWage || 0).toLocaleString()}
+                                  </span>
+                                </td>
+                                <td style={{ padding: '0.75rem 0.5rem', textAlign: 'center' }}>
+                                  <input 
+                                    type="number" min="0" step="1"
+                                    className="input-field" 
+                                    value={form.advance}
+                                    disabled={!canModify}
+                                    onChange={e => handleAttendanceChange(w.id, 'advance', e.target.value)}
+                                    style={{ padding: '0.3rem', textAlign: 'center', width: '80px', fontSize: '0.85rem', borderColor: form.advance > 0 ? 'var(--danger)' : 'var(--border-strong)', opacity: canModify ? 1 : 0.5, margin: '0 auto', display: 'block' }}
+                                  />
+                                </td>
+                                <td style={{ padding: '0.75rem 0.5rem', textAlign: 'right', fontWeight: 500, fontSize: '0.9rem', color: adv > 0 ? 'var(--danger)' : 'var(--text-muted)' }}>
+                                  {adv > 0 ? `- Rs ${adv.toFixed(2)}` : '0.00'}
+                                </td>
+                              </tr>
+                            )
+                          })}
+                          {allWorkers.filter(w => w.projectId === activeProjectId && !w.isDeleted && (w.paymentType && w.paymentType !== 'daily')).length === 0 && (
+                            <tr><td colSpan="5" style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>No salaried staff found.</td></tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  {/* Payroll & Clearances Section */}
+                  <div>
+                    <div className="flex-between" style={{ marginBottom: '1rem', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '1rem' }}>
+                      <div style={{ display: 'flex', gap: '1.5rem' }}>
+                        <h3 className="heading-3" style={{ marginRight: '1rem' }}>Payroll & Settlement</h3>
+                        <button onClick={() => handleNav(() => setPayrollViewMode('outstanding'))} style={{ background: 'none', border: 'none', borderBottom: payrollViewMode === 'outstanding' ? '2px solid var(--accent-primary)' : '2px solid transparent', padding: '0.5rem 0', fontWeight: payrollViewMode === 'outstanding' ? 'bold' : 'normal', color: payrollViewMode === 'outstanding' ? 'var(--text-primary)' : 'var(--text-secondary)', cursor: 'pointer', fontSize: '1rem' }}>
+                          Outstanding
+                        </button>
+                        <button onClick={() => handleNav(() => setPayrollViewMode('history'))} style={{ background: 'none', border: 'none', borderBottom: payrollViewMode === 'history' ? '2px solid var(--accent-primary)' : '2px solid transparent', padding: '0.5rem 0', fontWeight: payrollViewMode === 'history' ? 'bold' : 'normal', color: payrollViewMode === 'history' ? 'var(--text-primary)' : 'var(--text-secondary)', cursor: 'pointer', fontSize: '1rem' }}>
+                          Paid History
+                        </button>
+                      </div>
+                      <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                        <input type="date" className="input-field" value={payrollStart} onChange={e => handleNav(() => setPayrollStart(e.target.value))} style={{ padding: '0.3rem', colorScheme: 'dark', fontSize: '0.85rem' }} />
+                        <span style={{ color: 'var(--text-secondary)' }}>to</span>
+                        <input type="date" className="input-field" value={payrollEnd} onChange={e => handleNav(() => setPayrollEnd(e.target.value))} style={{ padding: '0.3rem', colorScheme: 'dark', fontSize: '0.85rem' }} />
+                      </div>
+                    </div>
+                    
+                    {/* Process Logic specifically for Salaried Staff */}
+                    {(() => {
+                       const payrollData = {};
+                       allWorkers.filter(w => w.projectId === activeProjectId && !w.isDeleted && w.paymentType && w.paymentType !== 'daily').forEach(worker => {
+                         const workerLogs = allAttendance.filter(a => a.workerId === worker.id);
+                         if (payrollViewMode === 'outstanding') {
+                           const targetEnd = payrollEnd || new Date().toISOString().split('T')[0];
+                           const clearances = workerLogs.filter(a => a.regularHours === -999 && a.date <= targetEnd).sort((a,b) => new Date(b.date) - new Date(a.date));
+                           let cycleStartDateStr = clearances.length > 0 ? clearances[0].date : null;
+                           if (!cycleStartDateStr) {
+                             if (worker.createdAt) cycleStartDateStr = worker.createdAt.split('T')[0];
+                             else if (workerLogs.length > 0) cycleStartDateStr = workerLogs.sort((a,b) => new Date(a.date) - new Date(b.date))[0].date;
+                             else cycleStartDateStr = targetEnd;
+                           }
+                           const unpaidAdvances = workerLogs.filter(a => a.date <= targetEnd && (a.advance > 0) && a.regularHours !== -999 && !a.paid);
+                           let totalAdvance = 0;
+                           unpaidAdvances.forEach(a => totalAdvance += Number(a.advance));
+                           const d1 = new Date(cycleStartDateStr);
+                           const d2 = new Date(targetEnd);
+                           const diffTime = Math.abs(d2 - d1);
+                           const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                           let cycleLength = 30;
+                           if (worker.paymentType === 'bi-weekly') cycleLength = 14;
+                           else if (worker.paymentType === 'weekly') cycleLength = 7;
+                           const cycles = Math.floor(diffDays / cycleLength);
+                           const accruedGross = (worker.dailyWage || 0) * cycles;
+                           payrollData[worker.id] = { isSalaried: true, advance: totalAdvance, dates: new Set([`Since ${cycleStartDateStr}`]), grossPay: accruedGross };
+                         } else {
+                           const periodAdvances = workerLogs.filter(a => a.advance > 0 && a.regularHours !== -999 && a.date >= payrollStart && a.date <= payrollEnd);
+                           const periodClearances = workerLogs.filter(a => a.regularHours === -999 && a.date >= payrollStart && a.date <= payrollEnd);
+                           if (periodAdvances.length > 0 || periodClearances.length > 0) {
+                             let totalAdv = 0; let totalCleared = 0; const dates = new Set();
+                             periodAdvances.forEach(a => { totalAdv += Number(a.advance); dates.add(a.date); });
+                             periodClearances.forEach(c => { totalCleared += Number(c.advance); dates.add(c.date); });
+                             payrollData[worker.id] = { isSalaried: true, advance: totalAdv, dates: dates, grossPay: totalCleared + totalAdv };
+                           }
+                         }
+                       });
+                       return (
+                         <div style={{ overflowX: 'auto', marginBottom: '2rem' }}>
+                          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '700px' }}>
+                           <thead>
+                             <tr style={{ borderBottom: '1px solid var(--border-strong)', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+                               <th style={{ padding: '1rem 0.5rem', fontWeight: 500 }}>Staff Info</th>
+                               <th style={{ padding: '1rem 0.5rem', fontWeight: 500 }}>Cycle</th>
+                               <th style={{ padding: '1rem 0.5rem', fontWeight: 500, textAlign: 'center' }}>Salary</th>
+                               <th style={{ padding: '1rem 0.5rem', fontWeight: 500, textAlign: 'right' }}>Advances Taken</th>
+                               <th style={{ padding: '1rem 0.5rem', fontWeight: 500, textAlign: 'right' }}>{payrollViewMode === 'outstanding' ? 'Net Owed' : 'Cleared Amount'}</th>
+                               <th style={{ padding: '1rem 0.5rem', fontWeight: 500, textAlign: 'center', width: '120px' }}>Action</th>
+                             </tr>
+                           </thead>
+                           <tbody>
+                             {Object.keys(payrollData).map(wId => {
+                               const worker = allWorkers.find(w => w.id === wId);
+                               if (!worker) return null;
+                               const data = payrollData[wId];
+                               const gross = data.grossPay;
+                               const owed = gross - data.advance;
+                               const sortedDates = Array.from(data.dates).sort();
+                               const dateStr = sortedDates.length > 2 ? `${sortedDates[0]} to ${sortedDates[sortedDates.length - 1]}` : sortedDates.join(', ');
+                               return (
+                                 <tr key={wId} style={{ borderBottom: '1px solid var(--border-subtle)', opacity: worker.isDeleted ? 0.6 : 1 }}>
+                                   <td style={{ padding: '0.75rem 0.5rem' }}>
+                                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                       <div>
+                                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                           <button onClick={() => { setSelectedLabour(worker); setIsLabourCardModalOpen(true); }} style={{ background: 'none', border: 'none', color: 'var(--accent-primary)', cursor: 'pointer', textDecoration: 'none', padding: 0, font: 'inherit', fontWeight: 500, fontSize: '0.9rem', textAlign: 'left' }} className="hover-underline">{worker.name}</button>
+                                           {worker.isDeleted && <span style={{ fontSize: '0.7rem', color: 'var(--danger)', fontWeight: 'normal', background: 'rgba(239, 68, 68, 0.1)', padding: '0.1rem 0.3rem', borderRadius: 'var(--radius-full)' }}>Removed</span>}
+                                         </div>
+                                         <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'capitalize' }}>{worker.paymentType}</div>
+                                       </div>
+                                     </div>
+                                   </td>
+                                   <td style={{ padding: '0.75rem 0.5rem', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{dateStr}</td>
+                                   <td style={{ padding: '0.75rem 0.5rem', textAlign: 'center', color: 'var(--text-primary)', fontSize: '0.9rem' }}>Rs {gross.toFixed(2)}</td>
+                                   <td style={{ padding: '0.75rem 0.5rem', textAlign: 'right', color: 'var(--danger)', fontSize: '0.9rem' }}>Rs {data.advance.toFixed(2)}</td>
+                                   <td style={{ padding: '0.75rem 0.5rem', textAlign: 'right', fontWeight: 500, fontSize: '0.95rem', color: owed >= 0 ? 'var(--text-primary)' : 'var(--danger)' }}>Rs {owed.toFixed(2)}</td>
+                                   {payrollViewMode === 'outstanding' ? (
+                                     <td style={{ padding: '0.75rem 0.5rem', textAlign: 'center', display: 'flex', gap: '0.5rem', justifyContent: 'center', alignItems: 'center' }}>
+                                       <button className={`btn ${owed > 0 ? 'btn-primary' : 'btn-secondary'}`} onClick={() => handleOpenSettleModal(wId, owed)} style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', borderRadius: 'var(--radius-full)' }} title={owed > 0 ? "Clear Salary" : "Account Cleared"}>
+                                         <CheckCircle size={14} style={{ display: 'inline', marginRight: '0.2rem', verticalAlign: 'text-bottom' }} /> {owed > 0 ? 'Clear' : 'Clear'}
+                                       </button>
+                                       <button className="btn btn-secondary" onClick={() => handleOpenWorkerAdvanceModal(wId)} style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', borderRadius: 'var(--radius-full)', background: 'transparent', border: '1px solid var(--accent-primary)', color: 'var(--accent-primary)' }} title="Issue Cash Advance">
+                                         Advance
+                                       </button>
+                                     </td>
+                                   ) : (
+                                     <td style={{ padding: '0.75rem 0.5rem', textAlign: 'center', display: 'flex', gap: '0.5rem', justifyContent: 'center', alignItems: 'center' }}>
+                                       <button className="btn btn-danger" onClick={() => handleRevertPaid(wId, sortedDates)} style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', borderRadius: 'var(--radius-full)', background: 'transparent', border: '1px solid var(--danger)', color: 'var(--danger)' }} title="Revert to Unpaid">
+                                         <Edit2 size={12} style={{ display: 'inline', marginRight: '0.2rem', verticalAlign: 'text-bottom' }} /> Revert
+                                       </button>
+                                     </td>
+                                   )}
+                                 </tr>
+                               )
+                             })}
+                             {Object.keys(payrollData).length === 0 && (
+                               <tr><td colSpan="6" style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>No salaried staff found.</td></tr>
+                             )}
+                           </tbody>
+                         </table>
+                        </div>
+                       );
+                    })()}
+                  </div>
+                </div>
+              </div>
+            )}
+
 
             {projectTab === 'subcontractors' && (
               <div className="glass-card animate-fade-in" style={{ padding: '2.5rem', minHeight: '500px' }}>

@@ -2745,27 +2745,78 @@ const [profileName, setProfileName] = useState('');
                        allWorkers.filter(w => w.projectId === activeProjectId && !w.isDeleted && w.paymentType && w.paymentType !== 'daily').forEach(worker => {
                          const workerLogs = allAttendance.filter(a => a.workerId === worker.id);
                          if (payrollViewMode === 'outstanding') {
-                           const targetEnd = payrollEnd || new Date().toISOString().split('T')[0];
-                           const clearances = workerLogs.filter(a => a.regularHours === -999 && a.date <= targetEnd).sort((a,b) => new Date(b.date) - new Date(a.date));
-                           let cycleStartDateStr = clearances.length > 0 ? clearances[0].date : null;
-                           if (!cycleStartDateStr) {
-                             if (worker.createdAt) cycleStartDateStr = worker.createdAt.split('T')[0];
-                             else if (workerLogs.length > 0) cycleStartDateStr = workerLogs.sort((a,b) => new Date(a.date) - new Date(b.date))[0].date;
-                             else cycleStartDateStr = targetEnd;
-                           }
-                           const unpaidAdvances = workerLogs.filter(a => a.date <= targetEnd && (a.advance > 0) && a.regularHours !== -999 && !a.paid);
-                           let totalAdvance = 0;
-                           unpaidAdvances.forEach(a => totalAdvance += Number(a.advance));
-                           const d1 = new Date(cycleStartDateStr);
-                           const d2 = new Date(targetEnd);
-                           const diffTime = Math.abs(d2 - d1);
-                           const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                           let cycleLength = 30;
-                           if (worker.paymentType === 'bi-weekly') cycleLength = 14;
-                           else if (worker.paymentType === 'weekly') cycleLength = 7;
-                           const cycles = Math.floor(diffDays / cycleLength);
-                           const accruedGross = (worker.dailyWage || 0) * cycles;
-                           payrollData[worker.id] = { isSalaried: true, advance: totalAdvance, dates: new Set([`Since ${cycleStartDateStr}`]), grossPay: accruedGross };
+                             const targetEnd = payrollEnd || new Date().toISOString().split('T')[0];
+                             const clearances = workerLogs.filter(a => a.regularHours === -999 && a.date <= targetEnd).sort((a,b) => new Date(b.date) - new Date(a.date));
+                             let cycleStartDateStr = clearances.length > 0 ? clearances[0].date : null;
+                             const isFirstCycle = !cycleStartDateStr;
+                             if (!cycleStartDateStr) {
+                               if (worker.createdAt) cycleStartDateStr = worker.createdAt.split('T')[0];
+                               else if (workerLogs.length > 0) cycleStartDateStr = workerLogs.sort((a,b) => new Date(a.date) - new Date(b.date))[0].date;
+                               else cycleStartDateStr = targetEnd;
+                             }
+                             
+                             // Only count advances taken during the CURRENT cycle
+                             const unpaidAdvances = workerLogs.filter(a => {
+                               const inRange = isFirstCycle ? (a.date >= cycleStartDateStr) : (a.date > cycleStartDateStr);
+                               return a.date <= targetEnd && inRange && (a.advance > 0) && a.regularHours !== -999 && !a.paid;
+                             });
+                             
+                             let totalAdvance = 0;
+                             unpaidAdvances.forEach(a => totalAdvance += Number(a.advance));
+                             
+                             // Compute the START of the unpaid period
+                             let periodStart = new Date(cycleStartDateStr);
+                             if (!isFirstCycle) {
+                               periodStart.setUTCDate(periodStart.getUTCDate() + 1);
+                             }
+                             const endObj = new Date(targetEnd);
+                             if (periodStart > endObj) {
+                               periodStart = endObj;
+                             }
+                             
+                             let cycles = 0;
+                             let cycleLabels = [];
+                             let curr = new Date(periodStart);
+                             
+                             if (worker.paymentType === 'bi-weekly') {
+                               while (curr <= endObj) {
+                                 let d = curr.getUTCDate();
+                                 let y = curr.getUTCFullYear();
+                                 let m = curr.getUTCMonth();
+                                 if (d <= 15) {
+                                   cycleLabels.push(`1-15 ${curr.toLocaleString('default', { month: 'short', year: 'numeric', timeZone: 'UTC' })}`);
+                                   curr = new Date(Date.UTC(y, m, 16));
+                                 } else {
+                                   let eom = new Date(Date.UTC(y, m + 1, 0)).getUTCDate();
+                                   cycleLabels.push(`16-${eom} ${curr.toLocaleString('default', { month: 'short', year: 'numeric', timeZone: 'UTC' })}`);
+                                   curr = new Date(Date.UTC(y, m + 1, 1));
+                                 }
+                                 cycles++;
+                               }
+                             } else if (worker.paymentType === 'monthly') {
+                               while (curr <= endObj) {
+                                 let y = curr.getUTCFullYear();
+                                 let m = curr.getUTCMonth();
+                                 cycleLabels.push(curr.toLocaleString('default', { month: 'short', year: 'numeric', timeZone: 'UTC' }));
+                                 cycles++;
+                                 curr = new Date(Date.UTC(y, m + 1, 1));
+                               }
+                             } else {
+                               const diffTime = Math.abs(endObj - periodStart);
+                               const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                               cycles = Math.floor(diffDays / 7) || 1;
+                               for(let i=0; i<cycles; i++) cycleLabels.push(`Week ${i+1}`);
+                             }
+                             
+                             if (cycles === 0) {
+                               cycles = 1;
+                               cycleLabels.push('Current Period');
+                             }
+                             
+                             const accruedGross = (worker.dailyWage || 0) * cycles;
+                             const finalCycleStr = cycleLabels.join(', ');
+                             
+                             payrollData[worker.id] = { isSalaried: true, advance: totalAdvance, dates: new Set([finalCycleStr]), grossPay: accruedGross };
                          } else {
                            const periodAdvances = workerLogs.filter(a => a.advance > 0 && a.regularHours !== -999 && a.date >= payrollStart && a.date <= payrollEnd);
                            const periodClearances = workerLogs.filter(a => a.regularHours === -999 && a.date >= payrollStart && a.date <= payrollEnd);

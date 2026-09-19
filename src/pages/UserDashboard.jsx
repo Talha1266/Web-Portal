@@ -2634,7 +2634,9 @@ const [profileName, setProfileName] = useState('');
             )}
 
             
-            {projectTab === 'salaried' && (
+            {projectTab === 'salaried' && (() => {
+              const canModify = canModifyEntry(attendanceDate) || currentUser?.permissions?.root;
+              return (
               <div className="glass-card animate-fade-in" style={{ padding: '2.5rem', minHeight: '500px' }}>
                 <header className="flex-between" style={{ marginBottom: '2rem' }}>
                   <h2 className="heading-2 text-gradient">Salaried Staff Management</h2>
@@ -2844,7 +2846,7 @@ const [profileName, setProfileName] = useState('');
                   </div>
                 </div>
               </div>
-            )}
+            ); })()}
 
 
             {projectTab === 'subcontractors' && (

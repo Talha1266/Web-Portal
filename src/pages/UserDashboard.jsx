@@ -2765,31 +2765,6 @@ const [profileName, setProfileName] = useState('');
                        const payrollData = [];
                        allWorkers.filter(w => w.projectId === activeProjectId && !w.isDeleted && w.paymentType && w.paymentType !== 'daily').forEach(worker => {
                          const workerLogs = allAttendance.filter(a => a.workerId === worker.id);
-                         if (payrollViewMode === 'outstanding') {
-                             const targetEnd = payrollEnd || new Date().toISOString().split('T')[0];
-                             const clearances = workerLogs.filter(a => a.regularHours === -999 && a.date <= targetEnd).sort((a,b) => new Date(b.date) - new Date(a.date));
-                             let cycleStartDateStr = clearances.length > 0 ? clearances[0].date : null;
-                             const isFirstCycle = !cycleStartDateStr;
-                             if (!cycleStartDateStr) {
-                               if (worker.createdAt) cycleStartDateStr = worker.createdAt.split('T')[0];
-                               else if (workerLogs.length > 0) cycleStartDateStr = workerLogs.sort((a,b) => new Date(a.date) - new Date(b.date))[0].date;
-                               else cycleStartDateStr = targetEnd;
-                             }
-                             
-                             const unpaidAdvances = workerLogs.filter(a => {
-                               const inRange = isFirstCycle ? (a.date >= cycleStartDateStr) : (a.date > cycleStartDateStr);
-                               return a.date <= targetEnd && inRange && (a.advance > 0) && a.regularHours !== -999 && !a.paid;
-                             });
-                             
-                             let periodStart = new Date(cycleStartDateStr);
-                             if (!isFirstCycle) {
-                               periodStart.setUTCDate(periodStart.getUTCDate() + 1);
-                             }
-                             const endObj = new Date(targetEnd);
-                             if (periodStart > endObj) {
-                               periodStart = endObj;
-                             }
-                             
                              const getCycles = (startD, endD) => {
                                let cyc = [];
                                let curr = new Date(startD);
@@ -2832,7 +2807,32 @@ const [profileName, setProfileName] = useState('');
                                return cyc;
                              };
 
-                             let cyclesData = getCycles(periodStart, endObj);
+                                                      if (payrollViewMode === 'outstanding') {
+                             const targetEnd = payrollEnd || new Date().toISOString().split('T')[0];
+                             const clearances = workerLogs.filter(a => a.regularHours === -999 && a.date <= targetEnd).sort((a,b) => new Date(b.date) - new Date(a.date));
+                             let cycleStartDateStr = clearances.length > 0 ? clearances[0].date : null;
+                             const isFirstCycle = !cycleStartDateStr;
+                             if (!cycleStartDateStr) {
+                               if (worker.createdAt) cycleStartDateStr = worker.createdAt.split('T')[0];
+                               else if (workerLogs.length > 0) cycleStartDateStr = workerLogs.sort((a,b) => new Date(a.date) - new Date(b.date))[0].date;
+                               else cycleStartDateStr = targetEnd;
+                             }
+                             
+                             const unpaidAdvances = workerLogs.filter(a => {
+                               const inRange = isFirstCycle ? (a.date >= cycleStartDateStr) : (a.date > cycleStartDateStr);
+                               return a.date <= targetEnd && inRange && (a.advance > 0) && a.regularHours !== -999 && !a.paid;
+                             });
+                             
+                             let periodStart = new Date(cycleStartDateStr);
+                             if (!isFirstCycle) {
+                               periodStart.setUTCDate(periodStart.getUTCDate() + 1);
+                             }
+                             const endObj = new Date(targetEnd);
+                             if (periodStart > endObj) {
+                               periodStart = endObj;
+                             }
+                             
+let cyclesData = getCycles(periodStart, endObj);
                              
                              cyclesData.forEach(cd => {
                                  const cAdv = unpaidAdvances.filter(a => a.date >= cd.startStr && a.date <= cd.endStr);

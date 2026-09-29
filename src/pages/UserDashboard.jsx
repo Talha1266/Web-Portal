@@ -2741,7 +2741,7 @@ const [profileName, setProfileName] = useState('');
                     
                     {/* Process Logic specifically for Salaried Staff */}
                     {(() => {
-                       const payrollData = {};
+                       const payrollData = [];
                        allWorkers.filter(w => w.projectId === activeProjectId && !w.isDeleted && w.paymentType && w.paymentType !== 'daily').forEach(worker => {
                          const workerLogs = allAttendance.filter(a => a.workerId === worker.id);
                          if (payrollViewMode === 'outstanding') {
@@ -2755,16 +2755,11 @@ const [profileName, setProfileName] = useState('');
                                else cycleStartDateStr = targetEnd;
                              }
                              
-                             // Only count advances taken during the CURRENT cycle
                              const unpaidAdvances = workerLogs.filter(a => {
                                const inRange = isFirstCycle ? (a.date >= cycleStartDateStr) : (a.date > cycleStartDateStr);
                                return a.date <= targetEnd && inRange && (a.advance > 0) && a.regularHours !== -999 && !a.paid;
                              });
                              
-                             let totalAdvance = 0;
-                             unpaidAdvances.forEach(a => totalAdvance += Number(a.advance));
-                             
-                             // Compute the START of the unpaid period
                              let periodStart = new Date(cycleStartDateStr);
                              if (!isFirstCycle) {
                                periodStart.setUTCDate(periodStart.getUTCDate() + 1);
@@ -2774,8 +2769,7 @@ const [profileName, setProfileName] = useState('');
                                periodStart = endObj;
                              }
                              
-                             let cycles = 0;
-                             let cycleLabels = [];
+                             let cyclesData = [];
                              let curr = new Date(periodStart);
                              
                              if (worker.paymentType === 'bi-weekly') {
@@ -2783,40 +2777,56 @@ const [profileName, setProfileName] = useState('');
                                  let d = curr.getUTCDate();
                                  let y = curr.getUTCFullYear();
                                  let m = curr.getUTCMonth();
+                                 let label = '';
+                                 let cycleStartStr = curr.toISOString().split('T')[0];
+                                 let cycleEndStr = '';
                                  if (d <= 15) {
-                                   cycleLabels.push(`1-15 ${curr.toLocaleString('default', { month: 'short', year: 'numeric', timeZone: 'UTC' })}`);
+                                   label = `1-15 ${curr.toLocaleString('default', { month: 'short', year: 'numeric', timeZone: 'UTC' })}`;
                                    curr = new Date(Date.UTC(y, m, 16));
+                                   cycleEndStr = new Date(Date.UTC(y, m, 15)).toISOString().split('T')[0];
                                  } else {
                                    let eom = new Date(Date.UTC(y, m + 1, 0)).getUTCDate();
-                                   cycleLabels.push(`16-${eom} ${curr.toLocaleString('default', { month: 'short', year: 'numeric', timeZone: 'UTC' })}`);
+                                   label = `16-${eom} ${curr.toLocaleString('default', { month: 'short', year: 'numeric', timeZone: 'UTC' })}`;
                                    curr = new Date(Date.UTC(y, m + 1, 1));
+                                   cycleEndStr = new Date(Date.UTC(y, m + 1, 0)).toISOString().split('T')[0];
                                  }
-                                 cycles++;
+                                 cyclesData.push({ label, startStr: cycleStartStr, endStr: cycleEndStr });
                                }
                              } else if (worker.paymentType === 'monthly') {
                                while (curr <= endObj) {
                                  let y = curr.getUTCFullYear();
                                  let m = curr.getUTCMonth();
-                                 cycleLabels.push(curr.toLocaleString('default', { month: 'short', year: 'numeric', timeZone: 'UTC' }));
-                                 cycles++;
+                                 let label = curr.toLocaleString('default', { month: 'short', year: 'numeric', timeZone: 'UTC' });
+                                 let cycleStartStr = curr.toISOString().split('T')[0];
                                  curr = new Date(Date.UTC(y, m + 1, 1));
+                                 let cycleEndStr = new Date(Date.UTC(y, m + 1, 0)).toISOString().split('T')[0];
+                                 cyclesData.push({ label, startStr: cycleStartStr, endStr: cycleEndStr });
                                }
                              } else {
                                const diffTime = Math.abs(endObj - periodStart);
                                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                               cycles = Math.floor(diffDays / 7) || 1;
-                               for(let i=0; i<cycles; i++) cycleLabels.push(`Week ${i+1}`);
+                               let cycles = Math.floor(diffDays / 7) || 1;
+                               for(let i=0; i<cycles; i++) cyclesData.push({ label: `Week ${i+1}`, startStr: periodStart.toISOString().split('T')[0], endStr: targetEnd });
                              }
                              
-                             if (cycles === 0) {
-                               cycles = 1;
-                               cycleLabels.push('Current Period');
+                             if (cyclesData.length === 0) {
+                               cyclesData.push({ label: 'Current Period', startStr: periodStart.toISOString().split('T')[0], endStr: targetEnd });
                              }
                              
-                             const accruedGross = (worker.dailyWage || 0) * cycles;
-                             const finalCycleStr = cycleLabels.join(', ');
-                             
-                             payrollData[worker.id] = { isSalaried: true, advance: totalAdvance, dates: new Set([finalCycleStr]), grossPay: accruedGross };
+                             cyclesData.forEach(cd => {
+                                 const cAdv = unpaidAdvances.filter(a => a.date >= cd.startStr && a.date <= cd.endStr);
+                                 let cycleAdvanceTotal = 0;
+                                 cAdv.forEach(a => cycleAdvanceTotal += Number(a.advance));
+                                 payrollData.push({
+                                     workerId: worker.id,
+                                     isSalaried: true,
+                                     advance: cycleAdvanceTotal,
+                                     dates: new Set([cd.label]),
+                                     cycleEndStr: cd.endStr,
+                                     grossPay: (worker.dailyWage || 0),
+                                     isPaidReport: false
+                                 });
+                             });
                          } else {
                            const periodAdvances = workerLogs.filter(a => a.advance > 0 && a.regularHours !== -999 && a.date >= payrollStart && a.date <= payrollEnd);
                            const periodClearances = workerLogs.filter(a => a.regularHours === -999 && a.date >= payrollStart && a.date <= payrollEnd);
@@ -2824,7 +2834,7 @@ const [profileName, setProfileName] = useState('');
                              let totalAdv = 0; let totalCleared = 0; const dates = new Set();
                              periodAdvances.forEach(a => { totalAdv += Number(a.advance); dates.add(a.date); });
                              periodClearances.forEach(c => { totalCleared += Number(c.advance); dates.add(c.date); });
-                             payrollData[worker.id] = { isSalaried: true, advance: totalAdv, dates: dates, grossPay: totalCleared + totalAdv };
+                             payrollData.push({ workerId: worker.id, isSalaried: true, advance: totalAdv, dates: dates, grossPay: totalCleared + totalAdv, isPaidReport: true });
                            }
                          }
                        });
@@ -2842,10 +2852,10 @@ const [profileName, setProfileName] = useState('');
                              </tr>
                            </thead>
                            <tbody>
-                             {Object.keys(payrollData).map(wId => {
-                               const worker = allWorkers.find(w => w.id === wId);
+                             {payrollData.map((data, index) => {
+                               const worker = allWorkers.find(w => w.id === data.workerId);
                                if (!worker) return null;
-                               const data = payrollData[wId];
+                               const wId = worker.id + '_' + index;
                                const gross = data.grossPay;
                                const owed = gross - data.advance;
                                const sortedDates = Array.from(data.dates).sort();
@@ -2869,16 +2879,16 @@ const [profileName, setProfileName] = useState('');
                                    <td style={{ padding: '0.75rem 0.5rem', textAlign: 'right', fontWeight: 500, fontSize: '0.95rem', color: owed >= 0 ? 'var(--text-primary)' : 'var(--danger)' }}>Rs {owed.toFixed(2)}</td>
                                    {payrollViewMode === 'outstanding' ? (
                                      <td style={{ padding: '0.75rem 0.5rem', textAlign: 'center', display: 'flex', gap: '0.5rem', justifyContent: 'center', alignItems: 'center' }}>
-                                       <button className={`btn ${owed > 0 ? 'btn-primary' : 'btn-secondary'}`} onClick={() => handleOpenSettleModal(wId, owed)} style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', borderRadius: 'var(--radius-full)' }} title={owed > 0 ? "Clear Salary" : "Account Cleared"}>
+                                       <button className={`btn ${owed > 0 ? 'btn-primary' : 'btn-secondary'}`} onClick={() => handleOpenSettleModal(worker.id, owed, data.cycleEndStr)} style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', borderRadius: 'var(--radius-full)' }} title={owed > 0 ? "Clear Salary" : "Account Cleared"}>
                                          <CheckCircle size={14} style={{ display: 'inline', marginRight: '0.2rem', verticalAlign: 'text-bottom' }} /> {owed > 0 ? 'Clear' : 'Clear'}
                                        </button>
-                                       <button className="btn btn-secondary" onClick={() => handleOpenWorkerAdvanceModal(wId)} style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', borderRadius: 'var(--radius-full)', background: 'transparent', border: '1px solid var(--accent-primary)', color: 'var(--accent-primary)' }} title="Issue Cash Advance">
+                                       <button className="btn btn-secondary" onClick={() => handleOpenWorkerAdvanceModal(worker.id)} style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', borderRadius: 'var(--radius-full)', background: 'transparent', border: '1px solid var(--accent-primary)', color: 'var(--accent-primary)' }} title="Issue Cash Advance">
                                          Advance
                                        </button>
                                      </td>
                                    ) : (
                                      <td style={{ padding: '0.75rem 0.5rem', textAlign: 'center', display: 'flex', gap: '0.5rem', justifyContent: 'center', alignItems: 'center' }}>
-                                       <button className="btn btn-danger" onClick={() => handleRevertPaid(wId, sortedDates)} style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', borderRadius: 'var(--radius-full)', background: 'transparent', border: '1px solid var(--danger)', color: 'var(--danger)' }} title="Revert to Unpaid">
+                                       <button className="btn btn-danger" onClick={() => handleRevertPaid(worker.id, sortedDates)} style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', borderRadius: 'var(--radius-full)', background: 'transparent', border: '1px solid var(--danger)', color: 'var(--danger)' }} title="Revert to Unpaid">
                                          <Edit2 size={12} style={{ display: 'inline', marginRight: '0.2rem', verticalAlign: 'text-bottom' }} /> Revert
                                        </button>
                                      </td>
@@ -2886,7 +2896,7 @@ const [profileName, setProfileName] = useState('');
                                  </tr>
                                )
                              })}
-                             {Object.keys(payrollData).length === 0 && (
+                             {payrollData.length === 0 && (
                                <tr><td colSpan="6" style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>No salaried staff found.</td></tr>
                              )}
                            </tbody>

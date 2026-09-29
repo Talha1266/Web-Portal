@@ -81,6 +81,7 @@ const UserDashboard = () => {
   const [isWorkerModalOpen, setIsWorkerModalOpen] = useState(false);
   const [isLabourCardModalOpen, setIsLabourCardModalOpen] = useState(false);
   const [selectedLabour, setSelectedLabour] = useState(null);
+  const [selectedLabourCycle, setSelectedLabourCycle] = useState(null);
   const [wName, setWName] = useState('');
   const [wTrade, setWTrade] = useState('');
   const [wWage, setWWage] = useState(''); // Daily Wage
@@ -2577,7 +2578,7 @@ const [profileName, setProfileName] = useState('');
                                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                                        <div>
                                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                           <button onClick={() => { setSelectedLabour(worker); setIsLabourCardModalOpen(true); }} style={{ background: 'none', border: 'none', color: 'var(--accent-primary)', cursor: 'pointer', textDecoration: 'none', padding: 0, font: 'inherit', fontWeight: 500, fontSize: '0.9rem', textAlign: 'left' }} className="hover-underline">
+                                           <button onClick={() => { setSelectedLabour(worker); setSelectedLabourCycle({ start: data.cycleStartStr, end: data.cycleEndStr }); setIsLabourCardModalOpen(true); }} style={{ background: 'none', border: 'none', color: 'var(--accent-primary)', cursor: 'pointer', textDecoration: 'none', padding: 0, font: 'inherit', fontWeight: 500, fontSize: '0.9rem', textAlign: 'left' }} className="hover-underline">
                                              {worker.name}
                                            </button>
                                            {worker.isDeleted && <span style={{ fontSize: '0.7rem', color: 'var(--danger)', fontWeight: 'normal', background: 'rgba(239, 68, 68, 0.1)', padding: '0.1rem 0.3rem', borderRadius: 'var(--radius-full)' }}>Removed</span>}
@@ -2789,49 +2790,49 @@ const [profileName, setProfileName] = useState('');
                                periodStart = endObj;
                              }
                              
-                             let cyclesData = [];
-                             let curr = new Date(periodStart);
-                             
-                             if (worker.paymentType === 'bi-weekly') {
-                               while (curr <= endObj) {
-                                 let d = curr.getUTCDate();
-                                 let y = curr.getUTCFullYear();
-                                 let m = curr.getUTCMonth();
-                                 let label = '';
-                                 let cycleStartStr = curr.toISOString().split('T')[0];
-                                 let cycleEndStr = '';
-                                 if (d <= 15) {
-                                   label = `1-15 ${curr.toLocaleString('default', { month: 'short', year: 'numeric', timeZone: 'UTC' })}`;
-                                   curr = new Date(Date.UTC(y, m, 16));
-                                   cycleEndStr = new Date(Date.UTC(y, m, 15)).toISOString().split('T')[0];
-                                 } else {
-                                   let eom = new Date(Date.UTC(y, m + 1, 0)).getUTCDate();
-                                   label = `16-${eom} ${curr.toLocaleString('default', { month: 'short', year: 'numeric', timeZone: 'UTC' })}`;
-                                   curr = new Date(Date.UTC(y, m + 1, 1));
-                                   cycleEndStr = new Date(Date.UTC(y, m + 1, 0)).toISOString().split('T')[0];
+                             const getCycles = (startD, endD) => {
+                               let cyc = [];
+                               let curr = new Date(startD);
+                               if (worker.paymentType === 'bi-weekly') {
+                                 curr = new Date(Date.UTC(curr.getUTCFullYear(), curr.getUTCMonth(), curr.getUTCDate() > 15 ? 16 : 1));
+                                 while (curr <= endD) {
+                                   let d = curr.getUTCDate();
+                                   let y = curr.getUTCFullYear();
+                                   let m = curr.getUTCMonth();
+                                   let label = '';
+                                   let cycleStartStr = curr.toISOString().split('T')[0];
+                                   let cycleEndStr = '';
+                                   if (d <= 15) {
+                                     label = `1-15 ${curr.toLocaleString('default', { month: 'short', year: 'numeric', timeZone: 'UTC' })}`;
+                                     curr = new Date(Date.UTC(y, m, 16));
+                                     cycleEndStr = new Date(Date.UTC(y, m, 15)).toISOString().split('T')[0];
+                                   } else {
+                                     let eom = new Date(Date.UTC(y, m + 1, 0)).getUTCDate();
+                                     label = `16-${eom} ${curr.toLocaleString('default', { month: 'short', year: 'numeric', timeZone: 'UTC' })}`;
+                                     curr = new Date(Date.UTC(y, m + 1, 1));
+                                     cycleEndStr = new Date(Date.UTC(y, m + 1, 0)).toISOString().split('T')[0];
+                                   }
+                                   cyc.push({ label, startStr: cycleStartStr, endStr: cycleEndStr });
                                  }
-                                 cyclesData.push({ label, startStr: cycleStartStr, endStr: cycleEndStr });
+                               } else if (worker.paymentType === 'monthly') {
+                                 curr = new Date(Date.UTC(curr.getUTCFullYear(), curr.getUTCMonth(), 1));
+                                 while (curr <= endD) {
+                                   let y = curr.getUTCFullYear();
+                                   let m = curr.getUTCMonth();
+                                   let label = curr.toLocaleString('default', { month: 'short', year: 'numeric', timeZone: 'UTC' });
+                                   let cycleStartStr = curr.toISOString().split('T')[0];
+                                   curr = new Date(Date.UTC(y, m + 1, 1));
+                                   let cycleEndStr = new Date(Date.UTC(y, m + 1, 0)).toISOString().split('T')[0];
+                                   cyc.push({ label, startStr: cycleStartStr, endStr: cycleEndStr });
+                                 }
+                               } else {
+                                 cyc.push({ label: 'Current Period', startStr: startD.toISOString().split('T')[0], endStr: endD.toISOString().split('T')[0] });
                                }
-                             } else if (worker.paymentType === 'monthly') {
-                               while (curr <= endObj) {
-                                 let y = curr.getUTCFullYear();
-                                 let m = curr.getUTCMonth();
-                                 let label = curr.toLocaleString('default', { month: 'short', year: 'numeric', timeZone: 'UTC' });
-                                 let cycleStartStr = curr.toISOString().split('T')[0];
-                                 curr = new Date(Date.UTC(y, m + 1, 1));
-                                 let cycleEndStr = new Date(Date.UTC(y, m + 1, 0)).toISOString().split('T')[0];
-                                 cyclesData.push({ label, startStr: cycleStartStr, endStr: cycleEndStr });
-                               }
-                             } else {
-                               const diffTime = Math.abs(endObj - periodStart);
-                               const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                               let cycles = Math.floor(diffDays / 7) || 1;
-                               for(let i=0; i<cycles; i++) cyclesData.push({ label: `Week ${i+1}`, startStr: periodStart.toISOString().split('T')[0], endStr: targetEnd });
-                             }
-                             
-                             if (cyclesData.length === 0) {
-                               cyclesData.push({ label: 'Current Period', startStr: periodStart.toISOString().split('T')[0], endStr: targetEnd });
-                             }
+                               if (cyc.length === 0) cyc.push({ label: 'Current Period', startStr: startD.toISOString().split('T')[0], endStr: endD.toISOString().split('T')[0] });
+                               return cyc;
+                             };
+
+                             let cyclesData = getCycles(periodStart, endObj);
                              
                              cyclesData.forEach(cd => {
                                  const cAdv = unpaidAdvances.filter(a => a.date >= cd.startStr && a.date <= cd.endStr);
@@ -2842,20 +2843,34 @@ const [profileName, setProfileName] = useState('');
                                      isSalaried: true,
                                      advance: cycleAdvanceTotal,
                                      dates: new Set([cd.label]),
+                                     cycleStartStr: cd.startStr,
                                      cycleEndStr: cd.endStr,
                                      grossPay: (worker.dailyWage || 0),
                                      isPaidReport: false
                                  });
                              });
                          } else {
-                           const periodAdvances = workerLogs.filter(a => a.advance > 0 && a.regularHours !== -999 && a.date >= payrollStart && a.date <= payrollEnd);
-                           const periodClearances = workerLogs.filter(a => a.regularHours === -999 && a.date >= payrollStart && a.date <= payrollEnd);
-                           if (periodAdvances.length > 0 || periodClearances.length > 0) {
-                             let totalAdv = 0; let totalCleared = 0; const dates = new Set();
-                             periodAdvances.forEach(a => { totalAdv += Number(a.advance); dates.add(a.date); });
-                             periodClearances.forEach(c => { totalCleared += Number(c.advance); dates.add(c.date); });
-                             payrollData.push({ workerId: worker.id, isSalaried: true, advance: totalAdv, dates: dates, grossPay: totalCleared + totalAdv, isPaidReport: true });
-                           }
+                           let cyclesData = getCycles(new Date(payrollStart), new Date(payrollEnd));
+                           cyclesData.forEach(cd => {
+                             const cycleClearances = workerLogs.filter(a => a.regularHours === -999 && a.date >= cd.startStr && a.date <= cd.endStr);
+                             if (cycleClearances.length > 0) {
+                               const cAdv = workerLogs.filter(a => a.advance > 0 && a.regularHours !== -999 && a.date >= cd.startStr && a.date <= cd.endStr);
+                               let cycleAdvanceTotal = 0;
+                               cAdv.forEach(a => cycleAdvanceTotal += Number(a.advance));
+                               let totalCleared = 0;
+                               cycleClearances.forEach(c => totalCleared += Number(c.advance));
+                               payrollData.push({
+                                   workerId: worker.id,
+                                   isSalaried: true,
+                                   advance: cycleAdvanceTotal,
+                                   dates: new Set([cd.label]),
+                                   cycleStartStr: cd.startStr,
+                                   cycleEndStr: cd.endStr,
+                                   grossPay: totalCleared + cycleAdvanceTotal,
+                                   isPaidReport: true
+                               });
+                             }
+                           });
                          }
                        });
                        return (
@@ -2886,7 +2901,7 @@ const [profileName, setProfileName] = useState('');
                                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                                        <div>
                                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                           <button onClick={() => { setSelectedLabour(worker); setIsLabourCardModalOpen(true); }} style={{ background: 'none', border: 'none', color: 'var(--accent-primary)', cursor: 'pointer', textDecoration: 'none', padding: 0, font: 'inherit', fontWeight: 500, fontSize: '0.9rem', textAlign: 'left' }} className="hover-underline">{worker.name}</button>
+                                           <button onClick={() => { setSelectedLabour(worker); setSelectedLabourCycle({ start: data.cycleStartStr, end: data.cycleEndStr }); setIsLabourCardModalOpen(true); }} style={{ background: 'none', border: 'none', color: 'var(--accent-primary)', cursor: 'pointer', textDecoration: 'none', padding: 0, font: 'inherit', fontWeight: 500, fontSize: '0.9rem', textAlign: 'left' }} className="hover-underline">{worker.name}</button>
                                            {worker.isDeleted && <span style={{ fontSize: '0.7rem', color: 'var(--danger)', fontWeight: 'normal', background: 'rgba(239, 68, 68, 0.1)', padding: '0.1rem 0.3rem', borderRadius: 'var(--radius-full)' }}>Removed</span>}
                                          </div>
                                          <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'capitalize' }}>{worker.paymentType}</div>
@@ -4550,11 +4565,15 @@ const [profileName, setProfileName] = useState('');
       {/* Labour Card Modal */}
       {isLabourCardModalOpen && selectedLabour && (() => {
         // Compute labour's attendance and advances
-        let labourRecords = allAttendance.filter(a => 
-            a.projectId === activeProjectId && 
-            a.workerId === selectedLabour.id &&
-            (payrollViewMode === 'outstanding' ? !a.paid : a.paid)
-          ).sort((a,b) => new Date(b.date) - new Date(a.date));
+        let labourRecords = allAttendance.filter(a => {
+            if (a.projectId !== activeProjectId) return false;
+            if (a.workerId !== selectedLabour.id) return false;
+            if (payrollViewMode === 'outstanding' ? a.paid : !a.paid) return false;
+            if (selectedLabourCycle && selectedLabourCycle.start && selectedLabourCycle.end) {
+              if (a.date < selectedLabourCycle.start || a.date > selectedLabourCycle.end) return false;
+            }
+            return true;
+          }).sort((a,b) => new Date(b.date) - new Date(a.date));
                                            
         let totalReg = 0;
         let totalOT = 0;
@@ -4570,7 +4589,7 @@ const [profileName, setProfileName] = useState('');
         return (
           <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(9, 9, 11, 0.5)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}>
             <div className="glass-card animate-fade-in" style={{ padding: '2.5rem', width: '100%', maxWidth: '700px', maxHeight: '90vh', overflowY: 'auto', position: 'relative' }}>
-              <button onClick={() => { setIsLabourCardModalOpen(false); setSelectedLabour(null); }} style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}><X size={24} /></button>
+              <button onClick={() => { setIsLabourCardModalOpen(false); setSelectedLabour(null); setSelectedLabourCycle(null); }} style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}><X size={24} /></button>
               
               <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2rem' }}>
                 <div style={{ padding: '1rem', background: 'var(--bg-tertiary)', borderRadius: 'var(--radius-full)' }}>

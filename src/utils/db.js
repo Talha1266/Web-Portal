@@ -412,6 +412,16 @@ export const markAllAttendancePaid = async (projectId, startDate, endDate) => {
    if (error) throw new Error(error.message);
 };
 export const revertAttendancePaid = async (projectId, workerId, startDate, endDate) => {
+   // First delete any clearance records in that range
+   await supabase.from('attendance')
+     .delete()
+     .eq('projectId', projectId)
+     .eq('workerId', workerId)
+     .eq('regularHours', -999)
+     .gte('date', startDate)
+     .lte('date', endDate);
+
+   // Then mark remaining attendance as unpaid
    const { error } = await supabase.from('attendance')
      .update({ paid: false })
      .eq('projectId', projectId)

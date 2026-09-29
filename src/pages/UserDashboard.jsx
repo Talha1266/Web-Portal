@@ -4595,9 +4595,14 @@ const [profileName, setProfileName] = useState('');
                         const grossForDay = ((rec.regularHours || 0) + (rec.overtimeHours || 0)) * recHourlyRate;
                         totalGross += grossForDay;
                         
+                        const dayName = new Date(rec.date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short' });
+                        
                         return (
                           <tr key={rec.id} style={{ borderBottom: '1px solid var(--border-subtle)' }}>
-                            <td style={{ padding: '0.75rem 0.5rem', color: 'var(--text-primary)' }}>{rec.date}</td>
+                            <td style={{ padding: '0.75rem 0.5rem', color: 'var(--text-primary)' }}>
+                              <div>{rec.date}</div>
+                              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{dayName}</div>
+                            </td>
                             <td style={{ padding: '0.75rem 0.5rem', textAlign: 'center', color: rec.regularHours > 0 ? 'var(--text-primary)' : 'var(--text-muted)' }}>{rec.regularHours || '-'}</td>
                             <td style={{ padding: '0.75rem 0.5rem', textAlign: 'center', color: rec.overtimeHours > 0 ? 'var(--accent-primary)' : 'var(--text-muted)' }}>{rec.overtimeHours || '-'}</td>
                             <td style={{ padding: '0.75rem 0.5rem', textAlign: 'right', color: rec.advance > 0 ? 'var(--danger)' : 'var(--text-muted)' }}>{rec.advance ? `Rs ${rec.advance.toFixed(2)}` : '-'}</td>

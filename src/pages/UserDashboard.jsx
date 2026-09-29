@@ -166,6 +166,7 @@ const UserDashboard = () => {
   const [isSettleModalOpen, setIsSettleModalOpen] = useState(false);
   const [settleWorkerId, setSettleWorkerId] = useState(null);
   const [settleAdvance, setSettleAdvance] = useState('');
+  const [settleCycleEnd, setSettleCycleEnd] = useState(null);
   const [settleNetOwed, setSettleNetOwed] = useState(0);
   
   const [isWorkerAdvanceModalOpen, setIsWorkerAdvanceModalOpen] = useState(false);
@@ -777,10 +778,11 @@ const [profileName, setProfileName] = useState('');
     }
   };
 
-  const handleOpenSettleModal = async (wId, owed) => {
+  const handleOpenSettleModal = async (wId, owed, cycleEndStr = null) => {
     setSettleWorkerId(wId);
     setSettleNetOwed(owed);
     setSettleAdvance(owed.toString());
+    setSettleCycleEnd(cycleEndStr);
     setIsSettleModalOpen(true);
   };
 
@@ -792,7 +794,7 @@ const [profileName, setProfileName] = useState('');
       
       if (worker && worker.paymentType && worker.paymentType !== 'daily') {
         // Salaried worker clearance logic
-        await addClearanceRecord(activeProjectId, settleWorkerId, amountPaid, currentUser.id);
+        await addClearanceRecord(activeProjectId, settleWorkerId, amountPaid, currentUser.id, settleCycleEnd);
       } else {
         // Daily worker settlement logic (FIFO)
         let dailyRate = worker?.dailyWage || 0;
@@ -804,6 +806,7 @@ const [profileName, setProfileName] = useState('');
       setSettleWorkerId(null);
       setSettleAdvance('');
       setSettleNetOwed(0);
+      setSettleCycleEnd(null);
       await loadData();
       const workerName = workerMap.get(settleWorkerId)?.name || "a worker";
       notifyAdmins(`${currentUser?.name || "A user"} settled wages for ${workerName}`, "Payroll Settled");

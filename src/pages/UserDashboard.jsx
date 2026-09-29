@@ -369,7 +369,7 @@ const UserDashboard = () => {
     const projAtt = allAttendance.filter(a => a.projectId === projectId);
     projAtt.forEach(record => {
       if (record.regularHours === -999) return;
-      const worker = allWorkers.find(w => w.id === record.workerId);
+      const worker = workerMap.get();
       if (worker) {
         let dailyRate = record.dailyWage !== undefined ? record.dailyWage : (worker.dailyWage || 0);
         if (worker.paymentType === 'monthly') dailyRate = dailyRate / 30;
@@ -735,7 +735,7 @@ const [profileName, setProfileName] = useState('');
         const data = attendanceForm[wId];
         // Only skip if the worker has 0 hours/advance AND they don't already have an existing record in the DB for this date
         if (data.regularHours > 0 || data.overtimeHours > 0 || data.advance > 0 || data.id) {
-          const worker = allWorkers.find(w => w.id === wId);
+          const worker = workerMap.get();
           recordsToSave.push({
             id: `att_${activeProjectId}_${wId}_${attendanceDate}`,
             projectId: activeProjectId,
@@ -786,7 +786,7 @@ const [profileName, setProfileName] = useState('');
     e.preventDefault();
     triggerSecurityChallenge(`Are you sure you want to mark these wages as paid?`, "PAY", async () => {
       const amountPaid = Number(settleAdvance);
-      const worker = allWorkers.find(w => w.id === settleWorkerId);
+      const worker = workerMap.get();
       
       if (worker && worker.paymentType && worker.paymentType !== 'daily') {
         // Salaried worker clearance logic
@@ -803,7 +803,7 @@ const [profileName, setProfileName] = useState('');
       setSettleAdvance('');
       setSettleNetOwed(0);
       await loadData();
-      const workerName = allWorkers.find(w => w.id === settleWorkerId)?.name || "a worker";
+      const workerName = workerMap.get()?.name || "a worker";
       notifyAdmins(`${currentUser?.name || "A user"} settled wages for ${workerName}`, "Payroll Settled");
     });
   };
@@ -823,7 +823,7 @@ const [profileName, setProfileName] = useState('');
       setIsWorkerAdvanceModalOpen(false);
       setWorkerAdvanceAmount('');
       await loadData();
-      const workerName = allWorkers.find(w => w.id === workerAdvanceWorkerId)?.name || "a worker";
+      const workerName = workerMap.get()?.name || "a worker";
       const actionText = amount > 0 ? "issued an advance of Rs" : "received advance payback of Rs";
       notifyAdmins(`${currentUser?.name || "A user"} ${actionText} ${Math.abs(amount)} from/to ${workerName} on ${workerAdvanceDate}`, amount > 0 ? "Worker Advance Issued" : "Advance Payback Received");
       setWorkerAdvanceWorkerId(null);
@@ -838,7 +838,7 @@ const [profileName, setProfileName] = useState('');
       triggerSecurityChallenge("Are you sure you want to revert these wages back to Unpaid?", "REVERT", async () => {
         await revertAttendancePaid(activeProjectId, wId, payrollStart, payrollEnd);
         await loadData();
-        const workerName = allWorkers.find(w => w.id === wId)?.name || "a worker";
+        const workerName = workerMap.get()?.name || "a worker";
         notifyAdmins(`${currentUser?.name || "A user"} reverted payroll for ${workerName} back to unpaid`, "Payroll Reverted");
       });
     } else {
@@ -864,7 +864,7 @@ const [profileName, setProfileName] = useState('');
       try {
         await deleteAttendanceRecords(wId, activeProjectId, payrollStart, payrollEnd, true);
         await loadData();
-        const workerName = allWorkers.find(w => w.id === wId)?.name || "a worker";
+        const workerName = workerMap.get()?.name || "a worker";
         notifyAdmins(`${currentUser?.name || "A user"} permanently deleted paid payroll history for ${workerName}`, "Paid History Deleted");
       } catch (err) {
         toast.error("Error deleting records: " + err.message);
@@ -1250,7 +1250,7 @@ const [profileName, setProfileName] = useState('');
       });
     } else {
       triggerSecurityChallenge("These records are older than 24 hours. Request root admin to delete?", 'MODIFY', async () => {
-        const worker = allWorkers.find(w => w.id === workerId);
+        const worker = workerMap.get();
         await addChangeRequest(currentUser.name, 'Delete', 'Payroll/Attendance', workerId, `Requested deletion of payroll records for ${worker?.name || workerId} from ${payrollStart} to ${payrollEnd}`);
         toast("Deletion request sent to root admin.");
       });
@@ -1705,6 +1705,7 @@ const [profileName, setProfileName] = useState('');
   const perms = currentUser.permissions || {};
   const currentFolder = allDocs.find(d => d.id === currentFolderId);
   const activeProj = activeProjectId ? projects.find(p => p.id === activeProjectId) : null;
+  const workerMap = useMemo(() => new Map(allWorkers.map(w => [w.id, w])), [allWorkers]);
 
   return (
     <div className="app-layout">
@@ -1934,7 +1935,7 @@ const [profileName, setProfileName] = useState('');
 
               allAttendance.forEach(a => {
                 if (a.regularHours === -999) return;
-                const w = allWorkers.find(worker => worker.id === a.workerId);
+                const w = workerMap.get();
                 const hours = (a.regularHours || 0) + (a.overtimeHours || 0);
                 totalManHours += hours;
                 
@@ -2181,7 +2182,7 @@ const [profileName, setProfileName] = useState('');
 
               allAttendance.filter(a => a.projectId === activeProj.id).forEach(a => {
                 if (a.regularHours === -999) return;
-                const w = allWorkers.find(worker => worker.id === a.workerId);
+                const w = workerMap.get();
                 const hours = (a.regularHours || 0) + (a.overtimeHours || 0);
                 totalManHours += hours;
                 
@@ -2512,7 +2513,7 @@ const [profileName, setProfileName] = useState('');
                    
                    // 1. Process Daily Workers
                    relevantLogs.forEach(log => {
-                     const worker = allWorkers.find(w => w.id === log.workerId);
+                     const worker = workerMap.get();
                      if (worker && worker.paymentType && worker.paymentType !== 'daily') return; // Skip salaried here
                      
                      if (!payrollData[log.workerId]) payrollData[log.workerId] = { isSalaried: false, regHours: 0, otHours: 0, advance: 0, dates: new Set(), grossPay: 0 };
@@ -2550,7 +2551,7 @@ const [profileName, setProfileName] = useState('');
                            </thead>
                            <tbody>
                              {Object.keys(payrollData).filter(wId => !payrollData[wId].isSalaried).map(wId => {
-                               const worker = allWorkers.find(w => w.id === wId);
+                               const worker = workerMap.get();
                                if (!worker) return null;
                                const data = payrollData[wId];
                                const totalHours = data.regHours + data.otHours;
@@ -2863,7 +2864,7 @@ const [profileName, setProfileName] = useState('');
                            </thead>
                            <tbody>
                              {payrollData.map((data, index) => {
-                               const worker = allWorkers.find(w => w.id === data.workerId);
+                               const worker = workerMap.get();
                                if (!worker) return null;
                                const wId = worker.id + '_' + index;
                                const gross = data.grossPay;
@@ -5049,7 +5050,7 @@ const [profileName, setProfileName] = useState('');
         });
 
         repAttendance.forEach(a => {
-          const w = allWorkers.find(wk => wk.id === a.workerId);
+          const w = workerMap.get();
           if (w) {
             const adv = Number(a.advance || 0);
             if (!w.paymentType || w.paymentType === 'daily') {
@@ -5425,7 +5426,7 @@ const [profileName, setProfileName] = useState('');
                     <tbody>
                       {Object.entries(workerTotals).map(([wId, totals]) => {
                         if (totals.gross === 0) return null;
-                        const worker = allWorkers.find(w => w.id === wId);
+                        const worker = workerMap.get();
                         return (
                           <tr key={wId}>
                             <td><strong>{worker ? worker.name : 'Unknown'}</strong></td>
@@ -5466,7 +5467,7 @@ const [profileName, setProfileName] = useState('');
                     <tbody>
                       {Object.entries(salariedTotals).map(([wId, totals]) => {
                         if (totals.advancePaid === 0 && totals.clearancePaid === 0) return null;
-                        const worker = allWorkers.find(w => w.id === wId);
+                        const worker = workerMap.get();
                         const totalPaid = totals.advancePaid + totals.clearancePaid;
                         return (
                           <tr key={wId}>

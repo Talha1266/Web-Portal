@@ -138,6 +138,7 @@ export const deleteWorker = async (id) => {  const { error } = await supabase.fr
 export const getAttendance = async () => fetchWithCache('attendance');
 export const addAttendanceRecord = async (r) => { const payload = { ...r, id: r.id || Date.now().toString(), createdAt: new Date().toISOString() }; await executeMutation('attendance', 'INSERT', payload, payload.id); };
 export const updateAttendanceRecord = async (id, updates) => {  const { error } = await supabase.from('attendance').update(updates).eq('id', id); if (error) throw new Error(error.message); };
+export const deleteSingleAttendanceRecord = async (id) => { const { error } = await supabase.from('attendance').delete().eq('id', id); if (error) throw new Error(error.message); };
 export const deleteAttendanceRecords = async (workerId, projectId, startDate, endDate, isPaid) => {
   let query = supabase.from('attendance').delete().eq('workerId', workerId);
   if (projectId) query = query.eq('projectId', projectId);

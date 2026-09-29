@@ -5,7 +5,7 @@ import Zoom from 'yet-another-react-lightbox/plugins/zoom';
 import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LayoutDashboard, HardHat, FileText, MessageSquare, LogOut, Plus, Edit2, Trash2, PieChart, Shield, X, MapPin, Building, Calendar, Users, Folder, FolderPlus, UploadCloud, ChevronRight, ArrowLeft, CheckSquare, Settings, ClipboardList, DollarSign, CheckCircle, Briefcase, Package, CreditCard, Truck, AlertTriangle, XCircle, Menu, Unlock, Printer, Camera, RefreshCw } from 'lucide-react';
-import { getUsers, getProjects, addProject, updateProject, deleteProject, getDocuments, addDocument, deleteDocument, getWorkers, addWorker, updateWorker, deleteWorker, getAttendance, saveAttendance, markAttendancePaid, markAllAttendancePaid, deleteAttendanceRecords, getSubcontractors, addSubcontractor, updateSubcontractor, deleteSubcontractor, getSubPayments, addSubPayment, deleteSubPayment, updateSubPayment, getChangeRequests, addChangeRequest, updateChangeRequestStatus, getMaterials, addMaterial, updateMaterial, deleteMaterial, getMaterialCategories, addMaterialCategory, updateMaterialCategory, deleteMaterialCategory, getVendors, addVendor, updateVendor, deleteVendor, getSiteAdvances, addSiteAdvance, updateSiteAdvance, deleteSiteAdvance, getSiteExpenses, addSiteExpense, updateSiteExpense, deleteSiteExpense, addAdvanceOnlyRecord, addClearanceRecord, processDailyWorkerFifoSettlement, revertAttendancePaid, getAssets, addAsset, updateAsset, deleteAsset, saveFileContentToDB, getFileContentFromDB, deleteFileContentFromDB, getTasks, addTask, updateTask, deleteTask, getMessages, addMessage, updateUserProfile, addActivityLog } from '../utils/db';
+import { getUsers, getProjects, addProject, updateProject, deleteProject, getDocuments, addDocument, deleteDocument, getWorkers, addWorker, updateWorker, deleteWorker, getAttendance, saveAttendance, markAttendancePaid, markAllAttendancePaid, deleteAttendanceRecords, deleteSingleAttendanceRecord, getSubcontractors, addSubcontractor, updateSubcontractor, deleteSubcontractor, getSubPayments, addSubPayment, deleteSubPayment, updateSubPayment, getChangeRequests, addChangeRequest, updateChangeRequestStatus, getMaterials, addMaterial, updateMaterial, deleteMaterial, getMaterialCategories, addMaterialCategory, updateMaterialCategory, deleteMaterialCategory, getVendors, addVendor, updateVendor, deleteVendor, getSiteAdvances, addSiteAdvance, updateSiteAdvance, deleteSiteAdvance, getSiteExpenses, addSiteExpense, updateSiteExpense, deleteSiteExpense, addAdvanceOnlyRecord, addClearanceRecord, processDailyWorkerFifoSettlement, revertAttendancePaid, getAssets, addAsset, updateAsset, deleteAsset, saveFileContentToDB, getFileContentFromDB, deleteFileContentFromDB, getTasks, addTask, updateTask, deleteTask, getMessages, addMessage, updateUserProfile, addActivityLog } from '../utils/db';
 import { supabase } from '../supabaseClient';
 import { PieChart as RechartsPieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import InstallPWA from '../components/InstallPWA';
@@ -1239,6 +1239,15 @@ const [profileName, setProfileName] = useState('');
       await loadData();
     }
     setDraggedTaskId(null);
+  };
+
+  const handleDeleteSingleRecord = async (id) => {
+    triggerSecurityChallenge('Delete this specific record?', 'DELETE', async () => {
+      await deleteSingleAttendanceRecord(id);
+      await loadData();
+      toast.success('Record deleted.');
+      notifyAdmins((currentUser?.name || "A user") + ' deleted an attendance/advance record', 'Record Deleted');
+    });
   };
 
   const handleDeletePayrollRecord = async (workerId) => {
@@ -4626,7 +4635,14 @@ const [profileName, setProfileName] = useState('');
                               {rec.paid ? (
                                 <span style={{ fontSize: '0.7rem', padding: '0.15rem 0.4rem', background: 'rgba(16, 185, 129, 0.1)', color: 'var(--success)', borderRadius: 'var(--radius-sm)' }}>Paid</span>
                               ) : (
-                                <span style={{ fontSize: '0.7rem', padding: '0.15rem 0.4rem', background: 'rgba(245, 158, 11, 0.1)', color: 'var(--warning)', borderRadius: 'var(--radius-sm)' }}>Pending</span>
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
+                                  <span style={{ fontSize: '0.7rem', padding: '0.15rem 0.4rem', background: 'rgba(245, 158, 11, 0.1)', color: 'var(--warning)', borderRadius: 'var(--radius-sm)' }}>Pending</span>
+                                  {(currentUser?.permissions?.root || currentUser?.permissions?.unlock_past || true) && (
+                                    <button onClick={() => handleDeleteSingleRecord(rec.id)} style={{ background: 'none', border: 'none', color: 'var(--danger)', cursor: 'pointer', opacity: 0.7 }} onMouseEnter={e => e.currentTarget.style.opacity=1} onMouseLeave={e => e.currentTarget.style.opacity=0.7} title="Delete Record">
+                                      <Trash2 size={14} />
+                                    </button>
+                                  )}
+                                </div>
                               )}
                             </td>
                           </tr>

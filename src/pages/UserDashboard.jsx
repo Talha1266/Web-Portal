@@ -2853,8 +2853,9 @@ let cyclesData = getCycles(periodStart, endObj);
                            let cyclesData = getCycles(new Date(payrollStart), new Date(payrollEnd));
                            cyclesData.forEach(cd => {
                              const cycleClearances = workerLogs.filter(a => a.regularHours === -999 && a.date >= cd.startStr && a.date <= cd.endStr);
-                             if (cycleClearances.length > 0) {
-                               const cAdv = workerLogs.filter(a => a.advance > 0 && a.regularHours !== -999 && a.date >= cd.startStr && a.date <= cd.endStr);
+                             const cAdv = workerLogs.filter(a => a.advance > 0 && a.regularHours !== -999 && a.date >= cd.startStr && a.date <= cd.endStr && a.paid);
+                             
+                             if (cycleClearances.length > 0 || cAdv.length > 0) {
                                let cycleAdvanceTotal = 0;
                                cAdv.forEach(a => cycleAdvanceTotal += Number(a.advance));
                                let totalCleared = 0;

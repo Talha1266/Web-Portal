@@ -368,9 +368,15 @@ const UserDashboard = () => {
     let labourTotal = 0;
     const projAtt = allAttendance.filter(a => a.projectId === projectId);
     projAtt.forEach(record => {
+      if (record.regularHours === -999) return;
       const worker = allWorkers.find(w => w.id === record.workerId);
       if (worker) {
-        const hourly = (record.dailyWage !== undefined ? record.dailyWage : (worker.dailyWage || 0)) / 8;
+        let dailyRate = record.dailyWage !== undefined ? record.dailyWage : (worker.dailyWage || 0);
+        if (worker.paymentType === 'monthly') dailyRate = dailyRate / 30;
+        else if (worker.paymentType === 'bi-weekly') dailyRate = dailyRate / 14;
+        else if (worker.paymentType === 'weekly') dailyRate = dailyRate / 7;
+        
+        const hourly = dailyRate / 8;
         labourTotal += ((record.regularHours || 0) + (record.overtimeHours || 0)) * hourly;
       }
     });
@@ -418,7 +424,7 @@ const UserDashboard = () => {
 
   useEffect(() => {
     if (activeProjectId) {
-      const todayRecords = allAttendance.filter(a => a.projectId === activeProjectId && a.date === attendanceDate);
+      const todayRecords = allAttendance.filter(a => a.projectId === activeProjectId && a.date === attendanceDate && a.regularHours !== -999);
       const projWorkers = allWorkers.filter(w => w.projectId === activeProjectId);
       const form = {};
       projWorkers.forEach(w => {
@@ -1927,6 +1933,7 @@ const [profileName, setProfileName] = useState('');
               let outstandingPayroll = 0;
 
               allAttendance.forEach(a => {
+                if (a.regularHours === -999) return;
                 const w = allWorkers.find(worker => worker.id === a.workerId);
                 const hours = (a.regularHours || 0) + (a.overtimeHours || 0);
                 totalManHours += hours;
@@ -2173,6 +2180,7 @@ const [profileName, setProfileName] = useState('');
               let outstandingPayroll = 0;
 
               allAttendance.filter(a => a.projectId === activeProj.id).forEach(a => {
+                if (a.regularHours === -999) return;
                 const w = allWorkers.find(worker => worker.id === a.workerId);
                 const hours = (a.regularHours || 0) + (a.overtimeHours || 0);
                 totalManHours += hours;
@@ -4584,7 +4592,10 @@ const [profileName, setProfileName] = useState('');
                       <tr><td colSpan="5" style={{ padding: '1.5rem', textAlign: 'center', color: 'var(--text-muted)' }}>No records found for this labour on the current project.</td></tr>
                     ) : (
                       labourRecords.map(rec => {
-                        totalReg += (rec.regularHours || 0);
+                        const isClearance = rec.regularHours === -999;
+                        const actualRegHours = isClearance ? 0 : (rec.regularHours || 0);
+
+                        totalReg += actualRegHours;
                         totalOT += (rec.overtimeHours || 0);
                         totalAdvance += (rec.advance || 0);
                         
@@ -4594,7 +4605,7 @@ const [profileName, setProfileName] = useState('');
                         else if (selectedLabour.paymentType === 'weekly') recDailyRate = recDailyRate / 7;
                         
                         const recHourlyRate = recDailyRate / 8;
-                        const grossForDay = ((rec.regularHours || 0) + (rec.overtimeHours || 0)) * recHourlyRate;
+                        const grossForDay = (actualRegHours + (rec.overtimeHours || 0)) * recHourlyRate;
                         totalGross += grossForDay;
                         
                         const dayName = new Date(rec.date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short' });
@@ -4605,7 +4616,9 @@ const [profileName, setProfileName] = useState('');
                               <div>{rec.date}</div>
                               <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{dayName}</div>
                             </td>
-                            <td style={{ padding: '0.75rem 0.5rem', textAlign: 'center', color: rec.regularHours > 0 ? 'var(--text-primary)' : 'var(--text-muted)' }}>{rec.regularHours || '-'}</td>
+                            <td style={{ padding: '0.75rem 0.5rem', textAlign: 'center', color: actualRegHours > 0 ? 'var(--text-primary)' : 'var(--text-muted)' }}>
+                              {isClearance ? <span style={{fontSize: '0.75rem', color: 'var(--success)'}}>Clearance</span> : (actualRegHours || '-')}
+                            </td>
                             <td style={{ padding: '0.75rem 0.5rem', textAlign: 'center', color: rec.overtimeHours > 0 ? 'var(--accent-primary)' : 'var(--text-muted)' }}>{rec.overtimeHours || '-'}</td>
                             <td style={{ padding: '0.75rem 0.5rem', textAlign: 'right', color: rec.advance > 0 ? 'var(--danger)' : 'var(--text-muted)' }}>{rec.advance ? `Rs ${rec.advance.toFixed(2)}` : '-'}</td>
                             <td style={{ padding: '0.75rem 0.5rem', textAlign: 'center' }}>

@@ -419,16 +419,16 @@ export const revertAttendancePaid = async (projectId, workerId, startDate, endDa
      .lte('date', endDate);
    if (error) throw new Error(error.message);
 };
-export const addAdvanceOnlyRecord = async (projectId, workerId, amount, userId) => {
+export const addAdvanceOnlyRecord = async (projectId, workerId, amount, userId, explicitDate = null) => {
    const { error } = await supabase.from('attendance').insert({
-    projectId, workerId, date: new Date().toISOString().split('T')[0], regularHours: 0, overtimeHours: 0, advance: amount, paid: false, id: Date.now().toString()
+    projectId, workerId, date: explicitDate || new Date().toISOString().split('T')[0], regularHours: 0, overtimeHours: 0, advance: amount, paid: false, id: Date.now().toString()
    });
    if (error) throw new Error(error.message);
 };
 
-export const addClearanceRecord = async (projectId, workerId, amount, userId) => {
+export const addClearanceRecord = async (projectId, workerId, amount, userId, explicitDate = null) => {
    const { error } = await supabase.from('attendance').insert({
-    projectId, workerId, date: new Date().toISOString().split('T')[0], regularHours: -999, overtimeHours: 0, advance: amount, paid: true, id: Date.now().toString()
+    projectId, workerId, date: explicitDate || new Date().toISOString().split('T')[0], regularHours: -999, overtimeHours: 0, advance: amount, paid: true, id: Date.now().toString()
    });
    if (error) throw new Error(error.message);
 };

@@ -169,6 +169,7 @@ const UserDashboard = () => {
   const [isWorkerAdvanceModalOpen, setIsWorkerAdvanceModalOpen] = useState(false);
   const [workerAdvanceWorkerId, setWorkerAdvanceWorkerId] = useState(null);
   const [workerAdvanceAmount, setWorkerAdvanceAmount] = useState('');
+  const [workerAdvanceDate, setWorkerAdvanceDate] = useState(new Date().toISOString().split('T')[0]);
 
   const [isEditWorkerModalOpen, setIsEditWorkerModalOpen] = useState(false);
   const [editWorkerObj, setEditWorkerObj] = useState(null);
@@ -804,6 +805,7 @@ const [profileName, setProfileName] = useState('');
   const handleOpenWorkerAdvanceModal = (wId) => {
     setWorkerAdvanceWorkerId(wId);
     setWorkerAdvanceAmount('');
+    setWorkerAdvanceDate(new Date().toISOString().split('T')[0]);
     setIsWorkerAdvanceModalOpen(true);
   };
   
@@ -811,13 +813,13 @@ const [profileName, setProfileName] = useState('');
     e.preventDefault();
     const amount = Number(workerAdvanceAmount);
     if (amount !== 0) {
-      await addAdvanceOnlyRecord(activeProjectId, workerAdvanceWorkerId, amount, currentUser.id);
+      await addAdvanceOnlyRecord(activeProjectId, workerAdvanceWorkerId, amount, currentUser.id, workerAdvanceDate);
       setIsWorkerAdvanceModalOpen(false);
       setWorkerAdvanceAmount('');
       await loadData();
       const workerName = allWorkers.find(w => w.id === workerAdvanceWorkerId)?.name || "a worker";
       const actionText = amount > 0 ? "issued an advance of Rs" : "received advance payback of Rs";
-      notifyAdmins(`${currentUser?.name || "A user"} ${actionText} ${Math.abs(amount)} from/to ${workerName}`, amount > 0 ? "Worker Advance Issued" : "Advance Payback Received");
+      notifyAdmins(`${currentUser?.name || "A user"} ${actionText} ${Math.abs(amount)} from/to ${workerName} on ${workerAdvanceDate}`, amount > 0 ? "Worker Advance Issued" : "Advance Payback Received");
       setWorkerAdvanceWorkerId(null);
     }
   };
@@ -4809,6 +4811,10 @@ const [profileName, setProfileName] = useState('');
             <h2 className="heading-2" style={{ marginBottom: '1.5rem' }}>Issue Cash Advance</h2>
             <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem', fontSize: '0.875rem' }}>This will issue a mid-week cash advance without marking their current wages as paid. It will automatically be deducted from their final settlement.</p>
             <form onSubmit={handleConfirmWorkerAdvance}>
+              <div className="input-group">
+                <label className="input-label">Date</label>
+                <input type="date" className="input-field" required value={workerAdvanceDate} onChange={e => setWorkerAdvanceDate(e.target.value)} max={new Date().toISOString().split('T')[0]} />
+              </div>
               <div className="input-group">
                 <label className="input-label">Advance Amount (Rs)</label>
                 <input type="number" className="input-field" required min="1" step="1" value={workerAdvanceAmount} onChange={e => setWorkerAdvanceAmount(e.target.value)} placeholder="e.g. 2000" />

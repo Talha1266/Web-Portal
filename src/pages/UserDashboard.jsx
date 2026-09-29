@@ -46,6 +46,7 @@ const UserDashboard = () => {
   const [allSubPayments, setAllSubPayments] = useState([]);
   const [allChangeRequests, setAllChangeRequests] = useState([]);
   const [allMaterials, setAllMaterials] = useState([]);
+  const workerMap = useMemo(() => new Map(allWorkers.map(w => [w.id, w])), [allWorkers]);
   const [materialCategories, setMaterialCategories] = useState([]);
   const [allVendors, setAllVendors] = useState([]);
   const [allSiteAdvances, setAllSiteAdvances] = useState([]);
@@ -1705,7 +1706,7 @@ const [profileName, setProfileName] = useState('');
   const perms = currentUser.permissions || {};
   const currentFolder = allDocs.find(d => d.id === currentFolderId);
   const activeProj = activeProjectId ? projects.find(p => p.id === activeProjectId) : null;
-  const workerMap = useMemo(() => new Map(allWorkers.map(w => [w.id, w])), [allWorkers]);
+
 
   return (
     <div className="app-layout">

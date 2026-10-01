@@ -2810,70 +2810,58 @@ const [profileName, setProfileName] = useState('');
                                return cyc;
                              };
 
-                                                      if (payrollViewMode === 'outstanding') {
-                             const targetEnd = payrollEnd || new Date().toISOString().split('T')[0];
-                             const clearances = workerLogs.filter(a => a.regularHours === -999 && a.date <= targetEnd).sort((a,b) => new Date(b.date) - new Date(a.date));
-                             let cycleStartDateStr = clearances.length > 0 ? clearances[0].date : null;
-                             const isFirstCycle = !cycleStartDateStr;
-                             if (!cycleStartDateStr) {
-                               if (worker.createdAt) cycleStartDateStr = worker.createdAt.split('T')[0];
-                               else if (workerLogs.length > 0) cycleStartDateStr = workerLogs.sort((a,b) => new Date(a.date) - new Date(b.date))[0].date;
-                               else cycleStartDateStr = targetEnd;
-                             }
-                             
-                             const unpaidAdvances = workerLogs.filter(a => {
-                               const inRange = isFirstCycle ? (a.date >= cycleStartDateStr) : (a.date > cycleStartDateStr);
-                               return a.date <= targetEnd && inRange && (a.advance > 0) && a.regularHours !== -999 && !a.paid;
+                         let startD = new Date(payrollStart);
+                         if (payrollViewMode === 'outstanding') {
+                           let firstLogDate = worker.createdAt ? worker.createdAt.split('T')[0] : null;
+                           if (!firstLogDate && workerLogs.length > 0) {
+                             firstLogDate = workerLogs.sort((a,b) => new Date(a.date) - new Date(b.date))[0].date;
+                           }
+                           if (!firstLogDate) firstLogDate = new Date().toISOString().split('T')[0];
+                           startD = new Date(firstLogDate);
+                         }
+                         
+                         const targetEnd = payrollViewMode === 'outstanding' ? new Date().toISOString().split('T')[0] : payrollEnd;
+                         
+                         let cyclesData = getCycles(startD, new Date(targetEnd));
+                         
+                         cyclesData.forEach(cd => {
+                           const cycleClearances = workerLogs.filter(a => a.regularHours === -999 && a.date >= cd.startStr && a.date <= cd.endStr);
+                           const cAdv = workerLogs.filter(a => a.advance > 0 && a.regularHours !== -999 && a.date >= cd.startStr && a.date <= cd.endStr);
+                           
+                           let cycleAdvanceTotal = 0;
+                           cAdv.forEach(a => cycleAdvanceTotal += Number(a.advance));
+                           
+                           const isPaid = cycleClearances.length > 0 || cycleAdvanceTotal >= (worker.dailyWage || 0);
+                           
+                           if (payrollViewMode === 'outstanding' && !isPaid) {
+                             payrollData.push({
+                                 workerId: worker.id,
+                                 isSalaried: true,
+                                 advance: cycleAdvanceTotal,
+                                 dates: new Set([cd.label]),
+                                 cycleStartStr: cd.startStr,
+                                 cycleEndStr: cd.endStr,
+                                 grossPay: (worker.dailyWage || 0),
+                                 isPaidReport: false
                              });
+                           } else if (payrollViewMode === 'paid' && isPaid) {
+                             let totalCleared = 0;
+                             cycleClearances.forEach(c => totalCleared += Number(c.advance));
                              
-                             let periodStart = new Date(cycleStartDateStr);
-                             if (!isFirstCycle) {
-                               periodStart.setUTCDate(periodStart.getUTCDate() + 1);
-                             }
-                             const endObj = new Date(targetEnd);
-                             if (periodStart > endObj) {
-                               periodStart = endObj;
-                             }
+                             let gross = cycleClearances.length > 0 ? (totalCleared + cycleAdvanceTotal) : (worker.dailyWage || 0);
                              
-let cyclesData = getCycles(periodStart, endObj);
-                             
-                             cyclesData.forEach(cd => {
-                                 const cAdv = unpaidAdvances.filter(a => a.date >= cd.startStr && a.date <= cd.endStr);
-                                 let cycleAdvanceTotal = 0;
-                                 cAdv.forEach(a => cycleAdvanceTotal += Number(a.advance));
-                                 payrollData.push({
-                                     workerId: worker.id,
-                                     isSalaried: true,
-                                     advance: cycleAdvanceTotal,
-                                     dates: new Set([cd.label]),
-                                     cycleStartStr: cd.startStr,
-                                     cycleEndStr: cd.endStr,
-                                     grossPay: (worker.dailyWage || 0),
-                                     isPaidReport: false
-                                 });
+                             payrollData.push({
+                                 workerId: worker.id,
+                                 isSalaried: true,
+                                 advance: cycleAdvanceTotal,
+                                 dates: new Set([cd.label]),
+                                 cycleStartStr: cd.startStr,
+                                 cycleEndStr: cd.endStr,
+                                 grossPay: gross,
+                                 isPaidReport: true
                              });
-                         } else {
-                           let cyclesData = getCycles(new Date(payrollStart), new Date(payrollEnd));
-                           cyclesData.forEach(cd => {
-                             const cycleClearances = workerLogs.filter(a => a.regularHours === -999 && a.date >= cd.startStr && a.date <= cd.endStr);
-                             const cAdv = workerLogs.filter(a => a.advance > 0 && a.regularHours !== -999 && a.date >= cd.startStr && a.date <= cd.endStr && a.paid);
-                             
-                             if (cycleClearances.length > 0 || cAdv.length > 0) {
-                               let cycleAdvanceTotal = 0;
-                               cAdv.forEach(a => cycleAdvanceTotal += Number(a.advance));
-                               let totalCleared = 0;
-                               cycleClearances.forEach(c => totalCleared += Number(c.advance));
-                               payrollData.push({
-                                   workerId: worker.id,
-                                   isSalaried: true,
-                                   advance: cycleAdvanceTotal,
-                                   dates: new Set([cd.label]),
-                                   cycleStartStr: cd.startStr,
-                                   cycleEndStr: cd.endStr,
-                                   grossPay: totalCleared + cycleAdvanceTotal,
-                                   isPaidReport: true
-                               });
-                             }
+                           }
+                         });
                            });
                          }
                        });
@@ -4572,7 +4560,11 @@ let cyclesData = getCycles(periodStart, endObj);
         let labourRecords = allAttendance.filter(a => {
             if (a.projectId !== activeProjectId) return false;
             if (a.workerId !== selectedLabour.id) return false;
-            if (payrollViewMode === 'outstanding' ? a.paid : !a.paid) return false;
+            if (selectedLabour.paymentType === 'daily') {
+            if (selectedLabour.paymentType === 'daily') {
+              if (payrollViewMode === 'outstanding' ? a.paid : !a.paid) return false;
+            }
+            }
             if (selectedLabourCycle && selectedLabourCycle.start && selectedLabourCycle.end) {
               if (a.date < selectedLabourCycle.start || a.date > selectedLabourCycle.end) return false;
             }

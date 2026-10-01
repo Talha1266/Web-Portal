@@ -2763,7 +2763,7 @@ const [profileName, setProfileName] = useState('');
                       </div>
                     </div>
                     
-                    <div style={{ marginTop: '2rem', padding: '1rem', border: '2px dashed var(--danger)', borderRadius: '8px' }}><h4 style={{ color: 'var(--danger)', marginBottom: '1rem' }}>GHOST RECORD FINDER (All raw salaried advances in database)</h4><table className="table" style={{ width: '100%', fontSize: '0.85rem' }}><thead><tr><th>Worker</th><th>Date</th><th>Type</th><th>Amount</th><th>Action</th></tr></thead><tbody>{allAttendance.filter(a => a.projectId === activeProjectId && (a.advance > 0 || a.regularHours === -999)).sort((a,b) => new Date(a.date) - new Date(b.date)).map(a => {const w = workerMap.get(a.workerId);if (!w || w.paymentType === 'daily') return null;return (<tr key={a.id}><td>{w.name}</td><td>{a.date}</td><td>{a.regularHours === -999 ? 'Clearance' : 'Advance'}</td><td style={{ color: 'red', fontWeight: 'bold' }}>Rs {a.advance}</td><td><button className="btn btn-danger" onClick={() => handleDeleteSingleRecord(a.id)} style={{ padding: '0.2rem 0.5rem', fontSize: '0.7rem' }}>Delete Ghost</button></td></tr>);})}</tbody></table></div>{/* Process Logic specifically for Salaried Staff */}
+                    {/* Process Logic specifically for Salaried Staff */}
                     {(() => {
                        const payrollData = [];
                        allWorkers.filter(w => w.projectId === activeProjectId && !w.isDeleted && w.paymentType && w.paymentType !== 'daily').forEach(worker => {

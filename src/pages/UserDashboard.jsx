@@ -2825,6 +2825,9 @@ const [profileName, setProfileName] = useState('');
                          let endDObj = new Date(targetEnd);
                            endDObj.setUTCHours(12);
                            let cyclesData = getCycles(startD, endDObj);
+                           if (!window.DEBUG_CYCLES) window.DEBUG_CYCLES = [];
+                           window.DEBUG_CYCLES.push({name: worker.name, cycles: cyclesData});
+
 console.log("WORKER:", worker.name, worker.paymentType, "CYCLES:", cyclesData);
 
                          

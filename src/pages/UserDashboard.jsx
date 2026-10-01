@@ -5086,10 +5086,24 @@ console.log("WORKER:", worker.name, worker.paymentType, "CYCLES:", cyclesData);
         projWorkers.forEach(w => {
           if (!w.paymentType || w.paymentType === 'daily') {
             workerTotals[w.id] = { gross: 0, advance: 0, net: 0, totalPaid: 0, pending: 0 };
-          } else {
-            salariedTotals[w.id] = { salary: w.dailyWage || 0, schedule: w.paymentType, advancePaid: 0, clearancePaid: 0 };
           }
         });
+
+        const getCycleLabel = (dateStr, w) => {
+          if (!dateStr) return 'Unknown Cycle';
+          const dateObj = new Date(dateStr);
+          const d = dateObj.getUTCDate();
+          const m = dateObj.getUTCMonth();
+          const y = dateObj.getUTCFullYear();
+          if (w.paymentType === 'bi-weekly') {
+            if (d <= 15) return `1-15 ${dateObj.toLocaleString('default', { month: 'short', year: 'numeric', timeZone: 'UTC' })}`;
+            const eom = new Date(Date.UTC(y, m + 1, 0)).getUTCDate();
+            return `16-${eom} ${dateObj.toLocaleString('default', { month: 'short', year: 'numeric', timeZone: 'UTC' })}`;
+          } else if (w.paymentType === 'monthly') {
+            return dateObj.toLocaleString('default', { month: 'short', year: 'numeric', timeZone: 'UTC' });
+          }
+          return 'Current Period';
+        };
 
         repAttendance.forEach(a => {
           const w = workerMap.get(a.workerId);
@@ -5643,6 +5657,8 @@ console.log("WORKER:", worker.name, worker.paymentType, "CYCLES:", cyclesData);
 };
 
 export default UserDashboard;
+
+
 
 
 

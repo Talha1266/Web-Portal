@@ -2851,7 +2851,7 @@ console.log("WORKER:", worker.name, worker.paymentType, "CYCLES:", cyclesData);
                                  grossPay: (worker.dailyWage || 0),
                                  isPaidReport: false
                              });
-                           } else if (payrollViewMode === 'paid' && isPaid) {
+                           } else if (payrollViewMode === 'history' && isPaid) {
                              let totalCleared = 0;
                              cycleClearances.forEach(c => totalCleared += Number(c.advance));
                              

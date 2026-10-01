@@ -5079,15 +5079,15 @@ console.log("WORKER:", worker.name, worker.paymentType, "CYCLES:", cyclesData);
         const repSubs = allSubPayments.filter(p => p.projectId === activeProjectId && isWithinDate(p.date));
         const repExpenses = allSiteExpenses.filter(e => e.projectId === activeProjectId && isWithinDate(e.date));
         const repAttendance = allAttendance.filter(a => a.projectId === activeProjectId && isWithinDate(a.date));
-        const workerTotals = {};
-        const salariedTotals = {};
-        const projWorkers = allWorkers.filter(w => w.projectId === activeProjectId && !w.isDeleted);
-        
-        projWorkers.forEach(w => {
-          if (!w.paymentType || w.paymentType === 'daily') {
-            workerTotals[w.id] = { gross: 0, advance: 0, net: 0, totalPaid: 0, pending: 0 };
-          }
-        });
+          const workerTotals = {};
+          const salariedTotals = {};
+          const projWorkers = allWorkers.filter(w => w.projectId === activeProjectId && !w.isDeleted);
+          
+          projWorkers.forEach(w => {
+            if (!w.paymentType || w.paymentType === 'daily') {
+              workerTotals[w.id] = { workerId: w.id, isSalaried: false, gross: 0, advance: 0, net: 0, totalPaid: 0, pending: 0 };
+            }
+          });
 
         const getCycleLabel = (dateStr, w) => {
           if (!dateStr) return 'Unknown Cycle';
@@ -5110,7 +5110,7 @@ console.log("WORKER:", worker.name, worker.paymentType, "CYCLES:", cyclesData);
           if (w) {
             const adv = Number(a.advance || 0);
             if (!w.paymentType || w.paymentType === 'daily') {
-              if (!workerTotals[a.workerId]) workerTotals[a.workerId] = { gross: 0, advance: 0, net: 0, totalPaid: 0, pending: 0 };
+                if (!workerTotals[a.workerId]) workerTotals[a.workerId] = { workerId: a.workerId, isSalaried: false, gross: 0, advance: 0, net: 0, totalPaid: 0, pending: 0 };
               const hrRate = (a.dailyWage !== undefined && a.dailyWage !== null ? Number(a.dailyWage) : (w.dailyWage || 0)) / 8;
               const gross = ((Number(a.regularHours) + Number(a.overtimeHours)) * hrRate);
               const netSettled = a.paid ? (gross - adv) : 0;
@@ -5123,14 +5123,21 @@ console.log("WORKER:", worker.name, worker.paymentType, "CYCLES:", cyclesData);
               t.totalPaid += (adv + netSettled);
               t.pending += pending;
             } else {
-              // Salaried Logic (Cash-flow based strictly for tracking cash exiting the business)
-              if (adv > 0) {
-                if (!salariedTotals[a.workerId]) salariedTotals[a.workerId] = { salary: w.dailyWage || 0, schedule: w.paymentType, advancePaid: 0, clearancePaid: 0 };
-                const t = salariedTotals[a.workerId];
-                if (a.regularHours === -999) {
-                  // Salary Clearance
-                  t.clearancePaid += adv;
-                } else {
+                // Unified Salaried Logic
+                if (adv > 0) {
+                  const cycleLabel = getCycleLabel(a.date, w);
+                  const key = a.workerId + '_' + cycleLabel;
+                  if (!workerTotals[key]) {
+                     workerTotals[key] = { workerId: a.workerId, isSalaried: true, cycleLabel: cycleLabel, gross: Number(w.dailyWage || 0), totalPaid: 0, pending: Number(w.dailyWage || 0) };
+                  }
+                  const t = workerTotals[key];
+                  t.totalPaid += adv;
+                  t.pending = t.gross - t.totalPaid;
+                  
+                  // Also populate salariedTotals just for the summary section at the top of the report to still work
+                  if (!salariedTotals[a.workerId]) salariedTotals[a.workerId] = { advancePaid: 0, clearancePaid: 0 };
+                  salariedTotals[a.workerId].advancePaid += adv;
+                }
                   // Advance Payment
                   t.advancePaid += adv;
                 }
@@ -5480,18 +5487,23 @@ console.log("WORKER:", worker.name, worker.paymentType, "CYCLES:", cyclesData);
                       </tr>
                     </thead>
                     <tbody>
-                      {Object.entries(workerTotals).map(([wId, totals]) => {
-                        if (totals.gross === 0) return null;
-                        const worker = workerMap.get(wId);
+                      {Object.entries(workerTotals).map(([key, totals]) => {
+                        if (totals.gross === 0 && totals.totalPaid === 0 && totals.pending === 0) return null;
+                        const worker = workerMap.get(totals.workerId);
+                        let tradeDisplay = worker ? worker.trade : '';
+                        let nameDisplay = worker ? worker.name : 'Unknown';
+                        if (totals.isSalaried) {
+                           tradeDisplay = totals.cycleLabel;
+                           nameDisplay = nameDisplay + ' (Salaried)';
+                        }
+                        
                         return (
-                          <tr key={wId}>
-                            <td><strong>{worker ? worker.name : 'Unknown'}</strong></td>
+                          <tr key={key}>
+                            <td><strong>{nameDisplay}</strong></td>
                             <td>
-                              {worker ? (
-                                <span>
-                                  {worker.trade} {totals.pending === 0 && totals.totalPaid > 0 ? <span style={{color: '#10b981', fontWeight: 500}}> (Paid)</span> : ''}
-                                </span>
-                              ) : ''}
+                              <span>
+                                {tradeDisplay} {totals.pending === 0 && totals.totalPaid > 0 ? <span style={{color: '#10b981', fontWeight: 500}}> (Paid)</span> : ''}
+                              </span>
                             </td>
                             <td style={{textAlign:'right'}}>Rs {totals.gross.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
                             <td style={{textAlign:'right', color:'#10b981'}}>Rs {totals.totalPaid.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
@@ -5499,48 +5511,10 @@ console.log("WORKER:", worker.name, worker.paymentType, "CYCLES:", cyclesData);
                           </tr>
                         );
                       })}
-                      {Object.keys(workerTotals).length === 0 && <tr><td colSpan="5" style={{textAlign:'center', padding:'20px'}}>No daily labour records found in this period.</td></tr>}
+                      {Object.keys(workerTotals).length === 0 && <tr><td colSpan="5" style={{textAlign:'center', padding:'20px'}}>No labour or salaried records found in this period.</td></tr>}
                     </tbody>
                   </table>
 
-                  <div className="section-header" style={{ marginTop: '2rem' }}>
-                    <h3 style={{ color: 'var(--text-primary)' }}>Salaried Staff</h3>
-                    <div className="section-totals">
-                      Total Cash Outlay: <span style={{color:'#10b981'}}>Rs {salTotals.paid.toLocaleString()}</span>
-                    </div>
-                  </div>
-                  <table className="report-table">
-                    <thead>
-                      <tr>
-                        <th>Staff Name</th>
-                        <th style={{textAlign:'center'}}>Schedule</th>
-                        <th style={{textAlign:'right'}}>Fixed Salary</th>
-                        <th style={{textAlign:'right'}}>Advance (Period)</th>
-                        <th style={{textAlign:'right'}}>Clearance (Period)</th>
-                        <th style={{textAlign:'right'}}>Total Paid</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {Object.entries(salariedTotals).map(([wId, totals]) => {
-                        if (totals.advancePaid === 0 && totals.clearancePaid === 0) return null;
-                        const worker = workerMap.get(wId);
-                        const totalPaid = totals.advancePaid + totals.clearancePaid;
-                        return (
-                          <tr key={wId}>
-                            <td><strong>{worker ? worker.name : 'Unknown'}</strong><br/><span style={{fontSize: '0.75rem', color: 'var(--text-secondary)'}}>{worker ? worker.trade : ''}</span></td>
-                            <td style={{textAlign:'center', textTransform: 'capitalize'}}>{totals.schedule}</td>
-                            <td style={{textAlign:'right'}}>Rs {totals.salary.toLocaleString()}</td>
-                            <td style={{textAlign:'right', color: totals.advancePaid > 0 ? '#ef4444' : 'inherit'}}>Rs {totals.advancePaid.toLocaleString()}</td>
-                            <td style={{textAlign:'right', color: totals.clearancePaid > 0 ? '#10b981' : 'inherit'}}>Rs {totals.clearancePaid.toLocaleString()}</td>
-                            <td style={{textAlign:'right', fontWeight:'600'}}>Rs {totalPaid.toLocaleString()}</td>
-                          </tr>
-                        );
-                      })}
-                      {Object.keys(salariedTotals).filter(wId => (salariedTotals[wId].advancePaid > 0 || salariedTotals[wId].clearancePaid > 0)).length === 0 && (
-                        <tr><td colSpan="6" style={{textAlign:'center', padding:'20px'}}>No salaried staff payments found in this period.</td></tr>
-                      )}
-                    </tbody>
-                  </table>
                 </div>
               )}
 
@@ -5657,6 +5631,8 @@ console.log("WORKER:", worker.name, worker.paymentType, "CYCLES:", cyclesData);
 };
 
 export default UserDashboard;
+
+
 
 
 

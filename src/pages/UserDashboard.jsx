@@ -5079,15 +5079,15 @@ console.log("WORKER:", worker.name, worker.paymentType, "CYCLES:", cyclesData);
         const repSubs = allSubPayments.filter(p => p.projectId === activeProjectId && isWithinDate(p.date));
         const repExpenses = allSiteExpenses.filter(e => e.projectId === activeProjectId && isWithinDate(e.date));
         const repAttendance = allAttendance.filter(a => a.projectId === activeProjectId && isWithinDate(a.date));
-          const workerTotals = {};
-          const salariedTotals = {};
-          const projWorkers = allWorkers.filter(w => w.projectId === activeProjectId && !w.isDeleted);
-          
-          projWorkers.forEach(w => {
-            if (!w.paymentType || w.paymentType === 'daily') {
-              workerTotals[w.id] = { workerId: w.id, isSalaried: false, gross: 0, advance: 0, net: 0, totalPaid: 0, pending: 0 };
-            }
-          });
+        const workerTotals = {};
+        const salariedTotals = {};
+        const projWorkers = allWorkers.filter(w => w.projectId === activeProjectId && !w.isDeleted);
+        
+        projWorkers.forEach(w => {
+          if (!w.paymentType || w.paymentType === 'daily') {
+            workerTotals[w.id] = { workerId: w.id, isSalaried: false, gross: 0, advance: 0, net: 0, totalPaid: 0, pending: 0 };
+          }
+        });
 
         const getCycleLabel = (dateStr, w) => {
           if (!dateStr) return 'Unknown Cycle';
@@ -5110,7 +5110,7 @@ console.log("WORKER:", worker.name, worker.paymentType, "CYCLES:", cyclesData);
           if (w) {
             const adv = Number(a.advance || 0);
             if (!w.paymentType || w.paymentType === 'daily') {
-                if (!workerTotals[a.workerId]) workerTotals[a.workerId] = { workerId: a.workerId, isSalaried: false, gross: 0, advance: 0, net: 0, totalPaid: 0, pending: 0 };
+              if (!workerTotals[a.workerId]) workerTotals[a.workerId] = { workerId: a.workerId, isSalaried: false, gross: 0, advance: 0, net: 0, totalPaid: 0, pending: 0 };
               const hrRate = (a.dailyWage !== undefined && a.dailyWage !== null ? Number(a.dailyWage) : (w.dailyWage || 0)) / 8;
               const gross = ((Number(a.regularHours) + Number(a.overtimeHours)) * hrRate);
               const netSettled = a.paid ? (gross - adv) : 0;
@@ -5123,24 +5123,20 @@ console.log("WORKER:", worker.name, worker.paymentType, "CYCLES:", cyclesData);
               t.totalPaid += (adv + netSettled);
               t.pending += pending;
             } else {
-                // Unified Salaried Logic
-                if (adv > 0) {
-                  const cycleLabel = getCycleLabel(a.date, w);
-                  const key = a.workerId + '_' + cycleLabel;
-                  if (!workerTotals[key]) {
-                     workerTotals[key] = { workerId: a.workerId, isSalaried: true, cycleLabel: cycleLabel, gross: Number(w.dailyWage || 0), totalPaid: 0, pending: Number(w.dailyWage || 0) };
-                  }
-                  const t = workerTotals[key];
-                  t.totalPaid += adv;
-                  t.pending = t.gross - t.totalPaid;
-                  
-                  // Also populate salariedTotals just for the summary section at the top of the report to still work
-                  if (!salariedTotals[a.workerId]) salariedTotals[a.workerId] = { advancePaid: 0, clearancePaid: 0 };
-                  salariedTotals[a.workerId].advancePaid += adv;
+              // Unified Salaried Logic
+              if (adv > 0) {
+                const cycleLabel = getCycleLabel(a.date, w);
+                const key = a.workerId + '_' + cycleLabel;
+                if (!workerTotals[key]) {
+                   workerTotals[key] = { workerId: a.workerId, isSalaried: true, cycleLabel: cycleLabel, gross: Number(w.dailyWage || 0), totalPaid: 0, pending: Number(w.dailyWage || 0) };
                 }
-                  // Advance Payment
-                  t.advancePaid += adv;
-                }
+                const t = workerTotals[key];
+                t.totalPaid += adv;
+                t.pending = t.gross - t.totalPaid;
+                
+                // Keep salariedTotals populated just for the summary section at the top of the report to still work
+                if (!salariedTotals[a.workerId]) salariedTotals[a.workerId] = { advancePaid: 0, clearancePaid: 0 };
+                salariedTotals[a.workerId].advancePaid += adv;
               }
             }
           }
@@ -5514,6 +5510,7 @@ console.log("WORKER:", worker.name, worker.paymentType, "CYCLES:", cyclesData);
                       {Object.keys(workerTotals).length === 0 && <tr><td colSpan="5" style={{textAlign:'center', padding:'20px'}}>No labour or salaried records found in this period.</td></tr>}
                     </tbody>
                   </table>
+
 
                 </div>
               )}

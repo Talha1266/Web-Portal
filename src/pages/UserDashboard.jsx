@@ -2862,8 +2862,6 @@ const [profileName, setProfileName] = useState('');
                              });
                            }
                          });
-                           });
-                         }
                        });
                        return (
                          <div style={{ overflowX: 'auto', marginBottom: '2rem' }}>

@@ -813,10 +813,10 @@ const [profileName, setProfileName] = useState('');
     });
   };
 
-  const handleOpenWorkerAdvanceModal = (wId) => {
+  const handleOpenWorkerAdvanceModal = (wId, cycleEndStr) => {
     setWorkerAdvanceWorkerId(wId);
     setWorkerAdvanceAmount('');
-    setWorkerAdvanceDate(new Date().toISOString().split('T')[0]);
+    setWorkerAdvanceDate(cycleEndStr || new Date().toISOString().split('T')[0]);
     setIsWorkerAdvanceModalOpen(true);
   };
   
@@ -2877,15 +2877,20 @@ const [profileName, setProfileName] = useState('');
                              </tr>
                            </thead>
                            <tbody>
-                             {payrollData.map((data, index) => {
+                             {( () => { let currentMonth = ""; return payrollData.sort((a,b) => new Date(a.cycleStartStr) - new Date(b.cycleStartStr)).map((data, index) => {
                                const worker = workerMap.get(data.workerId);
                                if (!worker) return null;
                                const wId = worker.id + '_' + index;
+                               const dMonth = new Date(data.cycleStartStr).toLocaleString('default', { month: 'long', year: 'numeric', timeZone: 'UTC' });
+                               const showMonthHeader = dMonth !== currentMonth;
+                               currentMonth = dMonth;
                                const gross = data.grossPay;
                                const owed = gross - data.advance;
                                const sortedDates = Array.from(data.dates).sort();
                                const dateStr = sortedDates.length > 2 ? `${sortedDates[0]} to ${sortedDates[sortedDates.length - 1]}` : sortedDates.join(', ');
                                return (
+                                 <React.Fragment key={wId + "_frag"}>
+                                 {showMonthHeader && <tr><td colSpan="6" style={{ background: "var(--bg-secondary)", fontWeight: "bold", padding: "0.5rem" }}>{dMonth}</td></tr>}
                                  <tr key={wId} style={{ borderBottom: '1px solid var(--border-subtle)', opacity: worker.isDeleted ? 0.6 : 1 }}>
                                    <td style={{ padding: '0.75rem 0.5rem' }}>
                                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
@@ -2907,7 +2912,7 @@ const [profileName, setProfileName] = useState('');
                                        <button className={`btn ${owed > 0 ? 'btn-primary' : 'btn-secondary'}`} onClick={() => handleOpenSettleModal(worker.id, owed, data.cycleEndStr)} style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', borderRadius: 'var(--radius-full)' }} title={owed > 0 ? "Clear Salary" : "Account Cleared"}>
                                          <CheckCircle size={14} style={{ display: 'inline', marginRight: '0.2rem', verticalAlign: 'text-bottom' }} /> {owed > 0 ? 'Clear' : 'Clear'}
                                        </button>
-                                       <button className="btn btn-secondary" onClick={() => handleOpenWorkerAdvanceModal(worker.id)} style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', borderRadius: 'var(--radius-full)', background: 'transparent', border: '1px solid var(--accent-primary)', color: 'var(--accent-primary)' }} title="Issue Cash Advance">
+                                       <button className="btn btn-secondary" onClick={() => handleOpenWorkerAdvanceModal(worker.id, data.cycleEndStr)} style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', borderRadius: 'var(--radius-full)', background: 'transparent', border: '1px solid var(--accent-primary)', color: 'var(--accent-primary)' }} title="Issue Cash Advance">
                                          Advance
                                        </button>
                                      </td>
@@ -2919,8 +2924,9 @@ const [profileName, setProfileName] = useState('');
                                      </td>
                                    )}
                                  </tr>
+                                 </React.Fragment>
                                )
-                             })}
+                             }); })()}
                              {payrollData.length === 0 && (
                                <tr><td colSpan="6" style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>No salaried staff found.</td></tr>
                              )}

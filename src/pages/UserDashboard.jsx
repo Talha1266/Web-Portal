@@ -2822,7 +2822,9 @@ const [profileName, setProfileName] = useState('');
                          
                          const targetEnd = payrollViewMode === 'outstanding' ? new Date().toISOString().split('T')[0] : payrollEnd;
                          
-                         let cyclesData = getCycles(startD, new Date(targetEnd));
+                         let endDObj = new Date(targetEnd);
+                           endDObj.setUTCHours(12);
+                           let cyclesData = getCycles(startD, endDObj);
                          
                          cyclesData.forEach(cd => {
                            const cycleClearances = workerLogs.filter(a => a.regularHours === -999 && a.date >= cd.startStr && a.date <= cd.endStr);
@@ -2831,7 +2833,7 @@ const [profileName, setProfileName] = useState('');
                            let cycleAdvanceTotal = 0;
                            cAdv.forEach(a => cycleAdvanceTotal += Number(a.advance));
                            
-                           const isPaid = cycleClearances.length > 0 || cycleAdvanceTotal >= (worker.dailyWage || 0);
+                           const isPaid = cycleClearances.length > 0 || (worker.dailyWage > 0 && cycleAdvanceTotal >= worker.dailyWage);
                            
                            if (payrollViewMode === 'outstanding' && !isPaid) {
                              payrollData.push({

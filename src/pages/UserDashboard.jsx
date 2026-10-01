@@ -2615,11 +2615,11 @@ const [profileName, setProfileName] = useState('');
                                      </td>
                                    ) : (
                                      <td style={{ padding: '0.75rem 0.5rem', textAlign: 'center', display: 'flex', gap: '0.5rem', justifyContent: 'center', alignItems: 'center' }}>
-                                       <button className="btn btn-danger" onClick={() => handleRevertPaid(wId, sortedDates)} style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', borderRadius: 'var(--radius-full)', background: 'transparent', border: '1px solid var(--danger)', color: 'var(--danger)' }} title="Revert to Unpaid">
+                                       <button className="btn btn-danger" onClick={() => handleRevertPaid(worker.id, sortedDates)} style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', borderRadius: 'var(--radius-full)', background: 'transparent', border: '1px solid var(--danger)', color: 'var(--danger)' }} title="Revert to Unpaid">
                                          <Edit2 size={12} style={{ display: 'inline', marginRight: '0.2rem', verticalAlign: 'text-bottom' }} /> Revert
                                        </button>
                                        {adminUnlockPast && (
-                                         <button className="btn btn-danger" onClick={() => handleDeletePaidHistory(wId, sortedDates)} style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', borderRadius: 'var(--radius-full)', background: 'transparent', border: '1px solid var(--danger)', color: 'var(--danger)' }} title="Delete Paid History">
+                                         <button className="btn btn-danger" onClick={() => handleDeletePaidHistory(worker.id, sortedDates)} style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', borderRadius: 'var(--radius-full)', background: 'transparent', border: '1px solid var(--danger)', color: 'var(--danger)' }} title="Delete Paid History">
                                            <Trash2 size={12} />
                                          </button>
                                        )}

@@ -2825,6 +2825,8 @@ const [profileName, setProfileName] = useState('');
                          let endDObj = new Date(targetEnd);
                            endDObj.setUTCHours(12);
                            let cyclesData = getCycles(startD, endDObj);
+console.log("WORKER:", worker.name, worker.paymentType, "CYCLES:", cyclesData);
+
                          
                          cyclesData.forEach(cd => {
                            const cycleClearances = workerLogs.filter(a => a.regularHours === -999 && a.date >= cd.startStr && a.date <= cd.endStr);

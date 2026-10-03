@@ -1579,10 +1579,6 @@ const [profileName, setProfileName] = useState('');
       toast.error("Please select a date.");
       return;
     }
-    if (!adminUnlockPast && advDate < todayStrGlobal) {
-      toast.error("You cannot issue an advance for a past date without admin unlock.");
-      return;
-    }
     if (!advAmount || Number(advAmount) < 1) {
       toast.error("Advance amount must be at least 1.");
       return;

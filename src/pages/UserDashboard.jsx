@@ -824,14 +824,18 @@ const [profileName, setProfileName] = useState('');
     e.preventDefault();
     const amount = Number(workerAdvanceAmount);
     if (amount !== 0) {
-      await addAdvanceOnlyRecord(activeProjectId, workerAdvanceWorkerId, amount, currentUser.id, workerAdvanceDate);
-      setIsWorkerAdvanceModalOpen(false);
-      setWorkerAdvanceAmount('');
-      await loadData();
-      const workerName = workerMap.get(workerAdvanceWorkerId)?.name || "a worker";
-      const actionText = amount > 0 ? "issued an advance of Rs" : "received advance payback of Rs";
-      notifyAdmins(`${currentUser?.name || "A user"} ${actionText} ${Math.abs(amount)} from/to ${workerName} on ${workerAdvanceDate}`, amount > 0 ? "Worker Advance Issued" : "Advance Payback Received");
-      setWorkerAdvanceWorkerId(null);
+      try {
+        await addAdvanceOnlyRecord(activeProjectId, workerAdvanceWorkerId, amount, currentUser.id, workerAdvanceDate);
+        setIsWorkerAdvanceModalOpen(false);
+        setWorkerAdvanceAmount('');
+        await loadData();
+        const workerName = workerMap.get(workerAdvanceWorkerId)?.name || "a worker";
+        const actionText = amount > 0 ? "issued an advance of Rs" : "received advance payback of Rs";
+        notifyAdmins(`${currentUser?.name || "A user"} ${actionText} ${Math.abs(amount)} from/to ${workerName} on ${workerAdvanceDate}`, amount > 0 ? "Worker Advance Issued" : "Advance Payback Received");
+        setWorkerAdvanceWorkerId(null);
+      } catch (err) {
+        toast.error("Error issuing advance: " + err.message);
+      }
     }
   };
 
@@ -1575,17 +1579,21 @@ const [profileName, setProfileName] = useState('');
       toast.error("Advance amount cannot be negative.");
       return;
     }
-    await addSiteAdvance({
-      projectId: activeProjectId,
-      date: advDate,
-      amount: Number(advAmount),
-      description: advDesc,
-      issuedBy: currentUser?.name || 'Admin'
-    });
-    setAdvAmount(''); setAdvDesc(''); setAdvDate(new Date().toISOString().split('T')[0]);
-    setIsAdvanceModalOpen(false);
-    await loadData();
-    notifyAdmins(`${currentUser?.name || "A user"} issued a site advance of Rs ${advAmount}`, "Site Advance Issued");
+    try {
+      await addSiteAdvance({
+        projectId: activeProjectId,
+        date: advDate,
+        amount: Number(advAmount),
+        description: advDesc,
+        issuedBy: currentUser?.name || 'Admin'
+      });
+      setAdvAmount(''); setAdvDesc(''); setAdvDate(new Date().toISOString().split('T')[0]);
+      setIsAdvanceModalOpen(false);
+      await loadData();
+      notifyAdmins(`${currentUser?.name || "A user"} issued a site advance of Rs ${advAmount}`, "Site Advance Issued");
+    } catch (err) {
+      toast.error("Error issuing site advance: " + err.message);
+    }
   };
 
   const handleDeleteAdvance = async (e, adv) => {

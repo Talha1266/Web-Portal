@@ -1593,8 +1593,7 @@ const [profileName, setProfileName] = useState('');
         projectId: activeProjectId,
         date: advDate,
         amount: Number(advAmount),
-        description: advDesc,
-        issuedBy: currentUser?.name || 'Admin'
+        description: advDesc
       });
       setAdvAmount(''); setAdvDesc(''); setAdvDate(todayStrGlobal);
       setIsAdvanceModalOpen(false);

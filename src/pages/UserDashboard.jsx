@@ -1575,10 +1575,23 @@ const [profileName, setProfileName] = useState('');
   // --- Site Expenses Logic ---
   const handleCreateAdvance = async (e) => {
     e.preventDefault();
-    if (Number(advAmount) < 0) {
-      toast.error("Advance amount cannot be negative.");
+    if (!advDate) {
+      toast.error("Please select a date.");
       return;
     }
+    if (!adminUnlockPast && advDate < todayStrGlobal) {
+      toast.error("You cannot issue an advance for a past date without admin unlock.");
+      return;
+    }
+    if (!advAmount || Number(advAmount) < 1) {
+      toast.error("Advance amount must be at least 1.");
+      return;
+    }
+    if (!advDesc || advDesc.trim() === '') {
+      toast.error("Please enter a description.");
+      return;
+    }
+
     try {
       await addSiteAdvance({
         projectId: activeProjectId,
@@ -1587,7 +1600,7 @@ const [profileName, setProfileName] = useState('');
         description: advDesc,
         issuedBy: currentUser?.name || 'Admin'
       });
-      setAdvAmount(''); setAdvDesc(''); setAdvDate(new Date().toISOString().split('T')[0]);
+      setAdvAmount(''); setAdvDesc(''); setAdvDate(todayStrGlobal);
       setIsAdvanceModalOpen(false);
       await loadData();
       notifyAdmins(`${currentUser?.name || "A user"} issued a site advance of Rs ${advAmount}`, "Site Advance Issued");
@@ -4727,15 +4740,15 @@ console.log("WORKER:", worker.name, worker.paymentType, "CYCLES:", cyclesData);
             <form onSubmit={handleCreateAdvance}>
               <div className="input-group">
                 <label className="input-label">Date</label>
-                <input type="date" className="input-field" required value={advDate} onChange={e => setAdvDate(e.target.value)} style={{ colorScheme: 'dark' }} min={!adminUnlockPast ? todayStrGlobal : undefined} />
+                <input type="date" className="input-field" value={advDate} onChange={e => setAdvDate(e.target.value)} style={{ colorScheme: 'dark' }} />
               </div>
               <div className="input-group">
                 <label className="input-label">Amount Given (Rs)</label>
-                <input type="number" className="input-field" required min="1" step="1" value={advAmount} onChange={e => setAdvAmount(e.target.value)} placeholder="50000" />
+                <input type="number" className="input-field" value={advAmount} onChange={e => setAdvAmount(e.target.value)} placeholder="50000" />
               </div>
               <div className="input-group">
                 <label className="input-label">Description / Note</label>
-                <input type="text" className="input-field" required value={advDesc} onChange={e => setAdvDesc(e.target.value)} placeholder="e.g. Initial petty cash" />
+                <input type="text" className="input-field" value={advDesc} onChange={e => setAdvDesc(e.target.value)} placeholder="e.g. Initial petty cash" />
               </div>
               <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '1rem' }}><DollarSign size={20}/> Give Advance</button>
             </form>

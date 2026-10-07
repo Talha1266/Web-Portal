@@ -2697,8 +2697,8 @@ const [profileName, setProfileName] = useState('');
                         <button onClick={handleSaveAttendance} className="btn btn-primary" style={{ padding: '0.4rem 1rem' }}>Save Advances</button>
                       </div>
                     </div>
-                    <div style={{ overflowX: 'auto' }}>
-                      <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '700px' }}>
+                    <div className="table-wrapper" style={{ overflowX: 'auto' }}>
+<table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '700px' }}>
                         <thead>
                           <tr style={{ borderBottom: '1px solid var(--border-strong)', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
                             <th style={{ padding: '1rem 0.5rem', fontWeight: 500 }}>Staff Info</th>
@@ -2887,8 +2887,8 @@ console.log("WORKER:", worker.name, worker.paymentType, "CYCLES:", cyclesData);
                          });
                        });
                        return (
-                         <div style={{ overflowX: 'auto', marginBottom: '2rem' }}>
-                          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '700px' }}>
+                         <div className="table-wrapper" style={{ overflowX: 'auto', marginBottom: '2rem' }}>
+<table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '700px' }}>
                            <thead>
                              <tr style={{ borderBottom: '1px solid var(--border-strong)', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
                                <th style={{ padding: '1rem 0.5rem', fontWeight: 500 }}>Staff Info</th>

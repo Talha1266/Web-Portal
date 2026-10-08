@@ -5101,7 +5101,7 @@ console.log("WORKER:", worker.name, worker.paymentType, "CYCLES:", cyclesData);
         
         projWorkers.forEach(w => {
           if (!w.paymentType || w.paymentType === 'daily') {
-            workerTotals[w.id] = { workerId: w.id, isSalaried: false, gross: 0, advance: 0, net: 0, totalPaid: 0, pending: 0 };
+            workerTotals[w.id] = { workerId: w.id, isSalaried: false, gross: 0, advance: 0, net: 0, totalPaid: 0, pending: 0, totalHours: 0 };
           }
         });
 
@@ -5126,7 +5126,7 @@ console.log("WORKER:", worker.name, worker.paymentType, "CYCLES:", cyclesData);
           if (w) {
             const adv = Number(a.advance || 0);
             if (!w.paymentType || w.paymentType === 'daily') {
-              if (!workerTotals[a.workerId]) workerTotals[a.workerId] = { workerId: a.workerId, isSalaried: false, gross: 0, advance: 0, net: 0, totalPaid: 0, pending: 0 };
+              if (!workerTotals[a.workerId]) workerTotals[a.workerId] = { workerId: a.workerId, isSalaried: false, gross: 0, advance: 0, net: 0, totalPaid: 0, pending: 0, totalHours: 0 };
               const hrRate = (a.dailyWage !== undefined && a.dailyWage !== null ? Number(a.dailyWage) : (w.dailyWage || 0)) / 8;
               const gross = ((Number(a.regularHours) + Number(a.overtimeHours)) * hrRate);
               const netSettled = a.paid ? (gross - adv) : 0;
@@ -5138,6 +5138,7 @@ console.log("WORKER:", worker.name, worker.paymentType, "CYCLES:", cyclesData);
               t.net += (gross - adv);
               t.totalPaid += (adv + netSettled);
               t.pending += pending;
+                t.totalHours += ((Number(a.regularHours) === -999 ? 0 : Number(a.regularHours)) + (Number(a.overtimeHours) === -999 ? 0 : Number(a.overtimeHours)));
             } else {
               // Separated Salaried Logic (with cycles)
               if (adv > 0) {
@@ -5492,7 +5493,8 @@ console.log("WORKER:", worker.name, worker.paymentType, "CYCLES:", cyclesData);
                       <tr>
                         <th>Worker Name</th>
                         <th>Trade</th>
-                        <th style={{textAlign:'right'}}>Gross Earned</th>
+                          <th>Days Worked</th>
+                          <th style={{textAlign:'right'}}>Gross Earned</th>
                         <th style={{textAlign:'right'}}>Total Paid</th>
                         <th style={{textAlign:'right'}}>Pending Unpaid</th>
                       </tr>
@@ -5508,10 +5510,11 @@ console.log("WORKER:", worker.name, worker.paymentType, "CYCLES:", cyclesData);
                               {worker ? (
                                 <span>
                                   {worker.trade} {totals.pending === 0 && totals.totalPaid > 0 ? <span style={{color: '#10b981', fontWeight: 500}}> (Paid)</span> : ''}
-                                </span>
-                              ) : ''}
-                            </td>
-                            <td style={{textAlign:'right'}}>Rs {totals.gross.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                                  </span>
+                                ) : ''}
+                              </td>
+                              <td>{totals.totalHours ? (totals.totalHours / 8).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 }) + ' Days' : '- ' }</td>
+                              <td style={{textAlign:'right'}}>Rs {totals.gross.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
                             <td style={{textAlign:'right', color:'#10b981'}}>Rs {totals.totalPaid.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
                             <td style={{textAlign:'right', fontWeight:'600', color: totals.pending > 0 ? '#ef4444' : '#0f172a'}}>Rs {totals.pending.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
                           </tr>

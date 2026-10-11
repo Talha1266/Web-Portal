@@ -431,10 +431,28 @@ export const revertAttendancePaid = async (projectId, workerId, startDate, endDa
    if (error) throw new Error(error.message);
 };
 export const addAdvanceOnlyRecord = async (projectId, workerId, amount, userId, explicitDate = null) => {
-   const { error } = await supabase.from('attendance').insert({
-    projectId, workerId, date: explicitDate || new Date().toISOString().split('T')[0], regularHours: 0, overtimeHours: 0, advance: amount, paid: false, id: Date.now().toString()
-   });
-   if (error) throw new Error(error.message);
+  const targetDate = explicitDate || new Date().toISOString().split('T')[0];
+  const { data: existing } = await supabase.from('attendance')
+    .select('*')
+    .eq('projectId', projectId)
+    .eq('workerId', workerId)
+    .eq('date', targetDate)
+    .eq('paid', false);
+
+  if (existing && existing.length > 0) {
+    const rec = existing[0];
+    const newAdvance = (Number(rec.advance) || 0) + Number(amount);
+    const { error } = await supabase.from('attendance')
+      .update({ advance: newAdvance })
+      .eq('id', rec.id);
+    if (error) throw new Error(error.message);
+    return;
+  }
+
+  const { error } = await supabase.from('attendance').insert({
+    projectId, workerId, date: targetDate, regularHours: 0, overtimeHours: 0, advance: amount, paid: false, id: Date.now().toString()
+  });
+  if (error) throw new Error(error.message);
 };
 
 export const addClearanceRecord = async (projectId, workerId, amount, userId, explicitDate = null) => {
@@ -607,29 +625,51 @@ export const processDailyWorkerFifoSettlement = async (projectId, workerId, amou
     .order('date', { ascending: true });
     
   if (fetchErr) throw new Error(fetchErr.message);
+  if (!unpaidRecords || unpaidRecords.length === 0) return;
   
-  let remainingPayment = amountPaid;
+  const totalUnpaidAdvances = unpaidRecords.reduce((sum, r) => sum + (Number(r.advance) || 0), 0);
+  const currentPayment = Number(amountPaid) || 0;
+  let pool = totalUnpaidAdvances + currentPayment;
   const recordsToUpdate = [];
-  
-  for (const record of unpaidRecords) {
-    if (remainingPayment <= 0) break;
-    
-    const gross = ((record.regularHours || 0) + (record.overtimeHours || 0)) * hourlyRate;
-    const existingAdvance = record.advance || 0;
-    const netOwedForDay = gross - existingAdvance;
-    
-    if (netOwedForDay <= 0) {
-      recordsToUpdate.push({ ...record, paid: true });
-      continue;
+
+  const workRecords = unpaidRecords.filter(r => 
+    (Number(r.regularHours) > 0 || Number(r.overtimeHours) > 0)
+  );
+  const advanceOnlyRecords = unpaidRecords.filter(r => 
+    (!r.regularHours || Number(r.regularHours) <= 0) && (!r.overtimeHours || Number(r.overtimeHours) <= 0) && Number(r.advance) > 0
+  );
+
+  if (workRecords.length === 0) {
+    if (currentPayment === 0) {
+      advanceOnlyRecords.forEach(r => recordsToUpdate.push({ ...r, paid: true }));
     }
-    
-    if (remainingPayment >= netOwedForDay) {
-      remainingPayment -= netOwedForDay;
-      recordsToUpdate.push({ ...record, paid: true });
-    } else {
-      recordsToUpdate.push({ ...record, advance: existingAdvance + remainingPayment });
-      remainingPayment = 0;
-      break;
+  } else {
+    for (const record of workRecords) {
+      const recRate = (record.dailyWage !== undefined && record.dailyWage !== null) ? (Number(record.dailyWage) / 8) : hourlyRate;
+      const gross = ((Number(record.regularHours) || 0) + (Number(record.overtimeHours) || 0)) * recRate;
+      
+      if (pool >= gross) {
+        pool -= gross;
+        recordsToUpdate.push({ ...record, paid: true });
+      } else if (pool > 0) {
+        recordsToUpdate.push({ ...record, advance: (record.advance || 0) + pool, paid: false });
+        pool = 0;
+      } else {
+        break;
+      }
+    }
+
+    if (advanceOnlyRecords.length > 0) {
+      if (pool <= 0) {
+        advanceOnlyRecords.forEach(r => recordsToUpdate.push({ ...r, paid: true }));
+      } else {
+        for (let i = 0; i < advanceOnlyRecords.length - 1; i++) {
+          recordsToUpdate.push({ ...advanceOnlyRecords[i], paid: true });
+        }
+        const lastAdv = advanceOnlyRecords[advanceOnlyRecords.length - 1];
+        recordsToUpdate.push({ ...lastAdv, advance: pool, paid: false });
+        pool = 0;
+      }
     }
   }
   
@@ -638,8 +678,7 @@ export const processDailyWorkerFifoSettlement = async (projectId, workerId, amou
     if (updateErr) throw new Error(updateErr.message);
   }
   
-  if (remainingPayment > 0) {
-    await addAdvanceOnlyRecord(projectId, workerId, remainingPayment, userId);
+  if (pool > 0) {
+    await addAdvanceOnlyRecord(projectId, workerId, pool, userId);
   }
 };
-

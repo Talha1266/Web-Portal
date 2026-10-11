@@ -677,7 +677,7 @@ const [profileName, setProfileName] = useState('');
     e.preventDefault();
     try {
       await addWorker({ projectId: activeProjectId, name: wName, trade: wTrade, dailyWage: Number(wWage), paymentType: wPaymentType, createdBy: currentUser.id });
-      setWName(''); setWTrade(''); setWWage(''); setIsWorkerModalOpen(false); await loadData();
+      setWName(''); setWTrade(''); setWWage(''); setWPaymentType('daily'); setIsWorkerModalOpen(false); await loadData();
       toast.success("Worker added successfully!");
     } catch (err) {
       toast.error("Database Schema Error: " + err.message);
@@ -697,6 +697,7 @@ const [profileName, setProfileName] = useState('');
     setEwName(worker.name);
     setEwTrade(worker.trade);
     setEwWage(worker.dailyWage || '');
+    setEwPaymentType(worker.paymentType || 'daily');
     setIsEditWorkerModalOpen(true);
   };
 
@@ -2382,7 +2383,7 @@ const [profileName, setProfileName] = useState('');
                     {!canModify && perms.root && <span style={{ color: 'var(--warning)', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.3rem', background: 'rgba(234, 179, 8, 0.1)', padding: '0.2rem 0.5rem', borderRadius: 'var(--radius-full)' }}><Shield size={12}/> Historical Record (Locked)</span>}
                   </div>
                   <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-                     <button className="btn btn-secondary" onClick={() => setIsWorkerModalOpen(true)} style={{ padding: '0.4rem 0.75rem', fontSize: '0.8rem' }}>+ Register Labourer</button>
+                     <button className="btn btn-secondary" onClick={() => { setWPaymentType('daily'); setIsWorkerModalOpen(true); }} style={{ padding: '0.4rem 0.75rem', fontSize: '0.8rem' }}>+ Register Labourer</button>
                      {!canModify && (perms.root || perms.unlock_past) && (
                        <button className="btn btn-warning" onClick={() => { if (window.confirm("You are about to edit historical attendance records. This can alter past payroll calculations. Proceed with caution?")) setAdminUnlockPast(true); }} style={{ background: 'transparent', border: '1px solid var(--warning)', color: 'var(--warning)', padding: '0.4rem 0.75rem', fontSize: '0.8rem' }}><Shield size={14} style={{ display: 'inline', verticalAlign: 'text-bottom', marginRight: '0.3rem' }}/> Unlock</button>
                      )}
@@ -2554,7 +2555,11 @@ const [profileName, setProfileName] = useState('');
                    // 1. Process Daily Workers
                    relevantLogs.forEach(log => {
                      const worker = workerMap.get(log.workerId);
-                     if (worker && worker.paymentType && worker.paymentType !== 'daily') return; // Skip salaried here
+                     if (worker && worker.paymentType && worker.paymentType !== 'daily') return;
+
+                      const hasHours = (Number(log.regularHours) || 0) > 0 || (Number(log.overtimeHours) || 0) > 0;
+                      const hasAdvance = (Number(log.advance) || 0) > 0;
+                      if (!hasHours && !hasAdvance) return; // Skip logs with 0 attendance hours and 0 advances // Skip salaried here
                      
                      if (!payrollData[log.workerId]) payrollData[log.workerId] = { isSalaried: false, regHours: 0, otHours: 0, advance: 0, dates: new Set(), grossPay: 0 };
                      
@@ -2590,7 +2595,10 @@ const [profileName, setProfileName] = useState('');
                              </tr>
                            </thead>
                            <tbody>
-                             {Object.keys(payrollData).filter(wId => !payrollData[wId].isSalaried).map(wId => {
+                             {Object.keys(payrollData).filter(wId => {
+                                const d = payrollData[wId];
+                                return !d.isSalaried && ((d.regHours + d.otHours) > 0 || d.advance > 0 || d.grossPay > 0);
+                              }).map(wId => {
                                const worker = workerMap.get(wId);
                                if (!worker) return null;
                                const data = payrollData[wId];
@@ -2655,7 +2663,10 @@ const [profileName, setProfileName] = useState('');
                                  </tr>
                                )
                              })}
-                             {Object.keys(payrollData).filter(wId => !payrollData[wId].isSalaried).length === 0 && (
+                             {Object.keys(payrollData).filter(wId => {
+                                const d = payrollData[wId];
+                                return !d.isSalaried && ((d.regHours + d.otHours) > 0 || d.advance > 0 || d.grossPay > 0);
+                              }).length === 0 && (
                                <tr><td colSpan="7" style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>No daily workers found.</td></tr>
                              )}
                            </tbody>

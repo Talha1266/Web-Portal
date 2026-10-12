@@ -194,7 +194,20 @@ export const deleteVendor = async (id, projectId) => {  const { error } = await 
 
 export const getDirectoryVendors = async () => {
   try {
-    return await fetchWithCache('directory_vendors');
+    const remoteData = await fetchWithCache('directory_vendors');
+    try {
+      const localCache = (await idbGet('cache_directory_vendors')) || [];
+      const missingOnServer = localCache.filter(local => !remoteData.some(rem => rem.id === local.id));
+      if (missingOnServer.length > 0 && navigator.onLine) {
+        for (const v of missingOnServer) {
+          await supabase.from('directory_vendors').upsert(v);
+        }
+        return [...remoteData, ...missingOnServer];
+      }
+    } catch (e) {
+      console.warn("Auto-sync local vendors to Supabase failed:", e.message);
+    }
+    return remoteData;
   } catch (err) {
     console.warn("Serving directory_vendors from fallback cache:", err.message);
     const cachedData = (await idbGet('cache_directory_vendors')) || [];
@@ -213,6 +226,7 @@ export const addDirectoryVendor = async (v) => {
     await executeMutation('directory_vendors', 'INSERT', payload, payload.id);
   } catch (err) {
     console.warn("Directory vendor saved locally (cloud sync pending):", err.message);
+    await queueOfflineMutation('directory_vendors', 'INSERT', payload, payload.id);
   }
   return payload;
 };
@@ -224,6 +238,7 @@ export const updateDirectoryVendor = async (id, updates) => {
     await executeMutation('directory_vendors', 'UPDATE', updates, id);
   } catch (err) {
     console.warn("Directory vendor updated locally:", err.message);
+    await queueOfflineMutation('directory_vendors', 'UPDATE', updates, id);
   }
 };
 export const deleteDirectoryVendor = async (id) => {
@@ -234,12 +249,26 @@ export const deleteDirectoryVendor = async (id) => {
     await executeMutation('directory_vendors', 'DELETE', null, id);
   } catch (err) {
     console.warn("Directory vendor deleted locally:", err.message);
+    await queueOfflineMutation('directory_vendors', 'DELETE', null, id);
   }
 };
 
 export const getDirectoryCategories = async () => {
   try {
-    return await fetchWithCache('directory_categories');
+    const remoteData = await fetchWithCache('directory_categories');
+    try {
+      const localCache = (await idbGet('cache_directory_categories')) || [];
+      const missingOnServer = localCache.filter(local => !remoteData.some(rem => rem.name?.toLowerCase() === local.name?.toLowerCase()));
+      if (missingOnServer.length > 0 && navigator.onLine) {
+        for (const c of missingOnServer) {
+          await supabase.from('directory_categories').upsert(c);
+        }
+        return [...remoteData, ...missingOnServer];
+      }
+    } catch (e) {
+      console.warn("Auto-sync local categories to Supabase failed:", e.message);
+    }
+    return remoteData;
   } catch (err) {
     console.warn("Serving directory_categories from fallback cache:", err.message);
     const cachedData = (await idbGet('cache_directory_categories')) || [];
@@ -263,6 +292,7 @@ export const addDirectoryCategory = async (name) => {
     await executeMutation('directory_categories', 'INSERT', payload, payload.id);
   } catch (err) {
     console.warn("Directory category saved locally:", err.message);
+    await queueOfflineMutation('directory_categories', 'INSERT', payload, payload.id);
   }
   return payload;
 };

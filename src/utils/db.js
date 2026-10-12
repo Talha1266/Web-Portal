@@ -237,6 +237,69 @@ export const deleteDirectoryVendor = async (id) => {
   }
 };
 
+export const getDirectoryCategories = async () => {
+  try {
+    return await fetchWithCache('directory_categories');
+  } catch (err) {
+    console.warn("Serving directory_categories from fallback cache:", err.message);
+    const cachedData = (await idbGet('cache_directory_categories')) || [];
+    return await mergeOffline('directory_categories', cachedData);
+  }
+};
+
+export const addDirectoryCategory = async (name) => {
+  const trimmed = (name || '').trim();
+  if (!trimmed) throw new Error("Category name cannot be empty");
+  const payload = {
+    id: Date.now().toString(),
+    name: trimmed,
+    createdAt: new Date().toISOString()
+  };
+  try {
+    const existing = (await idbGet('cache_directory_categories')) || [];
+    if (!existing.some(c => c.name.toLowerCase() === trimmed.toLowerCase())) {
+      await idbSet('cache_directory_categories', [...existing, payload]);
+    }
+    await executeMutation('directory_categories', 'INSERT', payload, payload.id);
+  } catch (err) {
+    console.warn("Directory category saved locally:", err.message);
+  }
+  return payload;
+};
+
+export const updateDirectoryCategory = async (oldName, newName) => {
+  const trimmed = (newName || '').trim();
+  if (!trimmed) throw new Error("New category name cannot be empty");
+  try {
+    const existing = (await idbGet('cache_directory_categories')) || [];
+    const cat = existing.find(c => c.name.toLowerCase() === oldName.toLowerCase());
+    const id = cat ? cat.id : Date.now().toString();
+    const updatedList = existing.map(c => c.name.toLowerCase() === oldName.toLowerCase() ? { ...c, name: trimmed } : c);
+    await idbSet('cache_directory_categories', updatedList);
+    
+    // Also update any directory_vendors using old category
+    const existingVendors = (await idbGet('cache_directory_vendors')) || [];
+    const updatedVendors = existingVendors.map(v => v.category === oldName ? { ...v, category: trimmed } : v);
+    await idbSet('cache_directory_vendors', updatedVendors);
+
+    await supabase.from('directory_vendors').update({ category: trimmed }).eq('category', oldName);
+    await supabase.from('directory_categories').update({ name: trimmed }).eq('id', id);
+  } catch (err) {
+    console.warn("Error updating directory category in cloud:", err.message);
+  }
+};
+
+export const deleteDirectoryCategory = async (id, name) => {
+  try {
+    const existing = (await idbGet('cache_directory_categories')) || [];
+    const filtered = existing.filter(c => c.id !== id && c.name.toLowerCase() !== (name || '').toLowerCase());
+    await idbSet('cache_directory_categories', filtered);
+    await executeMutation('directory_categories', 'DELETE', null, id);
+  } catch (err) {
+    console.warn("Error deleting directory category:", err.message);
+  }
+};
+
 export const getSiteAdvances = async () => fetchWithCache('site_advances');
 export const addSiteAdvance = async (a) => { const payload = { ...a, id: a.id || Date.now().toString(), createdAt: new Date().toISOString() }; await executeMutation('site_advances', 'INSERT', payload, payload.id); };
 export const updateSiteAdvance = async (id, updates) => { await executeMutation('site_advances', 'UPDATE', updates, id); };
@@ -287,7 +350,8 @@ export const migrateDataToCloud = async () => {
     documents: ['id', 'name', 'type', 'size', 'url', 'parentId', 'projectId', 'hasIDBContent', 'createdBy', 'createdAt'],
     change_requests: ['id', 'collection', 'recordId', 'changes', 'requestedBy', 'status', 'createdAt'],
     material_categories: ['id', 'name'],
-    directory_vendors: ['id', 'name', 'contactPerson', 'category', 'phone', 'whatsapp', 'secondaryPhone', 'email', 'city', 'address', 'services', 'notes', 'rating', 'visitedDate', 'createdAt']
+    directory_vendors: ['id', 'name', 'contactPerson', 'category', 'phone', 'whatsapp', 'secondaryPhone', 'email', 'city', 'address', 'services', 'notes', 'rating', 'visitedDate', 'createdAt'],
+    directory_categories: ['id', 'name', 'createdAt']
   };
 
   const getLocal = (key, table) => {

@@ -4,39 +4,11 @@ import 'yet-another-react-lightbox/styles.css';
 import Zoom from 'yet-another-react-lightbox/plugins/zoom';
 import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LayoutDashboard, HardHat, FileText, MessageSquare, LogOut, Plus, Edit2, Trash2, PieChart, Shield, X, MapPin, Building, Calendar, Users, Folder, FolderPlus, UploadCloud, ChevronRight, ArrowLeft, CheckSquare, Settings, ClipboardList, DollarSign, CheckCircle, Briefcase, Package, CreditCard, Truck, AlertTriangle, XCircle, Menu, Unlock, Printer, Camera, RefreshCw, BookUser, Phone, PhoneCall, Search, Download } from 'lucide-react';
-import { getUsers, getProjects, addProject, updateProject, deleteProject, getDocuments, addDocument, deleteDocument, getWorkers, addWorker, updateWorker, deleteWorker, getAttendance, saveAttendance, markAttendancePaid, markAllAttendancePaid, deleteAttendanceRecords, deleteSingleAttendanceRecord, updateAttendanceRecord, getSubcontractors, addSubcontractor, updateSubcontractor, deleteSubcontractor, getSubPayments, addSubPayment, deleteSubPayment, updateSubPayment, getChangeRequests, addChangeRequest, updateChangeRequestStatus, getMaterials, addMaterial, updateMaterial, deleteMaterial, getMaterialCategories, addMaterialCategory, updateMaterialCategory, deleteMaterialCategory, getVendors, addVendor, updateVendor, deleteVendor, getDirectoryVendors, addDirectoryVendor, updateDirectoryVendor, deleteDirectoryVendor, getSiteAdvances, addSiteAdvance, updateSiteAdvance, deleteSiteAdvance, getSiteExpenses, addSiteExpense, updateSiteExpense, deleteSiteExpense, addAdvanceOnlyRecord, addClearanceRecord, processDailyWorkerFifoSettlement, revertAttendancePaid, getAssets, addAsset, updateAsset, deleteAsset, saveFileContentToDB, getFileContentFromDB, deleteFileContentFromDB, getTasks, addTask, updateTask, deleteTask, getMessages, addMessage, updateUserProfile, addActivityLog } from '../utils/db';
+import { LayoutDashboard, HardHat, FileText, MessageSquare, LogOut, Plus, Edit2, Trash2, PieChart, Shield, X, MapPin, Building, Calendar, Users, Folder, FolderPlus, UploadCloud, ChevronRight, ArrowLeft, CheckSquare, Settings, ClipboardList, DollarSign, CheckCircle, Briefcase, Package, CreditCard, Truck, AlertTriangle, XCircle, Menu, Unlock, Printer, Camera, RefreshCw, BookUser, Phone, PhoneCall, Search, Download, Tag } from 'lucide-react';
+import { getUsers, getProjects, addProject, updateProject, deleteProject, getDocuments, addDocument, deleteDocument, getWorkers, addWorker, updateWorker, deleteWorker, getAttendance, saveAttendance, markAttendancePaid, markAllAttendancePaid, deleteAttendanceRecords, deleteSingleAttendanceRecord, updateAttendanceRecord, getSubcontractors, addSubcontractor, updateSubcontractor, deleteSubcontractor, getSubPayments, addSubPayment, deleteSubPayment, updateSubPayment, getChangeRequests, addChangeRequest, updateChangeRequestStatus, getMaterials, addMaterial, updateMaterial, deleteMaterial, getMaterialCategories, addMaterialCategory, updateMaterialCategory, deleteMaterialCategory, getVendors, addVendor, updateVendor, deleteVendor, getDirectoryVendors, addDirectoryVendor, updateDirectoryVendor, deleteDirectoryVendor, getDirectoryCategories, addDirectoryCategory, updateDirectoryCategory, deleteDirectoryCategory, getSiteAdvances, addSiteAdvance, updateSiteAdvance, deleteSiteAdvance, getSiteExpenses, addSiteExpense, updateSiteExpense, deleteSiteExpense, addAdvanceOnlyRecord, addClearanceRecord, processDailyWorkerFifoSettlement, revertAttendancePaid, getAssets, addAsset, updateAsset, deleteAsset, saveFileContentToDB, getFileContentFromDB, deleteFileContentFromDB, getTasks, addTask, updateTask, deleteTask, getMessages, addMessage, updateUserProfile, addActivityLog } from '../utils/db';
 import { supabase } from '../supabaseClient';
 import { PieChart as RechartsPieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import InstallPWA from '../components/InstallPWA';
-
-const VENDOR_DIRECTORY_CATEGORIES = [
-  'General Hardware & Tools',
-  'Cement, Sand & Aggregate',
-  'Steel & Rebar (Sarya)',
-  'Ready-Mix Concrete (RMC)',
-  'Bricks, Blocks & Masonry',
-  'Woodwork & Carpentry',
-  'Electrician & Electrical Fittings',
-  'Plumbing, Sanitary & Pipes',
-  'Fabrication, Welding & Iron Works',
-  'Tiles, Marble & Granite',
-  'Paint, Polish & Wall Texture',
-  'Glass, Aluminum & UPVC Windows',
-  'Shuttering & Scaffolding (Formwork)',
-  'Heavy Machinery, Excavation & Cranes',
-  'Transport & Logistics',
-  'False Ceiling & Drywall (Gypsum)',
-  'Waterproofing & Chemical Insulation',
-  'Roofing & Truss Work',
-  'Solar Panels & Electrical Systems',
-  'HVAC & Air Conditioning',
-  'Labor Contractor / Manpower',
-  'Security, CCTV & Fire Safety',
-  'Interior Decor & Flooring',
-  'Landscaping & Gardening',
-  'Other (Custom)'
-];
 
 const formatWhatsAppUrl = (phone) => {
   if (!phone) return null;
@@ -99,14 +71,18 @@ const UserDashboard = () => {
 
   // Global Vendor & Service Directory State
   const [directoryVendors, setDirectoryVendors] = useState([]);
+  const [directoryCategories, setDirectoryCategories] = useState([]);
   const [directorySearchTerm, setDirectorySearchTerm] = useState('');
   const [directoryCategoryFilter, setDirectoryCategoryFilter] = useState('All');
   const [isVendorDirModalOpen, setIsVendorDirModalOpen] = useState(false);
+  const [isManageDirCategoriesModalOpen, setIsManageDirCategoriesModalOpen] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [editingCategoryObj, setEditingCategoryObj] = useState(null);
   const [editingDirVendor, setEditingDirVendor] = useState(null);
   const [dvForm, setDvForm] = useState({
     name: '',
     contactPerson: '',
-    category: 'General Hardware & Tools',
+    category: '',
     customCategory: '',
     phone: '',
     whatsapp: '',
@@ -391,11 +367,11 @@ const UserDashboard = () => {
     const [
       users, docs, workers, attendance, subs, 
       rawSubPayments, crs, mats, matCats, vendors, advances, 
-      expenses, assets, tasks, messages, allProj, dirVendors
+      expenses, assets, tasks, messages, allProj, dirVendors, dirCategories
     ] = await Promise.all([
       getUsers(), getDocuments(), getWorkers(), getAttendance(), getSubcontractors(),
       getSubPayments(), getChangeRequests(), getMaterials(), getMaterialCategories(), getVendors(), getSiteAdvances(),
-      getSiteExpenses(), getAssets(), getTasks(), getMessages(), getProjects(), getDirectoryVendors()
+      getSiteExpenses(), getAssets(), getTasks(), getMessages(), getProjects(), getDirectoryVendors(), getDirectoryCategories()
     ]);
 
     setAllUsers(users);
@@ -413,6 +389,7 @@ const UserDashboard = () => {
     setMaterialCategories(matCats);
     setAllVendors(vendors);
     setDirectoryVendors(dirVendors || []);
+    setDirectoryCategories(dirCategories || []);
     setAllSiteAdvances(advances);
     setAllSiteExpenses(expenses);
     setAllAssets(assets);
@@ -661,12 +638,83 @@ const [profileName, setProfileName] = useState('');
     });
   }, [directoryVendors, directoryCategoryFilter, directorySearchTerm]);
 
+  const allAvailableCategories = useMemo(() => {
+    const set = new Set();
+    directoryCategories.forEach(c => { if (c.name && c.name.trim()) set.add(c.name.trim()); });
+    directoryVendors.forEach(v => { if (v.category && v.category.trim()) set.add(v.category.trim()); });
+    return Array.from(set).sort((a, b) => a.localeCompare(b));
+  }, [directoryCategories, directoryVendors]);
+
+  const handleAddDirectoryCategory = async (catName) => {
+    const name = (catName || newCategoryName).trim();
+    if (!name) {
+      toast.error("Please enter a category name.");
+      return null;
+    }
+    if (allAvailableCategories.some(c => c.toLowerCase() === name.toLowerCase())) {
+      toast.error(`Category "${name}" already exists.`);
+      return name;
+    }
+    try {
+      const added = await addDirectoryCategory(name);
+      setDirectoryCategories(prev => [...prev.filter(c => c.name.toLowerCase() !== name.toLowerCase()), added]);
+      setNewCategoryName('');
+      toast.success(`Category "${name}" added!`);
+      loadData().catch(console.error);
+      return name;
+    } catch (err) {
+      toast.error("Error adding category: " + err.message);
+      return null;
+    }
+  };
+
+  const handleRenameDirectoryCategory = async (oldName, newName) => {
+    const trimmed = (newName || '').trim();
+    if (!trimmed) {
+      toast.error("Category name cannot be empty.");
+      return;
+    }
+    if (trimmed.toLowerCase() === oldName.toLowerCase()) {
+      setEditingCategoryObj(null);
+      return;
+    }
+    try {
+      await updateDirectoryCategory(oldName, trimmed);
+      setDirectoryCategories(prev => prev.map(c => c.name.toLowerCase() === oldName.toLowerCase() ? { ...c, name: trimmed } : c));
+      setDirectoryVendors(prev => prev.map(v => v.category === oldName ? { ...v, category: trimmed } : v));
+      setEditingCategoryObj(null);
+      toast.success(`Renamed "${oldName}" to "${trimmed}".`);
+      loadData().catch(console.error);
+    } catch (err) {
+      toast.error("Error updating category: " + err.message);
+    }
+  };
+
+  const handleDeleteDirectoryCategory = async (catName) => {
+    const vendorCount = directoryVendors.filter(v => v.category === catName).length;
+    const confirmMsg = vendorCount > 0 
+      ? `There are ${vendorCount} vendor(s) categorized under "${catName}". Are you sure you want to delete this category?` 
+      : `Are you sure you want to delete category "${catName}"?`;
+    if (!window.confirm(confirmMsg)) return;
+
+    try {
+      const catObj = directoryCategories.find(c => c.name.toLowerCase() === catName.toLowerCase());
+      await deleteDirectoryCategory(catObj?.id, catName);
+      setDirectoryCategories(prev => prev.filter(c => c.name.toLowerCase() !== catName.toLowerCase()));
+      if (directoryCategoryFilter === catName) setDirectoryCategoryFilter('All');
+      toast.success(`Category "${catName}" removed.`);
+      loadData().catch(console.error);
+    } catch (err) {
+      toast.error("Error deleting category: " + err.message);
+    }
+  };
+
   const handleOpenAddVendorDirectoryModal = () => {
     setEditingDirVendor(null);
     setDvForm({
       name: '',
       contactPerson: '',
-      category: 'General Hardware & Tools',
+      category: allAvailableCategories[0] || '',
       customCategory: '',
       phone: '',
       whatsapp: '',
@@ -683,12 +731,12 @@ const [profileName, setProfileName] = useState('');
 
   const handleOpenEditVendorDirectoryModal = (vendor) => {
     setEditingDirVendor(vendor);
-    const isKnown = VENDOR_DIRECTORY_CATEGORIES.includes(vendor.category);
+    const hasCategory = allAvailableCategories.includes(vendor.category);
     setDvForm({
       name: vendor.name || '',
       contactPerson: vendor.contactPerson || '',
-      category: isKnown ? (vendor.category || 'General Hardware & Tools') : 'Other (Custom)',
-      customCategory: isKnown ? '' : (vendor.category || ''),
+      category: hasCategory ? (vendor.category || '') : (vendor.category ? '__NEW__' : (allAvailableCategories[0] || '')),
+      customCategory: hasCategory ? '' : (vendor.category || ''),
       phone: vendor.phone || '',
       whatsapp: vendor.whatsapp || '',
       secondaryPhone: vendor.secondaryPhone || '',
@@ -708,9 +756,19 @@ const [profileName, setProfileName] = useState('');
       toast.error("Business or Vendor Name is required.");
       return;
     }
-    const finalCategory = dvForm.category === 'Other (Custom)'
-      ? (dvForm.customCategory.trim() || 'General / Other')
-      : dvForm.category;
+
+    let finalCategory = dvForm.category;
+    if (dvForm.category === '__NEW__' || !dvForm.category) {
+      finalCategory = (dvForm.customCategory || '').trim() || 'General';
+    }
+
+    // If the category is brand new, also persist it to directory_categories
+    if (finalCategory && !allAvailableCategories.some(c => c.toLowerCase() === finalCategory.toLowerCase())) {
+      try {
+        const addedCat = await addDirectoryCategory(finalCategory);
+        setDirectoryCategories(prev => [...prev, addedCat]);
+      } catch (e) { console.warn("Auto-adding category:", e); }
+    }
 
     const payload = {
       name: dvForm.name.trim(),
@@ -4019,6 +4077,14 @@ console.log("WORKER:", worker.name, worker.paymentType, "CYCLES:", cyclesData);
               <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center' }}>
                 <button 
                   className="btn btn-secondary" 
+                  onClick={() => setIsManageDirCategoriesModalOpen(true)}
+                  style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                  title="Manage and create your custom vendor categories"
+                >
+                  <Tag size={18} /> Categories ({allAvailableCategories.length})
+                </button>
+                <button 
+                  className="btn btn-secondary" 
                   onClick={handleExportDirectoryVendorsCSV}
                   title="Download all vendor contacts as Excel/CSV"
                   style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
@@ -4058,7 +4124,7 @@ console.log("WORKER:", worker.name, worker.paymentType, "CYCLES:", cyclesData);
                   style={{ width: 'auto', minWidth: '200px' }}
                 >
                   <option value="All">All Categories ({directoryVendors.length})</option>
-                  {VENDOR_DIRECTORY_CATEGORIES.map(cat => {
+                  {allAvailableCategories.map(cat => {
                     const count = directoryVendors.filter(v => v.category === cat).length;
                     return (
                       <option key={cat} value={cat}>
@@ -6258,31 +6324,53 @@ console.log("WORKER:", worker.name, worker.paymentType, "CYCLES:", cyclesData);
 
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem' }}>
                 <div className="input-group">
-                  <label className="input-label">Service / Trade Category *</label>
-                  <select 
-                    className="input-field" 
-                    value={dvForm.category} 
-                    onChange={e => setDvForm({...dvForm, category: e.target.value})}
-                  >
-                    {VENDOR_DIRECTORY_CATEGORIES.map(cat => (
-                      <option key={cat} value={cat}>{cat}</option>
-                    ))}
-                  </select>
-                </div>
-
-                {dvForm.category === 'Other (Custom)' && (
-                  <div className="input-group">
-                    <label className="input-label">Specify Custom Category *</label>
-                    <input 
-                      type="text" 
-                      className="input-field" 
-                      required 
-                      placeholder="e.g. Fire Fighting Systems, Acoustic Wall..." 
-                      value={dvForm.customCategory} 
-                      onChange={e => setDvForm({...dvForm, customCategory: e.target.value})} 
-                    />
+                  <div className="flex-between" style={{ marginBottom: '0.25rem' }}>
+                    <label className="input-label" style={{ margin: 0 }}>Service / Trade Category *</label>
+                    <button 
+                      type="button" 
+                      onClick={() => setDvForm({...dvForm, category: '__NEW__', customCategory: ''})}
+                      style={{ background: 'transparent', border: 'none', color: 'var(--accent-primary)', fontSize: '0.75rem', cursor: 'pointer', padding: 0 }}
+                    >
+                      + Create New Category
+                    </button>
                   </div>
-                )}
+
+                  {allAvailableCategories.length > 0 && dvForm.category !== '__NEW__' ? (
+                    <select 
+                      className="input-field" 
+                      value={dvForm.category} 
+                      onChange={e => setDvForm({...dvForm, category: e.target.value})}
+                      required
+                    >
+                      <option value="">Select a Category...</option>
+                      {allAvailableCategories.map(cat => (
+                        <option key={cat} value={cat}>{cat}</option>
+                      ))}
+                      <option value="__NEW__">+ Create New Category...</option>
+                    </select>
+                  ) : (
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                      <input 
+                        type="text" 
+                        className="input-field" 
+                        required 
+                        placeholder="Type new category name..." 
+                        value={dvForm.customCategory} 
+                        onChange={e => setDvForm({...dvForm, category: '__NEW__', customCategory: e.target.value})} 
+                      />
+                      {allAvailableCategories.length > 0 && (
+                        <button 
+                          type="button" 
+                          className="btn btn-secondary" 
+                          onClick={() => setDvForm({...dvForm, category: allAvailableCategories[0] || '', customCategory: ''})}
+                          style={{ padding: '0.4rem 0.75rem', fontSize: '0.75rem', whiteSpace: 'nowrap' }}
+                        >
+                          Select Existing
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
 
                 <div className="input-group">
                   <label className="input-label">Date Visited / Recorded</label>
@@ -6417,6 +6505,146 @@ console.log("WORKER:", worker.name, worker.paymentType, "CYCLES:", cyclesData);
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ================= MANAGE VENDOR CATEGORIES MODAL ================= */}
+      {isManageDirCategoriesModalOpen && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(15, 23, 42, 0.75)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 110, padding: '1rem' }}>
+          <div className="glass-card animate-fade-in" style={{ padding: '2rem', width: '100%', maxWidth: '550px', maxHeight: '85vh', overflowY: 'auto', position: 'relative' }}>
+            <button 
+              onClick={() => { setIsManageDirCategoriesModalOpen(false); setEditingCategoryObj(null); }} 
+              style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}
+            >
+              <X size={24} />
+            </button>
+
+            <div style={{ marginBottom: '1.5rem' }}>
+              <h2 className="heading-2" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
+                <Tag size={24} color="var(--accent-primary)" />
+                Manage Vendor Categories
+              </h2>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+                Create, rename, or delete your custom service and product categories.
+              </p>
+            </div>
+
+            {/* Add Category Form */}
+            <form onSubmit={(e) => { e.preventDefault(); handleAddDirectoryCategory(); }} style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem' }}>
+              <input 
+                type="text" 
+                className="input-field" 
+                placeholder="Enter new category name..." 
+                value={newCategoryName} 
+                onChange={e => setNewCategoryName(e.target.value)} 
+                style={{ flex: 1 }}
+              />
+              <button type="submit" className="btn btn-primary" style={{ whiteSpace: 'nowrap' }}>
+                <Plus size={18} /> Add
+              </button>
+            </form>
+
+            {/* Existing Categories List */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              <h4 style={{ fontSize: '0.8rem', textTransform: 'uppercase', color: 'var(--text-muted)', letterSpacing: '0.5px' }}>
+                Your Categories ({allAvailableCategories.length})
+              </h4>
+
+              {allAvailableCategories.length === 0 ? (
+                <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)', background: 'var(--bg-tertiary)', borderRadius: 'var(--radius-md)' }}>
+                  No custom categories created yet. Type a category name above to create your first one!
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxHeight: '350px', overflowY: 'auto' }}>
+                  {allAvailableCategories.map((catName) => {
+                    const vendorCount = directoryVendors.filter(v => v.category === catName).length;
+                    const isEditing = editingCategoryObj?.name === catName;
+
+                    return (
+                      <div 
+                        key={catName} 
+                        style={{ 
+                          padding: '0.75rem 1rem', 
+                          background: 'var(--bg-tertiary)', 
+                          borderRadius: 'var(--radius-sm)', 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          justifyContent: 'space-between', 
+                          gap: '0.5rem',
+                          border: '1px solid var(--border-subtle)'
+                        }}
+                      >
+                        {isEditing ? (
+                          <div style={{ display: 'flex', gap: '0.5rem', flex: 1, alignItems: 'center' }}>
+                            <input 
+                              type="text" 
+                              className="input-field" 
+                              value={editingCategoryObj.newName} 
+                              onChange={e => setEditingCategoryObj({...editingCategoryObj, newName: e.target.value})}
+                              style={{ padding: '0.35rem 0.6rem', fontSize: '0.85rem' }}
+                              autoFocus
+                            />
+                            <button 
+                              className="btn btn-primary" 
+                              onClick={() => handleRenameDirectoryCategory(catName, editingCategoryObj.newName)}
+                              style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem' }}
+                            >
+                              Save
+                            </button>
+                            <button 
+                              className="btn btn-secondary" 
+                              onClick={() => setEditingCategoryObj(null)}
+                              style={{ padding: '0.35rem 0.5rem', fontSize: '0.8rem' }}
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        ) : (
+                          <>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                              <span style={{ fontWeight: 500, color: 'var(--text-primary)' }}>{catName}</span>
+                              <span style={{ fontSize: '0.75rem', padding: '0.15rem 0.5rem', borderRadius: '999px', background: 'rgba(99, 102, 241, 0.1)', color: 'var(--accent-primary)' }}>
+                                {vendorCount} vendor{vendorCount !== 1 ? 's' : ''}
+                              </span>
+                            </div>
+
+                            <div style={{ display: 'flex', gap: '0.4rem' }}>
+                              <button 
+                                className="btn btn-secondary" 
+                                onClick={() => setEditingCategoryObj({ name: catName, newName: catName })}
+                                style={{ padding: '0.3rem 0.5rem', fontSize: '0.75rem' }}
+                                title="Rename category"
+                              >
+                                <Edit2 size={13} />
+                              </button>
+                              <button 
+                                className="btn btn-danger" 
+                                onClick={() => handleDeleteDirectoryCategory(catName)}
+                                style={{ padding: '0.3rem 0.5rem', fontSize: '0.75rem' }}
+                                title="Delete category"
+                              >
+                                <Trash2 size={13} />
+                              </button>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            <div style={{ marginTop: '1.5rem', display: 'flex', justifyContent: 'flex-end' }}>
+              <button 
+                type="button" 
+                className="btn btn-secondary" 
+                onClick={() => { setIsManageDirCategoriesModalOpen(false); setEditingCategoryObj(null); }}
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}

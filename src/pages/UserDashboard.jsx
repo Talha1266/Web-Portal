@@ -4,11 +4,51 @@ import 'yet-another-react-lightbox/styles.css';
 import Zoom from 'yet-another-react-lightbox/plugins/zoom';
 import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LayoutDashboard, HardHat, FileText, MessageSquare, LogOut, Plus, Edit2, Trash2, PieChart, Shield, X, MapPin, Building, Calendar, Users, Folder, FolderPlus, UploadCloud, ChevronRight, ArrowLeft, CheckSquare, Settings, ClipboardList, DollarSign, CheckCircle, Briefcase, Package, CreditCard, Truck, AlertTriangle, XCircle, Menu, Unlock, Printer, Camera, RefreshCw } from 'lucide-react';
-import { getUsers, getProjects, addProject, updateProject, deleteProject, getDocuments, addDocument, deleteDocument, getWorkers, addWorker, updateWorker, deleteWorker, getAttendance, saveAttendance, markAttendancePaid, markAllAttendancePaid, deleteAttendanceRecords, deleteSingleAttendanceRecord, updateAttendanceRecord, getSubcontractors, addSubcontractor, updateSubcontractor, deleteSubcontractor, getSubPayments, addSubPayment, deleteSubPayment, updateSubPayment, getChangeRequests, addChangeRequest, updateChangeRequestStatus, getMaterials, addMaterial, updateMaterial, deleteMaterial, getMaterialCategories, addMaterialCategory, updateMaterialCategory, deleteMaterialCategory, getVendors, addVendor, updateVendor, deleteVendor, getSiteAdvances, addSiteAdvance, updateSiteAdvance, deleteSiteAdvance, getSiteExpenses, addSiteExpense, updateSiteExpense, deleteSiteExpense, addAdvanceOnlyRecord, addClearanceRecord, processDailyWorkerFifoSettlement, revertAttendancePaid, getAssets, addAsset, updateAsset, deleteAsset, saveFileContentToDB, getFileContentFromDB, deleteFileContentFromDB, getTasks, addTask, updateTask, deleteTask, getMessages, addMessage, updateUserProfile, addActivityLog } from '../utils/db';
+import { LayoutDashboard, HardHat, FileText, MessageSquare, LogOut, Plus, Edit2, Trash2, PieChart, Shield, X, MapPin, Building, Calendar, Users, Folder, FolderPlus, UploadCloud, ChevronRight, ArrowLeft, CheckSquare, Settings, ClipboardList, DollarSign, CheckCircle, Briefcase, Package, CreditCard, Truck, AlertTriangle, XCircle, Menu, Unlock, Printer, Camera, RefreshCw, BookUser, Phone, PhoneCall, Search, Download } from 'lucide-react';
+import { getUsers, getProjects, addProject, updateProject, deleteProject, getDocuments, addDocument, deleteDocument, getWorkers, addWorker, updateWorker, deleteWorker, getAttendance, saveAttendance, markAttendancePaid, markAllAttendancePaid, deleteAttendanceRecords, deleteSingleAttendanceRecord, updateAttendanceRecord, getSubcontractors, addSubcontractor, updateSubcontractor, deleteSubcontractor, getSubPayments, addSubPayment, deleteSubPayment, updateSubPayment, getChangeRequests, addChangeRequest, updateChangeRequestStatus, getMaterials, addMaterial, updateMaterial, deleteMaterial, getMaterialCategories, addMaterialCategory, updateMaterialCategory, deleteMaterialCategory, getVendors, addVendor, updateVendor, deleteVendor, getDirectoryVendors, addDirectoryVendor, updateDirectoryVendor, deleteDirectoryVendor, getSiteAdvances, addSiteAdvance, updateSiteAdvance, deleteSiteAdvance, getSiteExpenses, addSiteExpense, updateSiteExpense, deleteSiteExpense, addAdvanceOnlyRecord, addClearanceRecord, processDailyWorkerFifoSettlement, revertAttendancePaid, getAssets, addAsset, updateAsset, deleteAsset, saveFileContentToDB, getFileContentFromDB, deleteFileContentFromDB, getTasks, addTask, updateTask, deleteTask, getMessages, addMessage, updateUserProfile, addActivityLog } from '../utils/db';
 import { supabase } from '../supabaseClient';
 import { PieChart as RechartsPieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import InstallPWA from '../components/InstallPWA';
+
+const VENDOR_DIRECTORY_CATEGORIES = [
+  'General Hardware & Tools',
+  'Cement, Sand & Aggregate',
+  'Steel & Rebar (Sarya)',
+  'Ready-Mix Concrete (RMC)',
+  'Bricks, Blocks & Masonry',
+  'Woodwork & Carpentry',
+  'Electrician & Electrical Fittings',
+  'Plumbing, Sanitary & Pipes',
+  'Fabrication, Welding & Iron Works',
+  'Tiles, Marble & Granite',
+  'Paint, Polish & Wall Texture',
+  'Glass, Aluminum & UPVC Windows',
+  'Shuttering & Scaffolding (Formwork)',
+  'Heavy Machinery, Excavation & Cranes',
+  'Transport & Logistics',
+  'False Ceiling & Drywall (Gypsum)',
+  'Waterproofing & Chemical Insulation',
+  'Roofing & Truss Work',
+  'Solar Panels & Electrical Systems',
+  'HVAC & Air Conditioning',
+  'Labor Contractor / Manpower',
+  'Security, CCTV & Fire Safety',
+  'Interior Decor & Flooring',
+  'Landscaping & Gardening',
+  'Other (Custom)'
+];
+
+const formatWhatsAppUrl = (phone) => {
+  if (!phone) return null;
+  let digits = String(phone).replace(/\D/g, '');
+  if (!digits) return null;
+  if (digits.startsWith('03')) {
+    digits = '92' + digits.slice(1);
+  } else if (digits.startsWith('00')) {
+    digits = digits.slice(2);
+  }
+  return `https://wa.me/${digits}`;
+};
 
 const UserDashboard = () => {
   const navigate = useNavigate();
@@ -56,6 +96,28 @@ const UserDashboard = () => {
   const [allMessages, setAllMessages] = useState([]);
   const [activeChannel, setActiveChannel] = useState('global');
   const [messageText, setMessageText] = useState('');
+
+  // Global Vendor & Service Directory State
+  const [directoryVendors, setDirectoryVendors] = useState([]);
+  const [directorySearchTerm, setDirectorySearchTerm] = useState('');
+  const [directoryCategoryFilter, setDirectoryCategoryFilter] = useState('All');
+  const [isVendorDirModalOpen, setIsVendorDirModalOpen] = useState(false);
+  const [editingDirVendor, setEditingDirVendor] = useState(null);
+  const [dvForm, setDvForm] = useState({
+    name: '',
+    contactPerson: '',
+    category: 'General Hardware & Tools',
+    customCategory: '',
+    phone: '',
+    whatsapp: '',
+    secondaryPhone: '',
+    email: '',
+    city: '',
+    address: '',
+    services: '',
+    notes: '',
+    visitedDate: new Date().toISOString().split('T')[0]
+  });
   
   // Modals - Projects
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -329,11 +391,11 @@ const UserDashboard = () => {
     const [
       users, docs, workers, attendance, subs, 
       rawSubPayments, crs, mats, matCats, vendors, advances, 
-      expenses, assets, tasks, messages, allProj
+      expenses, assets, tasks, messages, allProj, dirVendors
     ] = await Promise.all([
       getUsers(), getDocuments(), getWorkers(), getAttendance(), getSubcontractors(),
       getSubPayments(), getChangeRequests(), getMaterials(), getMaterialCategories(), getVendors(), getSiteAdvances(),
-      getSiteExpenses(), getAssets(), getTasks(), getMessages(), getProjects()
+      getSiteExpenses(), getAssets(), getTasks(), getMessages(), getProjects(), getDirectoryVendors()
     ]);
 
     setAllUsers(users);
@@ -350,6 +412,7 @@ const UserDashboard = () => {
     setAllMaterials(mats);
     setMaterialCategories(matCats);
     setAllVendors(vendors);
+    setDirectoryVendors(dirVendors || []);
     setAllSiteAdvances(advances);
     setAllSiteExpenses(expenses);
     setAllAssets(assets);
@@ -572,6 +635,159 @@ const [profileName, setProfileName] = useState('');
     } catch (err) {
       toast.error("Error adding project: " + err.message);
     }
+  };
+
+  // ==========================================
+  // VENDOR & SERVICE PROVIDER DIRECTORY HANDLERS
+  // ==========================================
+  const filteredDirectoryVendors = useMemo(() => {
+    return directoryVendors.filter(vendor => {
+      if (directoryCategoryFilter !== 'All' && vendor.category !== directoryCategoryFilter) {
+        return false;
+      }
+      if (directorySearchTerm.trim()) {
+        const q = directorySearchTerm.toLowerCase();
+        const matchName = vendor.name?.toLowerCase().includes(q);
+        const matchPerson = vendor.contactPerson?.toLowerCase().includes(q);
+        const matchCategory = vendor.category?.toLowerCase().includes(q);
+        const matchPhone = vendor.phone?.toLowerCase().includes(q) || vendor.whatsapp?.toLowerCase().includes(q) || vendor.secondaryPhone?.toLowerCase().includes(q);
+        const matchCity = vendor.city?.toLowerCase().includes(q);
+        const matchAddress = vendor.address?.toLowerCase().includes(q);
+        const matchServices = vendor.services?.toLowerCase().includes(q);
+        const matchNotes = vendor.notes?.toLowerCase().includes(q);
+        return matchName || matchPerson || matchCategory || matchPhone || matchCity || matchAddress || matchServices || matchNotes;
+      }
+      return true;
+    });
+  }, [directoryVendors, directoryCategoryFilter, directorySearchTerm]);
+
+  const handleOpenAddVendorDirectoryModal = () => {
+    setEditingDirVendor(null);
+    setDvForm({
+      name: '',
+      contactPerson: '',
+      category: 'General Hardware & Tools',
+      customCategory: '',
+      phone: '',
+      whatsapp: '',
+      secondaryPhone: '',
+      email: '',
+      city: '',
+      address: '',
+      services: '',
+      notes: '',
+      visitedDate: new Date().toISOString().split('T')[0]
+    });
+    setIsVendorDirModalOpen(true);
+  };
+
+  const handleOpenEditVendorDirectoryModal = (vendor) => {
+    setEditingDirVendor(vendor);
+    const isKnown = VENDOR_DIRECTORY_CATEGORIES.includes(vendor.category);
+    setDvForm({
+      name: vendor.name || '',
+      contactPerson: vendor.contactPerson || '',
+      category: isKnown ? (vendor.category || 'General Hardware & Tools') : 'Other (Custom)',
+      customCategory: isKnown ? '' : (vendor.category || ''),
+      phone: vendor.phone || '',
+      whatsapp: vendor.whatsapp || '',
+      secondaryPhone: vendor.secondaryPhone || '',
+      email: vendor.email || '',
+      city: vendor.city || '',
+      address: vendor.address || '',
+      services: vendor.services || '',
+      notes: vendor.notes || '',
+      visitedDate: vendor.visitedDate || new Date().toISOString().split('T')[0]
+    });
+    setIsVendorDirModalOpen(true);
+  };
+
+  const handleSaveVendorDirectory = async (e) => {
+    e.preventDefault();
+    if (!dvForm.name.trim()) {
+      toast.error("Business or Vendor Name is required.");
+      return;
+    }
+    const finalCategory = dvForm.category === 'Other (Custom)'
+      ? (dvForm.customCategory.trim() || 'General / Other')
+      : dvForm.category;
+
+    const payload = {
+      name: dvForm.name.trim(),
+      contactPerson: dvForm.contactPerson.trim(),
+      category: finalCategory,
+      phone: dvForm.phone.trim(),
+      whatsapp: dvForm.whatsapp.trim(),
+      secondaryPhone: dvForm.secondaryPhone.trim(),
+      email: dvForm.email.trim(),
+      city: dvForm.city.trim(),
+      address: dvForm.address.trim(),
+      services: dvForm.services.trim(),
+      notes: dvForm.notes.trim(),
+      visitedDate: dvForm.visitedDate || new Date().toISOString().split('T')[0]
+    };
+
+    try {
+      if (editingDirVendor) {
+        await updateDirectoryVendor(editingDirVendor.id, payload);
+        setDirectoryVendors(prev => prev.map(v => v.id === editingDirVendor.id ? { ...v, ...payload } : v));
+        toast.success("Vendor details updated!");
+      } else {
+        const added = await addDirectoryVendor(payload);
+        setDirectoryVendors(prev => [added, ...prev.filter(v => v.id !== added.id)]);
+        toast.success("Vendor added to directory!");
+      }
+      setIsVendorDirModalOpen(false);
+      loadData().catch(console.error);
+    } catch (err) {
+      toast.error("Error saving vendor: " + err.message);
+    }
+  };
+
+  const handleDeleteVendorDirectory = async (vendor) => {
+    if (!window.confirm(`Are you sure you want to remove "${vendor.name}" from the vendor directory?`)) {
+      return;
+    }
+    try {
+      await deleteDirectoryVendor(vendor.id);
+      setDirectoryVendors(prev => prev.filter(v => v.id !== vendor.id));
+      toast.success(`"${vendor.name}" removed from directory.`);
+      loadData().catch(console.error);
+    } catch (err) {
+      toast.error("Error deleting vendor: " + err.message);
+    }
+  };
+
+  const handleExportDirectoryVendorsCSV = () => {
+    const listToExport = filteredDirectoryVendors.length > 0 ? filteredDirectoryVendors : directoryVendors;
+    if (!listToExport || listToExport.length === 0) {
+      toast.error("No vendors to export.");
+      return;
+    }
+    const headers = ['Business Name', 'Contact Person', 'Category', 'Phone', 'WhatsApp', 'Secondary Phone', 'Email', 'City', 'Address', 'Services/Products', 'Notes', 'Date Visited'];
+    const rows = listToExport.map(v => [
+      `"${(v.name || '').replace(/"/g, '""')}"`,
+      `"${(v.contactPerson || '').replace(/"/g, '""')}"`,
+      `"${(v.category || '').replace(/"/g, '""')}"`,
+      `"${(v.phone || '').replace(/"/g, '""')}"`,
+      `"${(v.whatsapp || '').replace(/"/g, '""')}"`,
+      `"${(v.secondaryPhone || '').replace(/"/g, '""')}"`,
+      `"${(v.email || '').replace(/"/g, '""')}"`,
+      `"${(v.city || '').replace(/"/g, '""')}"`,
+      `"${(v.address || '').replace(/"/g, '""')}"`,
+      `"${(v.services || '').replace(/"/g, '""')}"`,
+      `"${(v.notes || '').replace(/"/g, '""')}"`,
+      `"${(v.visitedDate || '').replace(/"/g, '""')}"`
+    ]);
+    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `Vendor_Directory_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success("Vendor directory exported successfully!");
   };
 
   const toggleAssignUser = (id) => setPAssigned(prev => prev.includes(id) ? prev.filter(uid => uid !== id) : [...prev, id]);
@@ -1759,6 +1975,7 @@ const [profileName, setProfileName] = useState('');
           <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', flex: 1 }}>
             <button className={activeTab === 'overview' ? "btn btn-primary" : "btn btn-secondary"} onClick={() => handleNav(() => setActiveTab('overview'))} style={{ justifyContent: 'flex-start' }}><LayoutDashboard size={20}/> My Dashboard</button>
             <button className={activeTab === 'projects' ? "btn btn-primary" : "btn btn-secondary"} onClick={() => handleNav(() => setActiveTab('projects'))} style={{ justifyContent: 'flex-start' }}><HardHat size={20}/> Active Projects</button>
+            <button className={activeTab === 'vendor_directory' ? "btn btn-primary" : "btn btn-secondary"} onClick={() => handleNav(() => setActiveTab('vendor_directory'))} style={{ justifyContent: 'flex-start' }}><BookUser size={20}/> Vendor Directory</button>
             <button className={activeTab === 'messages' ? "btn btn-primary" : "btn btn-secondary"} onClick={() => handleNav(() => setActiveTab('messages'))} style={{ justifyContent: 'flex-start' }}><MessageSquare size={20}/> Messages</button>
             <button className={activeTab === 'profile' ? "btn btn-primary" : "btn btn-secondary"} onClick={() => handleNav(() => setActiveTab('profile'))} style={{ justifyContent: 'flex-start' }}><Settings size={20}/> My Profile</button>
 
@@ -1787,6 +2004,8 @@ const [profileName, setProfileName] = useState('');
             {(perms.root || perms.documents) && <button className={projectTab === 'documents' ? "btn btn-primary" : "btn btn-secondary"} onClick={() => handleNav(() => setProjectTab('documents'))} style={{ justifyContent: 'flex-start' }}><FileText size={20}/> Documents</button>}
             {(perms.root || perms.tasks) && <button className={projectTab === 'tasks' ? "btn btn-primary" : "btn btn-secondary"} onClick={() => handleNav(() => setProjectTab('tasks'))} style={{ justifyContent: 'flex-start' }}><CheckSquare size={20}/> Tasks</button>}
             
+            <button className="btn btn-secondary" onClick={() => handleNav(() => { setActiveProjectId(null); setActiveTab('vendor_directory'); })} style={{ justifyContent: 'flex-start' }}><BookUser size={20}/> Vendor Directory</button>
+
             {perms.root && <button className="btn btn-secondary" onClick={() => handleNav(() => setIsReportModalOpen(true))} style={{ justifyContent: 'flex-start' }}><Printer size={20}/> Printable Reports</button>}
 
             {perms.root && <button className={projectTab === 'settings' ? "btn btn-primary" : "btn btn-secondary"} onClick={() => handleNav(() => setProjectTab('settings'))} style={{ justifyContent: 'flex-start' }}><Settings size={20}/> Settings</button>}
@@ -1861,6 +2080,19 @@ const [profileName, setProfileName] = useState('');
                       </div>
                     );
                   })()}
+
+                  <div 
+                    className="glass-card" 
+                    style={{ padding: '2rem', cursor: 'pointer', transition: 'var(--transition)' }} 
+                    onClick={() => handleNav(() => setActiveTab('vendor_directory'))}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
+                      <div style={{ padding: '1rem', background: 'var(--bg-tertiary)', borderRadius: 'var(--radius-md)' }}><BookUser size={24} color="#38bdf8" /></div>
+                      <h3 className="heading-3">Vendor Directory</h3>
+                    </div>
+                    <p className="text-gradient heading-1" style={{ background: 'linear-gradient(135deg, #38bdf8, #818cf8)', WebkitBackgroundClip: 'text', color: 'transparent' }}>{directoryVendors.length}</p>
+                    <p style={{ color: 'var(--text-secondary)', marginTop: '0.5rem' }}>Service providers & suppliers (Click to view)</p>
+                  </div>
 
                   <div className="glass-card" style={{ padding: '2rem', gridColumn: '1 / -1', cursor: 'pointer', transition: 'var(--transition)' }} onClick={() => handleNav(() => setActiveTab('messages'))}>
                     <h3 className="heading-3" style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><MessageSquare size={20} className="text-gradient"/> Recent Messages</h3>
@@ -3770,6 +4002,275 @@ console.log("WORKER:", worker.name, worker.paymentType, "CYCLES:", cyclesData);
               </div>
             )}
 
+          </div>
+        )}
+
+        {activeProjectId === null && activeTab === 'vendor_directory' && (
+          <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+            <header className="flex-between" style={{ flexWrap: 'wrap', gap: '1rem' }}>
+              <div>
+                <h1 className="heading-1" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <BookUser size={32} color="var(--accent-primary)" /> Vendor & Service Directory
+                </h1>
+                <p style={{ color: 'var(--text-secondary)' }}>
+                  Record and look up service providers, contractors, and suppliers for future work.
+                </p>
+              </div>
+              <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center' }}>
+                <button 
+                  className="btn btn-secondary" 
+                  onClick={handleExportDirectoryVendorsCSV}
+                  title="Download all vendor contacts as Excel/CSV"
+                  style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                >
+                  <Download size={18} /> Export CSV
+                </button>
+                <button 
+                  className="btn btn-primary" 
+                  onClick={handleOpenAddVendorDirectoryModal}
+                  style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                >
+                  <Plus size={20} /> Add Vendor / Contact
+                </button>
+              </div>
+            </header>
+
+            {/* Controls Bar: Search & Category Filter */}
+            <div className="glass-card" style={{ padding: '1.25rem 1.5rem', display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ position: 'relative', flex: '1 1 280px', maxWidth: '450px' }}>
+                <Search size={18} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                <input 
+                  type="text" 
+                  className="input-field" 
+                  placeholder="Search by vendor name, trade, phone, city, notes..." 
+                  value={directorySearchTerm} 
+                  onChange={e => setDirectorySearchTerm(e.target.value)}
+                  style={{ paddingLeft: '2.75rem' }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+                <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 500 }}>Category:</label>
+                <select 
+                  className="input-field" 
+                  value={directoryCategoryFilter} 
+                  onChange={e => setDirectoryCategoryFilter(e.target.value)}
+                  style={{ width: 'auto', minWidth: '200px' }}
+                >
+                  <option value="All">All Categories ({directoryVendors.length})</option>
+                  {VENDOR_DIRECTORY_CATEGORIES.map(cat => {
+                    const count = directoryVendors.filter(v => v.category === cat).length;
+                    return (
+                      <option key={cat} value={cat}>
+                        {cat} {count > 0 ? `(${count})` : ''}
+                      </option>
+                    );
+                  })}
+                </select>
+                {(directorySearchTerm || directoryCategoryFilter !== 'All') && (
+                  <button 
+                    className="btn btn-secondary" 
+                    onClick={() => { setDirectorySearchTerm(''); setDirectoryCategoryFilter('All'); }}
+                    style={{ padding: '0.5rem 0.75rem', fontSize: '0.8rem' }}
+                  >
+                    Clear Filters
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Quick Stats Pill */}
+            <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+              <span>Showing <strong>{filteredDirectoryVendors.length}</strong> of <strong>{directoryVendors.length}</strong> vendors</span>
+              {directoryCategoryFilter !== 'All' && <span>• Filtered by: <span style={{ color: 'var(--accent-primary)', fontWeight: 500 }}>{directoryCategoryFilter}</span></span>}
+            </div>
+
+            {/* Vendor Cards Grid */}
+            {filteredDirectoryVendors.length === 0 ? (
+              <div className="glass-card flex-center" style={{ padding: '4rem 2rem', flexDirection: 'column', color: 'var(--text-muted)', textAlign: 'center' }}>
+                <BookUser size={64} style={{ marginBottom: '1.5rem', opacity: 0.4, color: 'var(--accent-secondary)' }} />
+                <h3 className="heading-3">No Vendors Found</h3>
+                <p style={{ marginTop: '0.5rem', maxWidth: '400px' }}>
+                  {directoryVendors.length === 0 
+                    ? "Your directory is currently empty. Add vendors who visit or contact you so you can reach them when needed." 
+                    : "No vendors match your current search or category filter."}
+                </p>
+                {directoryVendors.length === 0 ? (
+                  <button className="btn btn-primary" onClick={handleOpenAddVendorDirectoryModal} style={{ marginTop: '1.5rem' }}>
+                    <Plus size={18} /> Add Your First Vendor
+                  </button>
+                ) : (
+                  <button className="btn btn-secondary" onClick={() => { setDirectorySearchTerm(''); setDirectoryCategoryFilter('All'); }} style={{ marginTop: '1.5rem' }}>
+                    Reset Filters
+                  </button>
+                )}
+              </div>
+            ) : (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1.5rem' }}>
+                {filteredDirectoryVendors.map((vendor) => {
+                  const waUrl = formatWhatsAppUrl(vendor.whatsapp || vendor.phone);
+                  return (
+                    <div 
+                      key={vendor.id} 
+                      className="glass-card"
+                      style={{ 
+                        padding: '1.5rem', 
+                        display: 'flex', 
+                        flexDirection: 'column', 
+                        gap: '1rem',
+                        transition: 'transform 0.2s, box-shadow 0.2s',
+                        border: '1px solid var(--border-subtle)'
+                      }}
+                      onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.borderColor = 'rgba(99, 102, 241, 0.4)'; }}
+                      onMouseLeave={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.borderColor = 'var(--border-subtle)'; }}
+                    >
+                      {/* Card Header */}
+                      <div className="flex-between" style={{ alignItems: 'flex-start', gap: '0.5rem' }}>
+                        <div>
+                          <h3 className="heading-3" style={{ fontSize: '1.2rem', marginBottom: '0.35rem', color: 'var(--text-primary)' }}>
+                            {vendor.name}
+                          </h3>
+                          <span style={{ 
+                            display: 'inline-block', 
+                            fontSize: '0.75rem', 
+                            fontWeight: 600, 
+                            padding: '0.2rem 0.6rem', 
+                            borderRadius: '999px', 
+                            background: 'rgba(56, 189, 248, 0.12)', 
+                            color: '#38bdf8',
+                            border: '1px solid rgba(56, 189, 248, 0.25)'
+                          }}>
+                            {vendor.category || 'General'}
+                          </span>
+                        </div>
+                        {vendor.visitedDate && (
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
+                            {vendor.visitedDate}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Contact Person */}
+                      {vendor.contactPerson && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+                          <Users size={15} color="var(--accent-primary)" />
+                          <span>Contact: <strong style={{ color: 'var(--text-primary)' }}>{vendor.contactPerson}</strong></span>
+                        </div>
+                      )}
+
+                      {/* Phone & Communication Buttons */}
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', alignItems: 'center' }}>
+                        {vendor.phone && (
+                          <a 
+                            href={`tel:${vendor.phone}`} 
+                            className="btn btn-secondary" 
+                            style={{ padding: '0.4rem 0.75rem', fontSize: '0.8rem', display: 'inline-flex', alignItems: 'center', gap: '0.4rem', textDecoration: 'none' }}
+                            title="Call vendor"
+                          >
+                            <Phone size={14} color="var(--accent-primary)" /> {vendor.phone}
+                          </a>
+                        )}
+                        {waUrl && (
+                          <a 
+                            href={waUrl} 
+                            target="_blank" 
+                            rel="noopener noreferrer" 
+                            className="btn" 
+                            style={{ 
+                              padding: '0.4rem 0.75rem', 
+                              fontSize: '0.8rem', 
+                              display: 'inline-flex', 
+                              alignItems: 'center', 
+                              gap: '0.4rem', 
+                              background: '#25D366', 
+                              color: '#fff', 
+                              border: 'none',
+                              textDecoration: 'none',
+                              fontWeight: 500
+                            }}
+                            title="Open WhatsApp chat"
+                          >
+                            <MessageSquare size={14} /> WhatsApp
+                          </a>
+                        )}
+                      </div>
+
+                      {/* Secondary Phone & Email */}
+                      {(vendor.secondaryPhone || vendor.email) && (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                          {vendor.secondaryPhone && (
+                            <div>Alt Phone: <a href={`tel:${vendor.secondaryPhone}`} style={{ color: 'var(--text-secondary)' }}>{vendor.secondaryPhone}</a></div>
+                          )}
+                          {vendor.email && (
+                            <div>Email: <a href={`mailto:${vendor.email}`} style={{ color: 'var(--accent-primary)' }}>{vendor.email}</a></div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Location / Address */}
+                      {(vendor.city || vendor.address) && (
+                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', fontSize: '0.825rem', color: 'var(--text-secondary)' }}>
+                          <MapPin size={15} color="var(--accent-secondary)" style={{ marginTop: '0.15rem', flexShrink: 0 }} />
+                          <span>
+                            {vendor.city && <strong>{vendor.city}: </strong>}
+                            {vendor.address}
+                          </span>
+                        </div>
+                      )}
+
+                      {/* Products & Services */}
+                      {vendor.services && (
+                        <div style={{ padding: '0.65rem 0.85rem', background: 'var(--bg-tertiary)', borderRadius: 'var(--radius-sm)', fontSize: '0.825rem' }}>
+                          <span style={{ fontSize: '0.72rem', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600, display: 'block', marginBottom: '0.25rem' }}>
+                            Services & Products
+                          </span>
+                          <span style={{ color: 'var(--text-secondary)', whiteSpace: 'pre-wrap' }}>
+                            {vendor.services}
+                          </span>
+                        </div>
+                      )}
+
+                      {/* Notes & Pricing Remarks */}
+                      {vendor.notes && (
+                        <div style={{ padding: '0.65rem 0.85rem', background: 'rgba(234, 179, 8, 0.08)', borderLeft: '3px solid var(--warning)', borderRadius: 'var(--radius-sm)', fontSize: '0.825rem' }}>
+                          <span style={{ fontSize: '0.72rem', textTransform: 'uppercase', color: 'var(--warning)', fontWeight: 600, display: 'block', marginBottom: '0.25rem' }}>
+                            Notes / Quotes
+                          </span>
+                          <span style={{ color: 'var(--text-secondary)', whiteSpace: 'pre-wrap' }}>
+                            {vendor.notes}
+                          </span>
+                        </div>
+                      )}
+
+                      {/* Card Actions Footer */}
+                      <div className="flex-between" style={{ marginTop: 'auto', paddingTop: '0.75rem', borderTop: '1px solid var(--border-subtle)' }}>
+                        <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                          ID: {vendor.id?.slice?.(-6) || 'Local'}
+                        </span>
+                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                          <button 
+                            className="btn btn-secondary" 
+                            onClick={() => handleOpenEditVendorDirectoryModal(vendor)}
+                            style={{ padding: '0.35rem 0.65rem', fontSize: '0.8rem' }}
+                            title="Edit vendor details"
+                          >
+                            <Edit2 size={14} /> Edit
+                          </button>
+                          <button 
+                            className="btn btn-danger" 
+                            onClick={() => handleDeleteVendorDirectory(vendor)}
+                            style={{ padding: '0.35rem 0.65rem', fontSize: '0.8rem' }}
+                            title="Delete vendor"
+                          >
+                            <Trash2 size={14} /> Delete
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         )}
 
@@ -5704,6 +6205,218 @@ console.log("WORKER:", worker.name, worker.paymentType, "CYCLES:", cyclesData);
             >
               Confirm Action
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* ================= VENDOR DIRECTORY ADD/EDIT MODAL ================= */}
+      {isVendorDirModalOpen && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(15, 23, 42, 0.7)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: '1rem' }}>
+          <div className="glass-card animate-fade-in" style={{ padding: '2rem', width: '100%', maxWidth: '750px', maxHeight: '90vh', overflowY: 'auto', position: 'relative' }}>
+            <button 
+              onClick={() => setIsVendorDirModalOpen(false)} 
+              style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}
+            >
+              <X size={24} />
+            </button>
+
+            <div style={{ marginBottom: '1.5rem' }}>
+              <h2 className="heading-2" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
+                <BookUser size={24} color="var(--accent-primary)" />
+                {editingDirVendor ? 'Edit Vendor Details' : 'Add New Vendor / Service Provider'}
+              </h2>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
+                Save contact details, trade categories, pricing notes, and services offered.
+              </p>
+            </div>
+
+            <form onSubmit={handleSaveVendorDirectory} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem' }}>
+                <div className="input-group">
+                  <label className="input-label">Business / Vendor Name *</label>
+                  <input 
+                    type="text" 
+                    className="input-field" 
+                    required 
+                    placeholder="e.g. Al-Madina Hardware, Apex Concrete..." 
+                    value={dvForm.name} 
+                    onChange={e => setDvForm({...dvForm, name: e.target.value})} 
+                  />
+                </div>
+
+                <div className="input-group">
+                  <label className="input-label">Contact Person Name</label>
+                  <input 
+                    type="text" 
+                    className="input-field" 
+                    placeholder="e.g. Muhammad Aslam, Engr. Tariq..." 
+                    value={dvForm.contactPerson} 
+                    onChange={e => setDvForm({...dvForm, contactPerson: e.target.value})} 
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem' }}>
+                <div className="input-group">
+                  <label className="input-label">Service / Trade Category *</label>
+                  <select 
+                    className="input-field" 
+                    value={dvForm.category} 
+                    onChange={e => setDvForm({...dvForm, category: e.target.value})}
+                  >
+                    {VENDOR_DIRECTORY_CATEGORIES.map(cat => (
+                      <option key={cat} value={cat}>{cat}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {dvForm.category === 'Other (Custom)' && (
+                  <div className="input-group">
+                    <label className="input-label">Specify Custom Category *</label>
+                    <input 
+                      type="text" 
+                      className="input-field" 
+                      required 
+                      placeholder="e.g. Fire Fighting Systems, Acoustic Wall..." 
+                      value={dvForm.customCategory} 
+                      onChange={e => setDvForm({...dvForm, customCategory: e.target.value})} 
+                    />
+                  </div>
+                )}
+
+                <div className="input-group">
+                  <label className="input-label">Date Visited / Recorded</label>
+                  <input 
+                    type="date" 
+                    className="input-field" 
+                    value={dvForm.visitedDate} 
+                    onChange={e => setDvForm({...dvForm, visitedDate: e.target.value})} 
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem' }}>
+                <div className="input-group">
+                  <label className="input-label">Primary Phone / Mobile *</label>
+                  <input 
+                    type="text" 
+                    className="input-field" 
+                    required 
+                    placeholder="e.g. 03001234567" 
+                    value={dvForm.phone} 
+                    onChange={e => setDvForm({...dvForm, phone: e.target.value})} 
+                  />
+                </div>
+
+                <div className="input-group">
+                  <div className="flex-between" style={{ marginBottom: '0.25rem' }}>
+                    <label className="input-label" style={{ margin: 0 }}>WhatsApp Number</label>
+                    {dvForm.phone && (
+                      <button 
+                        type="button" 
+                        onClick={() => setDvForm({...dvForm, whatsapp: dvForm.phone})}
+                        style={{ background: 'transparent', border: 'none', color: 'var(--accent-primary)', fontSize: '0.75rem', cursor: 'pointer', padding: 0 }}
+                      >
+                        Same as Phone
+                      </button>
+                    )}
+                  </div>
+                  <input 
+                    type="text" 
+                    className="input-field" 
+                    placeholder="e.g. 03001234567 (with or without 92)" 
+                    value={dvForm.whatsapp} 
+                    onChange={e => setDvForm({...dvForm, whatsapp: e.target.value})} 
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem' }}>
+                <div className="input-group">
+                  <label className="input-label">Secondary Phone / Landline (Optional)</label>
+                  <input 
+                    type="text" 
+                    className="input-field" 
+                    placeholder="e.g. 051-1234567" 
+                    value={dvForm.secondaryPhone} 
+                    onChange={e => setDvForm({...dvForm, secondaryPhone: e.target.value})} 
+                  />
+                </div>
+
+                <div className="input-group">
+                  <label className="input-label">Email Address (Optional)</label>
+                  <input 
+                    type="email" 
+                    className="input-field" 
+                    placeholder="e.g. contact@vendor.com" 
+                    value={dvForm.email} 
+                    onChange={e => setDvForm({...dvForm, email: e.target.value})} 
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem' }}>
+                <div className="input-group">
+                  <label className="input-label">City / Region</label>
+                  <input 
+                    type="text" 
+                    className="input-field" 
+                    placeholder="e.g. Islamabad, Rawalpindi, Lahore..." 
+                    value={dvForm.city} 
+                    onChange={e => setDvForm({...dvForm, city: e.target.value})} 
+                  />
+                </div>
+
+                <div className="input-group">
+                  <label className="input-label">Address / Shop Location</label>
+                  <input 
+                    type="text" 
+                    className="input-field" 
+                    placeholder="e.g. Shop # 24, Main Commercial Market, I-9" 
+                    value={dvForm.address} 
+                    onChange={e => setDvForm({...dvForm, address: e.target.value})} 
+                  />
+                </div>
+              </div>
+
+              <div className="input-group">
+                <label className="input-label">Products & Services Offered</label>
+                <textarea 
+                  className="input-field" 
+                  rows="2" 
+                  placeholder="e.g. Deals in 60-grade deformed steel bars, binding wire, free delivery within 20km..." 
+                  value={dvForm.services} 
+                  onChange={e => setDvForm({...dvForm, services: e.target.value})} 
+                />
+              </div>
+
+              <div className="input-group">
+                <label className="input-label">Notes, Price Quotes & Visiting Remarks</label>
+                <textarea 
+                  className="input-field" 
+                  rows="3" 
+                  placeholder="e.g. Quoted cement @ Rs 1,280/bag on Oct 11. Offered 5% credit discount on bulk purchases..." 
+                  value={dvForm.notes} 
+                  onChange={e => setDvForm({...dvForm, notes: e.target.value})} 
+                />
+              </div>
+
+              <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end', marginTop: '1rem' }}>
+                <button 
+                  type="button" 
+                  className="btn btn-secondary" 
+                  onClick={() => setIsVendorDirModalOpen(false)}
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit" 
+                  className="btn btn-primary"
+                >
+                  {editingDirVendor ? 'Update Vendor' : 'Save Vendor'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

@@ -192,6 +192,51 @@ export const updateVendor = async (id, newName, projectId) => {
 };
 export const deleteVendor = async (id, projectId) => {  const { error } = await supabase.from('vendors').delete().eq('id', id).eq('projectId', projectId); if (error) throw new Error(error.message); };
 
+export const getDirectoryVendors = async () => {
+  try {
+    return await fetchWithCache('directory_vendors');
+  } catch (err) {
+    console.warn("Serving directory_vendors from fallback cache:", err.message);
+    const cachedData = (await idbGet('cache_directory_vendors')) || [];
+    return await mergeOffline('directory_vendors', cachedData);
+  }
+};
+export const addDirectoryVendor = async (v) => {
+  const payload = {
+    ...v,
+    id: v.id || Date.now().toString(),
+    createdAt: v.createdAt || new Date().toISOString()
+  };
+  try {
+    const existing = (await idbGet('cache_directory_vendors')) || [];
+    await idbSet('cache_directory_vendors', [payload, ...existing.filter(item => item.id !== payload.id)]);
+    await executeMutation('directory_vendors', 'INSERT', payload, payload.id);
+  } catch (err) {
+    console.warn("Directory vendor saved locally (cloud sync pending):", err.message);
+  }
+  return payload;
+};
+export const updateDirectoryVendor = async (id, updates) => {
+  try {
+    const existing = (await idbGet('cache_directory_vendors')) || [];
+    const updated = existing.map(item => item.id === id ? { ...item, ...updates } : item);
+    await idbSet('cache_directory_vendors', updated);
+    await executeMutation('directory_vendors', 'UPDATE', updates, id);
+  } catch (err) {
+    console.warn("Directory vendor updated locally:", err.message);
+  }
+};
+export const deleteDirectoryVendor = async (id) => {
+  try {
+    const existing = (await idbGet('cache_directory_vendors')) || [];
+    const filtered = existing.filter(item => item.id !== id);
+    await idbSet('cache_directory_vendors', filtered);
+    await executeMutation('directory_vendors', 'DELETE', null, id);
+  } catch (err) {
+    console.warn("Directory vendor deleted locally:", err.message);
+  }
+};
+
 export const getSiteAdvances = async () => fetchWithCache('site_advances');
 export const addSiteAdvance = async (a) => { const payload = { ...a, id: a.id || Date.now().toString(), createdAt: new Date().toISOString() }; await executeMutation('site_advances', 'INSERT', payload, payload.id); };
 export const updateSiteAdvance = async (id, updates) => { await executeMutation('site_advances', 'UPDATE', updates, id); };
@@ -241,7 +286,8 @@ export const migrateDataToCloud = async () => {
     messages: ['id', 'channelId', 'senderId', 'text', 'timestamp', 'createdAt'],
     documents: ['id', 'name', 'type', 'size', 'url', 'parentId', 'projectId', 'hasIDBContent', 'createdBy', 'createdAt'],
     change_requests: ['id', 'collection', 'recordId', 'changes', 'requestedBy', 'status', 'createdAt'],
-    material_categories: ['id', 'name']
+    material_categories: ['id', 'name'],
+    directory_vendors: ['id', 'name', 'contactPerson', 'category', 'phone', 'whatsapp', 'secondaryPhone', 'email', 'city', 'address', 'services', 'notes', 'rating', 'visitedDate', 'createdAt']
   };
 
   const getLocal = (key, table) => {

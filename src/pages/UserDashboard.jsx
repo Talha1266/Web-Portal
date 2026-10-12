@@ -2045,11 +2045,8 @@ const [profileName, setProfileName] = useState('');
           </nav>
         ) : (
           <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', flex: 1 }}>
-            <button className="btn btn-secondary" onClick={() => handleNav(handleCloseProject)} style={{ marginBottom: '0.5rem', border: '1px solid var(--border-strong)' }}>
+            <button className="btn btn-secondary" onClick={() => handleNav(handleCloseProject)} style={{ marginBottom: '1.5rem', border: '1px solid var(--border-strong)' }}>
               <ArrowLeft size={18} /> Exit Project
-            </button>
-            <button className="btn btn-secondary" onClick={() => handleNav(() => { setActiveProjectId(null); setActiveTab('vendor_directory'); })} style={{ justifyContent: 'flex-start', marginBottom: '1.25rem', border: '1px solid rgba(56, 189, 248, 0.4)', background: 'rgba(56, 189, 248, 0.08)', color: '#38bdf8' }}>
-              <BookUser size={18}/> Vendor Directory
             </button>
             
             <h3 style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '0.5rem', letterSpacing: '1px', paddingLeft: '0.5rem' }}>Project Menu</h3>
@@ -2082,49 +2079,16 @@ const [profileName, setProfileName] = useState('');
       <div className={`sidebar-overlay ${isMobileMenuOpen ? "open" : ""}`} onClick={() => setIsMobileMenuOpen(false)}></div>
       <main className="main-content">
         <div className="mobile-header">
-          <h2 className="heading-3 text-gradient" style={{ margin: 0, fontSize: '1.05rem', maxWidth: '140px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            {activeProjectId ? (activeProj?.name || 'Project') : (currentUser.name || 'Dashboard')}
-          </h2>
-          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-            <button 
-              onClick={() => handleNav(() => { setActiveProjectId(null); setActiveTab('vendor_directory'); })}
-              className="btn"
-              style={{ 
-                padding: '0.35rem 0.65rem', 
-                fontSize: '0.75rem', 
-                display: 'flex', 
-                alignItems: 'center', 
-                gap: '0.35rem',
-                background: activeTab === 'vendor_directory' && activeProjectId === null ? 'var(--accent-primary)' : 'rgba(56, 189, 248, 0.12)',
-                color: activeTab === 'vendor_directory' && activeProjectId === null ? '#fff' : '#38bdf8',
-                border: '1px solid rgba(56, 189, 248, 0.35)',
-                borderRadius: 'var(--radius-sm)'
-              }}
-              title="Open Vendor Directory"
-            >
-              <BookUser size={15} /> Directory
+          <h2 className="heading-3 text-gradient" style={{ margin: 0 }}>{currentUser.name}</h2>
+          <button onClick={handleTestOS} style={{ background: 'red', color: 'white', padding: '8px', borderRadius: '4px', border: 'none', fontWeight: 'bold' }}>
+            Diag
+          </button>
+          <div style={{ display: 'flex', gap: '1.25rem', alignItems: 'center' }}>
+            <button onClick={handleLogout} style={{ background: 'transparent', border: 'none', color: 'var(--danger)', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: 0 }}>
+              <LogOut size={22} />
             </button>
-
-            <button 
-              onClick={() => {
-                if ('serviceWorker' in navigator) {
-                  navigator.serviceWorker.getRegistrations().then(regs => {
-                    for (let r of regs) r.update();
-                  });
-                }
-                window.location.reload(true);
-              }}
-              style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '0.35rem' }}
-              title="Refresh / Update"
-            >
-              <RefreshCw size={17} />
-            </button>
-
-            <button onClick={handleLogout} style={{ background: 'transparent', border: 'none', color: 'var(--danger)', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '0.35rem' }} title="Logout">
-              <LogOut size={19} />
-            </button>
-            <button onClick={() => setIsMobileMenuOpen(true)} style={{ background: 'transparent', border: 'none', color: 'var(--text-primary)', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '0.35rem' }} title="Open Menu">
-              <Menu size={24} />
+            <button onClick={() => setIsMobileMenuOpen(true)} style={{ background: 'transparent', border: 'none', color: 'var(--text-primary)', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: 0 }}>
+              <Menu size={26} />
             </button>
           </div>
         </div>
@@ -4208,7 +4172,7 @@ console.log("WORKER:", worker.name, worker.paymentType, "CYCLES:", cyclesData);
                 )}
               </div>
             ) : (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 280px), 1fr))', gap: '1.25rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1.5rem' }}>
                 {filteredDirectoryVendors.map((vendor) => {
                   const waUrl = formatWhatsAppUrl(vendor.whatsapp || vendor.phone);
                   return (
@@ -6684,44 +6648,6 @@ console.log("WORKER:", worker.name, worker.paymentType, "CYCLES:", cyclesData);
           </div>
         </div>
       )}
-
-      {/* Mobile Bottom Navigation Bar */}
-      <div className="mobile-bottom-nav">
-        <button 
-          className={`mobile-bottom-nav-item ${activeTab === 'overview' && activeProjectId === null ? 'active' : ''}`}
-          onClick={() => handleNav(() => { setActiveProjectId(null); setActiveTab('overview'); })}
-        >
-          <LayoutDashboard size={20} />
-          <span>Dashboard</span>
-        </button>
-
-        <button 
-          className={`mobile-bottom-nav-item ${activeTab === 'projects' || activeProjectId !== null ? 'active' : ''}`}
-          onClick={() => handleNav(() => { 
-            if (activeProjectId === null) setActiveTab('projects'); 
-            else setProjectTab('overview');
-          })}
-        >
-          <HardHat size={20} />
-          <span>{activeProjectId ? 'Project' : 'Projects'}</span>
-        </button>
-
-        <button 
-          className={`mobile-bottom-nav-item ${activeTab === 'vendor_directory' && activeProjectId === null ? 'active' : ''}`}
-          onClick={() => handleNav(() => { setActiveProjectId(null); setActiveTab('vendor_directory'); })}
-        >
-          <BookUser size={20} />
-          <span>Directory</span>
-        </button>
-
-        <button 
-          className={`mobile-bottom-nav-item ${isMobileMenuOpen ? 'active' : ''}`}
-          onClick={() => setIsMobileMenuOpen(prev => !prev)}
-        >
-          <Menu size={20} />
-          <span>Menu</span>
-        </button>
-      </div>
 
     </div>
   );

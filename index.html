@@ -26,21 +26,17 @@
       });
     </script>
     <script>
-      // Automatically refresh when a new Service Worker version is activated (clientsClaim/skipWaiting)
+      // Emergency Cache Buster for stuck Service Workers throwing 410 GONE
       if ('serviceWorker' in navigator) {
-        let refreshing = false;
-        navigator.serviceWorker.addEventListener('controllerchange', function() {
-          if (!refreshing) {
-            refreshing = true;
-            window.location.reload();
+        navigator.serviceWorker.getRegistrations().then(function(registrations) {
+          let hasUnregistered = false;
+          for(let registration of registrations) {
+            registration.unregister();
+            hasUnregistered = true;
           }
-        });
-        window.addEventListener('load', function() {
-          navigator.serviceWorker.getRegistrations().then(function(registrations) {
-            for (let reg of registrations) {
-              reg.update();
-            }
-          });
+          if (hasUnregistered && !window.location.search.includes('cleared=1')) {
+            window.location.href = window.location.pathname + '?cleared=1';
+          }
         });
       }
     </script>

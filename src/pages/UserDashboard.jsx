@@ -270,6 +270,7 @@ const UserDashboard = () => {
     endDate: '',
     includeMaterials: true,
     includeLabour: true,
+    includeSalaried: true,
     includeSubcontractors: true,
     includeExpenses: true,
   });
@@ -5653,7 +5654,11 @@ console.log("WORKER:", worker.name, worker.paymentType, "CYCLES:", cyclesData);
               </label>
               <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
                 <input type="checkbox" checked={reportConfig.includeLabour} onChange={e => setReportConfig({...reportConfig, includeLabour: e.target.checked})} style={{ width: '18px', height: '18px' }} />
-                Include Labour & Payroll Data
+                Include Labour & Wages (Daily Staff)
+              </label>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                <input type="checkbox" checked={reportConfig.includeSalaried} onChange={e => setReportConfig({...reportConfig, includeSalaried: e.target.checked})} style={{ width: '18px', height: '18px' }} />
+                Include Salaried Staff Data
               </label>
               <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
                 <input type="checkbox" checked={reportConfig.includeExpenses} onChange={e => setReportConfig({...reportConfig, includeExpenses: e.target.checked})} style={{ width: '18px', height: '18px' }} />
@@ -5798,8 +5803,8 @@ console.log("WORKER:", worker.name, worker.paymentType, "CYCLES:", cyclesData);
           return acc;
         }, { paid: 0 });
 
-        const grandGross = (reportConfig.includeMaterials ? matTotals.gross : 0) + (reportConfig.includeSubcontractors ? subTotals.gross : 0) + (reportConfig.includeLabour ? (labTotals.gross + salTotals.paid) : 0) + (reportConfig.includeExpenses ? expTotals.gross : 0);
-        const grandPaid = (reportConfig.includeMaterials ? matTotals.paid : 0) + (reportConfig.includeSubcontractors ? subTotals.paid : 0) + (reportConfig.includeLabour ? (labTotals.paid + salTotals.paid) : 0) + (reportConfig.includeExpenses ? expTotals.paid : 0);
+        const grandGross = (reportConfig.includeMaterials ? matTotals.gross : 0) + (reportConfig.includeSubcontractors ? subTotals.gross : 0) + (reportConfig.includeLabour ? labTotals.gross : 0) + (reportConfig.includeSalaried ? salTotals.paid : 0) + (reportConfig.includeExpenses ? expTotals.gross : 0);
+        const grandPaid = (reportConfig.includeMaterials ? matTotals.paid : 0) + (reportConfig.includeSubcontractors ? subTotals.paid : 0) + (reportConfig.includeLabour ? labTotals.paid : 0) + (reportConfig.includeSalaried ? salTotals.paid : 0) + (reportConfig.includeExpenses ? expTotals.paid : 0);
         const grandPending = (reportConfig.includeMaterials ? matTotals.pending : 0) + (reportConfig.includeSubcontractors ? subTotals.pending : 0) + (reportConfig.includeLabour ? labTotals.pending : 0) + (reportConfig.includeExpenses ? expTotals.pending : 0);
 
         return (
@@ -6080,9 +6085,9 @@ console.log("WORKER:", worker.name, worker.paymentType, "CYCLES:", cyclesData);
               {reportConfig.includeLabour && (
                 <div className="report-section">
                   <div className="section-header">
-                    <h3>Labour & Payroll</h3>
+                    <h3>Labour & Wages (Daily Staff)</h3>
                     <div className="section-totals">
-                      Gross: Rs {labTotals.gross.toLocaleString()} &nbsp;|&nbsp; Paid: <span style={{color:'#10b981'}}>Rs {labTotals.paid.toLocaleString()}</span> &nbsp;|&nbsp; Pending: <span style={{color:'#ef4444'}}>Rs {labTotals.pending.toLocaleString()}</span>
+                      Gross: Rs {labTotals.gross.toLocaleString()} &nbsp;|&nbsp; Paid: <span style={{color:'#065f46'}}>Rs {labTotals.paid.toLocaleString()}</span> &nbsp;|&nbsp; Pending: <span style={{color:'#991b1b'}}>Rs {labTotals.pending.toLocaleString()}</span>
                     </div>
                   </div>
                   <table className="report-table">
@@ -6090,8 +6095,8 @@ console.log("WORKER:", worker.name, worker.paymentType, "CYCLES:", cyclesData);
                       <tr>
                         <th>Worker Name</th>
                         <th>Trade</th>
-                          <th>Days Worked</th>
-                          <th style={{textAlign:'right'}}>Gross Earned</th>
+                        <th>Days Worked</th>
+                        <th style={{textAlign:'right'}}>Gross Earned</th>
                         <th style={{textAlign:'right'}}>Total Paid</th>
                         <th style={{textAlign:'right'}}>Pending Unpaid</th>
                       </tr>
@@ -6106,25 +6111,29 @@ console.log("WORKER:", worker.name, worker.paymentType, "CYCLES:", cyclesData);
                             <td>
                               {worker ? (
                                 <span>
-                                  {worker.trade} {totals.pending === 0 && totals.totalPaid > 0 ? <span style={{color: '#10b981', fontWeight: 500}}> (Paid)</span> : ''}
-                                  </span>
-                                ) : ''}
-                              </td>
-                              <td>{totals.totalHours ? (totals.totalHours / 8).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 }) + ' Days' : '- ' }</td>
-                              <td style={{textAlign:'right'}}>Rs {totals.gross.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
-                            <td style={{textAlign:'right', color:'#10b981'}}>Rs {totals.totalPaid.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
-                            <td style={{textAlign:'right', fontWeight:'600', color: totals.pending > 0 ? '#ef4444' : '#0f172a'}}>Rs {totals.pending.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                                  {worker.trade} {totals.pending === 0 && totals.totalPaid > 0 ? <span style={{color: '#065f46', fontWeight: 600}}> (Paid)</span> : ''}
+                                </span>
+                              ) : ''}
+                            </td>
+                            <td>{totals.totalHours ? (totals.totalHours / 8).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 }) + ' Days' : '- ' }</td>
+                            <td style={{textAlign:'right'}}>Rs {totals.gross.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                            <td style={{textAlign:'right', color:'#065f46'}}>Rs {totals.totalPaid.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                            <td style={{textAlign:'right', fontWeight:'700', color: totals.pending > 0 ? '#991b1b' : '#0f172a'}}>Rs {totals.pending.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
                           </tr>
                         );
                       })}
-                      {Object.keys(workerTotals).length === 0 && <tr><td colSpan="5" style={{textAlign:'center', padding:'20px'}}>No labour records found in this period.</td></tr>}
+                      {Object.keys(workerTotals).length === 0 && <tr><td colSpan="6" style={{textAlign:'center', padding:'20px'}}>No labour records found in this period.</td></tr>}
                     </tbody>
                   </table>
+                </div>
+              )}
 
-                  <div className="section-header" style={{ marginTop: '2rem' }}>
-                    <h3 style={{ color: 'var(--text-primary)' }}>Salaried Staff</h3>
+              {reportConfig.includeSalaried && (
+                <div className="report-section">
+                  <div className="section-header">
+                    <h3>Salaried Staff</h3>
                     <div className="section-totals">
-                      Total Cash Outlay: <span style={{color:'#10b981'}}>Rs {salTotals.paid.toLocaleString()}</span>
+                      Total Cash Outlay: <span style={{color:'#065f46'}}>Rs {salTotals.paid.toLocaleString()}</span>
                     </div>
                   </div>
                   <table className="report-table">
@@ -6149,12 +6158,12 @@ console.log("WORKER:", worker.name, worker.paymentType, "CYCLES:", cyclesData);
                             <td><strong>{worker ? worker.name : 'Unknown'}</strong></td>
                             <td>
                               <span>
-                                {totals.cycleLabel} {pending === 0 && totalPaid > 0 ? <span style={{color: '#10b981', fontWeight: 500}}> (Paid)</span> : ''}
+                                {totals.cycleLabel} {pending === 0 && totalPaid > 0 ? <span style={{color: '#065f46', fontWeight: 600}}> (Paid)</span> : ''}
                               </span>
                             </td>
                             <td style={{textAlign:'right'}}>Rs {totals.gross.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
-                            <td style={{textAlign:'right', color:'#10b981'}}>Rs {totalPaid.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
-                            <td style={{textAlign:'right', fontWeight:'600', color: pending > 0 ? '#ef4444' : '#0f172a'}}>Rs {pending.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                            <td style={{textAlign:'right', color:'#065f46'}}>Rs {totalPaid.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                            <td style={{textAlign:'right', fontWeight:'700', color: pending > 0 ? '#991b1b' : '#0f172a'}}>Rs {pending.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
                           </tr>
                         );
                       })}
@@ -6163,7 +6172,6 @@ console.log("WORKER:", worker.name, worker.paymentType, "CYCLES:", cyclesData);
                       )}
                     </tbody>
                   </table>
-
                 </div>
               )}
 
